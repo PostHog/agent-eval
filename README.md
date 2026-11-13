@@ -1,3 +1,5 @@
+![Agent eval](images/agent-eval-logo.png)
+
 # agent-eval
 
 Run coding agents against copies of a project. Compare their results against saved criteria in a local web application. Requires Node.js 22.19 or later.
