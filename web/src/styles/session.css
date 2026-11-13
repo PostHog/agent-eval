@@ -1,0 +1,119 @@
+.back-link {
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.session-model {
+  color: var(--color-accent);
+  margin-top: -12px;
+}
+.session-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 26px;
+  margin-bottom: 24px;
+}
+.session-metadata dd {
+  margin: 0;
+  font-weight: 700;
+}
+.session-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(290px, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+.tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tabs button {
+  background: transparent;
+}
+.tabs button[aria-pressed="true"] {
+  background: var(--color-selected);
+  border-color: var(--color-accent);
+}
+.section-tabs {
+  border-bottom: 1px solid var(--color-line);
+  padding-bottom: 12px;
+  margin-bottom: 0;
+}
+details > summary {
+  cursor: pointer;
+  color: var(--color-accent);
+}
+.judgment {
+  background: var(--color-panel);
+  padding: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+}
+.judgment > p {
+  margin-top: 16px;
+}
+.decision {
+  padding: 14px 0;
+  border-top: 1px solid var(--color-line);
+}
+.decision summary {
+  color: var(--color-text);
+}
+.decision p {
+  color: var(--color-subtle);
+  white-space: pre-wrap;
+  margin: 12px 0 0;
+}
+.check-bar {
+  display: flex;
+  gap: 3px;
+  min-width: 60px;
+}
+.check-bar .criterion-mark {
+  display: inline-block;
+  width: 12px;
+  height: 20px;
+  border-radius: 1px;
+}
+.check-bar .passed {
+  background: var(--color-success);
+}
+.check-bar .failed {
+  background: var(--color-failure);
+}
+.file-browser {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr);
+  border: 1px solid var(--color-line);
+  min-height: 420px;
+}
+.file-browser nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  max-height: 700px;
+  overflow: auto;
+  border-right: 1px solid var(--color-line);
+}
+.file-browser nav button {
+  display: block;
+  text-align: left;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.file-browser nav .selected {
+  border-color: var(--color-accent);
+}
+.file-browser section {
+  padding: 16px;
+  min-width: 0;
+  max-height: 700px;
+  overflow: auto;
+}
+.configuration {
+  padding: 20px;
+  background: var(--color-input);
+  max-height: 800px;
+  overflow: auto;
+}

@@ -1,0 +1,113 @@
+.page {
+  width: var(--page);
+  margin-inline: auto;
+  padding-block: 1.5rem clamp(5rem, 10vw, 9rem);
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 0.6rem;
+  padding-block: 0.75rem 1.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.breadcrumbs a {
+  color: inherit;
+}
+
+.product {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr);
+  gap: clamp(2rem, 7vw, 7rem);
+}
+
+.image {
+  position: relative;
+  min-height: min(72vw, 48rem);
+  background: var(--sand);
+}
+
+.image img {
+  object-fit: cover;
+}
+
+.details {
+  align-self: center;
+}
+
+.details h1 {
+  max-width: 9ch;
+  margin-top: 0.45rem;
+  font-size: clamp(3rem, 6vw, 5rem);
+}
+
+.price {
+  margin: 1.6rem 0 0;
+  font-size: 1.3rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.description {
+  max-width: 34rem;
+  color: var(--muted);
+  font-size: 1.12rem;
+}
+
+.rating,
+.stock {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.details > button {
+  width: 100%;
+  margin-top: 1.3rem;
+}
+
+.specs {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+}
+
+.specs h2 {
+  font-size: 1.8rem;
+}
+
+.specs ul {
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+
+.related {
+  padding-top: clamp(5rem, 10vw, 9rem);
+}
+
+.related > h2 {
+  margin-bottom: 2rem;
+}
+
+.related > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  max-width: 52rem;
+}
+
+@media (max-width: 800px) {
+  .product {
+    grid-template-columns: 1fr;
+  }
+
+  .image {
+    min-height: 110vw;
+  }
+}
+
+@media (max-width: 560px) {
+  .related > div {
+    grid-template-columns: 1fr;
+  }
+}

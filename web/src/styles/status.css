@@ -1,0 +1,201 @@
+.status-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: -3px;
+}
+.status-spinner {
+  animation: status-spin 1s linear infinite;
+}
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.status,
+.status-note,
+.loading-state,
+.feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.status {
+  --status-color: var(--color-muted);
+  color: var(--status-color);
+  border: 1px solid color-mix(in srgb, var(--status-color) 25%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--status-color) 7%,
+    var(--color-background)
+  );
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.status.completed {
+  --status-color: var(--color-success);
+}
+.status.failed {
+  --status-color: var(--color-failure);
+}
+.status.running {
+  --status-color: var(--color-accent);
+}
+.status.judging {
+  --status-color: var(--color-tool);
+}
+.status.queued {
+  --status-color: var(--color-warning);
+}
+.status.cancelled {
+  --status-color: var(--color-muted);
+}
+button {
+  gap: 6px;
+}
+.error {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.error > span {
+  min-width: 0;
+}
+.feedback {
+  align-items: baseline;
+}
+.eval-active {
+  margin-top: 6px;
+  display: flex;
+  color: var(--color-accent);
+  font-size: 12px;
+}
+.active-run-notice,
+.run-progress-heading,
+.run-progress-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.active-run-notice {
+  justify-content: space-between;
+  padding: 12px 0;
+  color: var(--color-accent);
+  border-block: 1px solid var(--color-line);
+}
+.run-progress {
+  --progress-color: var(--color-accent);
+  padding: 16px 0;
+  margin: 16px 0 24px;
+  border-block: 1px solid var(--color-line);
+}
+.run-progress.complete {
+  --progress-color: var(--color-success);
+}
+.run-progress.unknown {
+  --progress-color: var(--color-muted);
+}
+.run-progress.interrupted {
+  --progress-color: var(--color-warning);
+}
+.run-progress-heading {
+  justify-content: space-between;
+}
+.run-progress-heading output {
+  color: var(--progress-color);
+}
+.run-progress-heading > span {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-subtle);
+  font-size: 12px;
+}
+.run-progress-track {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin: 12px 0 14px;
+  border: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--color-line);
+  color: var(--progress-color);
+  accent-color: var(--progress-color);
+}
+.run-progress-track::-webkit-progress-bar {
+  background: var(--color-line);
+}
+.run-progress-track::-webkit-progress-value {
+  background: var(--progress-color);
+}
+.run-progress-track::-moz-progress-bar {
+  background: var(--progress-color);
+}
+.run-progress-counts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.run-progress .section-note {
+  margin: 10px 0 0;
+}
+.acceptance {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 80px;
+  max-width: 140px;
+  font-variant-numeric: tabular-nums;
+}
+.acceptance-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.acceptance-meter {
+  appearance: none;
+  display: block;
+  height: 4px;
+  width: 100%;
+  background: var(--color-line);
+  border: 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.acceptance-meter::-webkit-meter-bar {
+  background: var(--color-line);
+  border: 0;
+  border-radius: 2px;
+  height: 4px;
+}
+.acceptance-meter::-webkit-meter-optimum-value {
+  background: currentColor;
+}
+.acceptance-meter::-moz-meter-bar {
+  background: currentColor;
+}
+.tool-state {
+  display: inline-flex;
+  align-self: center;
+  color: var(--color-muted);
+}
+.tool-state.running {
+  color: var(--color-accent);
+}
+.tool-state.passed {
+  color: var(--color-success);
+}
+.tool-state.failed {
+  color: var(--color-failure);
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-spinner {
+    animation: none;
+  }
+}

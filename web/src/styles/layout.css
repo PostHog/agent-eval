@@ -1,0 +1,134 @@
+main {
+  padding: 26px clamp(20px, 2.4vw, 38px) 48px;
+}
+.page-title,
+.toolbar,
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-title {
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.toolbar {
+  justify-content: space-between;
+  margin: 22px 0 16px;
+}
+.toolbar input[type="search"] {
+  min-width: 230px;
+}
+.description {
+  max-width: 82ch;
+  color: var(--color-muted);
+  margin-bottom: 30px;
+}
+.muted {
+  color: var(--color-muted);
+}
+.error {
+  color: var(--color-failure);
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.pass {
+  color: var(--color-success);
+}
+.fail {
+  color: var(--color-failure);
+}
+.empty {
+  padding: 55px 0;
+  color: var(--color-muted);
+}
+.empty h2 {
+  color: var(--color-text);
+}
+.table-scroll {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+td,
+th {
+  border-bottom: 1px solid var(--color-line);
+  padding: 12px 10px;
+  vertical-align: top;
+}
+td:first-child,
+th:first-child {
+  padding-left: 0;
+}
+.table-scroll td a {
+  text-decoration: none;
+}
+.table-scroll td a:hover {
+  text-decoration: underline;
+}
+tbody tr:hover {
+  background: var(--color-panel);
+}
+.cell-description {
+  color: var(--color-muted);
+  margin: 4px 0 0;
+  max-width: 60ch;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.verdict-preview {
+  min-width: 200px;
+  max-width: 360px;
+}
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+  gap: 28px;
+  margin-top: 26px;
+}
+.prompt-block {
+  white-space: pre-wrap;
+  background: var(--color-panel);
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  margin-bottom: 22px;
+  overflow-wrap: anywhere;
+}
+.context-panel {
+  border-left: 1px solid var(--color-line);
+  padding-left: 24px;
+}
+dt {
+  color: var(--color-muted);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+dd {
+  margin: 0 0 20px;
+  overflow-wrap: anywhere;
+}
+.section {
+  margin-top: 30px;
+}
+.stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  border-block: 1px solid var(--color-line);
+  padding: 16px 0;
+  margin-bottom: 12px;
+}
+.stats-row strong {
+  margin-left: 8px;
+}

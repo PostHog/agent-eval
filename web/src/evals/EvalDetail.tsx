@@ -1,0 +1,224 @@
+import { useState } from "react";
+import { api, useApi } from "../api.js";
+import { Acceptance, Notice, PageTitle } from "../components.js";
+import { ModelKey } from "../models/ModelReference.js";
+import { Feedback, RequestState } from "../PageState.js";
+import { SessionsTable } from "../sessions/SessionList.js";
+import { isActive } from "../sessions/session-filters.js";
+import { UsageSummary } from "../sessions/UsageSummary.js";
+import { RunProgress } from "../status/RunProgress.js";
+import { StatusIcon } from "../status/StatusIcon.js";
+import type { EvaluationData, Session } from "../types.js";
+import { criterionDecisions } from "./acceptance.js";
+import { EvalConfiguration } from "./EvalConfiguration.js";
+import { RunComparison } from "./RunComparison.js";
+
+export function EvalDetail({ id }: { id: string }) {
+  const {
+    data: evaluation,
+    error,
+    refresh: refreshEval,
+  } = useApi<EvaluationData>(`/evals/${id}`);
+  const {
+    data: allSessions,
+    error: sessionsError,
+    refresh,
+  } = useApi<Session[]>(`/sessions?evalId=${id}`, true);
+  const [runError, setRunError] = useState("");
+  const [starting, setStarting] = useState(false);
+  const [batch, setBatch] = useState("latest");
+  const [message, setMessage] = useState("");
+
+  async function run() {
+    setStarting(true);
+    setRunError("");
+    setMessage("");
+
+    try {
+      await api(`/evals/${id}/run`, { method: "POST" });
+      setBatch("latest");
+      setMessage("Run created. Results update here as sessions finish.");
+      refresh();
+    } catch (error) {
+      setRunError(String(error));
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  if (!evaluation) return <RequestState error={error} retry={refreshEval} />;
+
+  const batches = [
+    ...new Set((allSessions ?? []).map((session) => session.batchId)),
+  ];
+  const sessions = (allSessions ?? []).filter(
+    (session) => session.batchId === (batch === "latest" ? batches[0] : batch),
+  );
+  const definition = sessions[0]?.snapshot.evaluation ?? evaluation;
+  const finished = sessions.filter((session) => !isActive(session));
+  const activeElsewhere = (allSessions ?? []).filter(
+    (session) => isActive(session) && session.batchId !== sessions[0]?.batchId,
+  );
+  const running = (allSessions ?? []).some(isActive);
+  const count = evaluation.models.reduce((sum, model) => sum + model.count, 0);
+  const models = [
+    ...new Set(
+      (sessions ?? []).map((session) => `${session.harness}/${session.model}`),
+    ),
+  ];
+
+  return (
+    <>
+      <PageTitle title={evaluation.title}>
+        <a className="button" href={`#evals/${id}/edit`}>
+          Edit eval
+        </a>
+        <button
+          type="button"
+          className="primary"
+          disabled={starting}
+          onClick={() => void run()}
+        >
+          {starting && <StatusIcon name="spinner" />}
+          {starting
+            ? "Preparing sessions..."
+            : `Run ${count} ${running ? "more " : ""}${count === 1 ? "session" : "sessions"}`}
+        </button>
+      </PageTitle>
+      <Notice error={runError || (allSessions ? sessionsError : undefined)} />
+      <Feedback message={message} />
+      {starting && (
+        <output className="loading-state">
+          <StatusIcon name="spinner" />
+          Preparing workspaces and starting sessions…
+        </output>
+      )}
+      {activeElsewhere.length > 0 && (
+        <div className="active-run-notice">
+          <span className="status-note">
+            <StatusIcon name="spinner" />
+            {activeElsewhere.length}{" "}
+            {activeElsewhere.length === 1 ? "session is" : "sessions are"}{" "}
+            active in other runs.
+          </span>
+          <button
+            type="button"
+            onClick={() => setBatch(activeElsewhere[0]?.batchId ?? "latest")}
+          >
+            View active run
+          </button>
+        </div>
+      )}
+      <p className="section-note">
+        Runs use revision {evaluation.revision}. Each session gets an
+        independent workspace and judgment; both agent and judge calls incur
+        usage.
+      </p>
+      <div className="toolbar">
+        <label>
+          Run{" "}
+          <select
+            value={batch}
+            disabled={batches.length === 0}
+            onChange={(event) => setBatch(event.target.value)}
+          >
+            <option value="latest">Latest run</option>
+            {batches.map((id) => (
+              <option key={id} value={id}>
+                {new Date(
+                  (allSessions ?? []).find((session) => session.batchId === id)
+                    ?.createdAt ?? "",
+                ).toLocaleString()}{" "}
+                / {id.slice(0, 8)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <span className="muted">
+          Showing revision {definition.revision}; current revision{" "}
+          {evaluation.revision}
+        </span>
+      </div>
+      {definition.revision !== evaluation.revision && (
+        <p className="info-note">
+          You are viewing saved results from revision {definition.revision}.
+          Editing or running this eval uses the current revision{" "}
+          {evaluation.revision}.
+        </p>
+      )}
+      <RunProgress sessions={sessions} />
+      <div className="overview">
+        <section>
+          <h2>Prompt</h2>
+          <p className="prompt-block">{definition.prompt}</p>
+          <details className="criteria-disclosure">
+            <summary>
+              Criteria{" "}
+              <span className="muted">{definition.criteria.length} checks</span>
+            </summary>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Criterion</th>
+                    {models.map((model) => (
+                      <th key={model}>
+                        <ModelKey value={model} />
+                      </th>
+                    ))}
+                    <th>Finished sessions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {definition.criteria.map((criterion, index) => (
+                    <tr key={criterion.id}>
+                      <td>
+                        {index + 1}. {criterion.description}
+                      </td>
+                      {models.map((model) => (
+                        <td key={model}>
+                          <Acceptance
+                            decisions={criterionDecisions(
+                              finished.filter(
+                                (session) =>
+                                  `${session.harness}/${session.model}` ===
+                                  model,
+                              ),
+                              criterion.id,
+                            )}
+                          />
+                        </td>
+                      ))}
+                      <td>
+                        <Acceptance
+                          decisions={criterionDecisions(finished, criterion.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+        <EvalConfiguration
+          definition={definition}
+          snapshot={sessions[0]?.snapshot}
+        />
+      </div>
+      {sessions.length > 0 && <UsageSummary sessions={sessions} />}
+      <section className="section">
+        <h2>Coding sessions</h2>
+        {allSessions ? (
+          <SessionsTable
+            sessions={sessions}
+            key={batch === "latest" ? (batches[0] ?? "empty") : batch}
+          />
+        ) : (
+          <RequestState error={sessionsError} retry={refresh} />
+        )}
+      </section>
+      <RunComparison sessions={sessions} definition={definition} />
+    </>
+  );
+}

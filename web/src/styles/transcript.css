@@ -1,0 +1,240 @@
+.transcript {
+  background: var(--color-input);
+  border: 1px solid var(--color-line);
+  min-width: 0;
+}
+.transcript-toolbar {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-background);
+}
+.transcript-filters {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.transcript-filters button {
+  min-height: 28px;
+  padding: 3px 9px;
+  border-radius: 18px;
+  font:
+    11px / 1.4 Consolas,
+    monospace;
+  background: transparent;
+  color: var(--color-muted);
+}
+.transcript-filters button span {
+  margin-left: 6px;
+  color: var(--color-muted);
+}
+.transcript-filters button[aria-pressed="true"] {
+  color: var(--color-text);
+  background: var(--color-selected);
+  border-color: var(--color-accent);
+}
+.transcript-filters .filter-tool {
+  border-color: #106fb2;
+}
+.transcript-filters .filter-thinking {
+  border-color: #8927af;
+}
+.transcript-filters .filter-message {
+  border-color: #35b14e;
+}
+.transcript-filters .filter-web {
+  border-color: #25bc95;
+}
+.transcript-options {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  color: var(--color-muted);
+  font-size: 11px;
+}
+.transcript-options select {
+  min-height: 26px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+.transcript-scroll {
+  max-height: 76vh;
+  min-height: 360px;
+  overflow: auto;
+  padding: 22px 20px 30px 30px;
+  font:
+    12px / 1.75 Consolas,
+    "SFMono-Regular",
+    monospace;
+  scroll-padding-top: 16px;
+}
+.transcript-intro {
+  padding: 0 0 18px;
+}
+.transcript-intro dl {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 14px 0 0;
+}
+.transcript-intro dt,
+.transcript-intro dd {
+  font-size: 12px;
+  margin: 0;
+}
+.transcript-intro dt {
+  color: var(--color-muted);
+}
+.transcript-prompt {
+  border-block: 1px solid var(--color-line);
+  background: var(--color-panel);
+  padding: 7px 12px;
+  margin-bottom: 22px;
+  white-space: pre-wrap;
+}
+.transcript-row {
+  position: relative;
+  margin: 0 0 22px;
+  overflow-wrap: anywhere;
+}
+.transcript-sequence {
+  position: absolute;
+  right: calc(100% + 9px);
+  top: 1px;
+  font-size: 9px;
+  color: var(--color-muted);
+}
+.tool-command {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.tool-command strong {
+  color: var(--color-tool);
+  font-weight: 700;
+  flex: none;
+}
+.tool-command code {
+  color: var(--color-accent);
+  white-space: pre-wrap;
+  font: inherit;
+}
+.tool-output {
+  margin: 3px 0 0 14px;
+  color: var(--color-muted);
+}
+.tool-output > summary {
+  color: var(--color-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.tool-result-status {
+  font-size: 10px;
+  margin-right: 6px;
+}
+.tool-result-status.passed {
+  color: var(--color-success);
+}
+.tool-result-status.failed {
+  color: var(--color-failure);
+}
+.tool-output pre {
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+  max-height: 400px;
+  overflow: auto;
+  font-size: 11px;
+}
+.tool-pending {
+  display: block;
+  margin-left: 14px;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.thinking-block > summary {
+  color: var(--color-reasoning);
+  font-weight: 700;
+}
+.transcript-markdown {
+  color: var(--color-text);
+}
+.thinking-block .transcript-markdown {
+  color: var(--color-subtle);
+  padding-top: 10px;
+}
+.transcript-markdown p {
+  margin: 0 0 12px;
+}
+.transcript-markdown p:last-child {
+  margin-bottom: 0;
+}
+.transcript-markdown ul,
+.transcript-markdown ol {
+  padding-left: 22px;
+  margin: 10px 0;
+}
+.transcript-markdown ul {
+  list-style: disc;
+}
+.transcript-markdown ol {
+  list-style: decimal;
+}
+.transcript-markdown li {
+  margin-bottom: 5px;
+}
+.transcript-markdown :not(pre) > code {
+  background: var(--color-hover);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.transcript-markdown pre {
+  background: var(--color-panel);
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  overflow: auto;
+  font: inherit;
+}
+.transcript-markdown h1,
+.transcript-markdown h2,
+.transcript-markdown h3 {
+  font:
+    600 13px / 1.6 Consolas,
+    monospace;
+  margin: 18px 0 8px;
+}
+.transcript-markdown blockquote {
+  margin: 12px 0;
+  border-left: 1px solid var(--color-muted);
+  padding-left: 12px;
+}
+.transcript-error {
+  color: var(--color-failure);
+}
+.transcript-user {
+  background: var(--color-panel);
+  padding: 7px 10px;
+}
+.raw-event {
+  margin-bottom: 12px;
+}
+.raw-event pre {
+  overflow-wrap: anywhere;
+}
+.back-to-top {
+  margin: 0 12px 12px;
+  font-size: 11px;
+}
+.load-transcript {
+  margin: 14px 0;
+}
+@media (max-width: 760px) {
+  .transcript-scroll {
+    padding: 18px 14px 24px 26px;
+  }
+}

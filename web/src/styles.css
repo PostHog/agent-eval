@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "./styles/fonts.css";
+@import "./styles/base.css";
+@import "./styles/shell.css";
+@import "./styles/layout.css";
+@import "./styles/forms.css";
+@import "./styles/session.css";
+@import "./styles/references.css";
+@import "./styles/model-dialog.css";
+@import "./styles/transcript.css";
+@import "./styles/workflow.css";
+@import "./styles/status.css";
+@import "./styles/responsive.css";

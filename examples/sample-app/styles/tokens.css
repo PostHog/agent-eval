@@ -1,0 +1,17 @@
+:root {
+  --ink: #20241f;
+  --spruce: #253629;
+  --moss: #53674f;
+  --paper: #f3f0e8;
+  --surface: #faf8f2;
+  --sand: #c6aa77;
+  --clay: #a65536;
+  --line: #cfc8b9;
+  --muted: #596455;
+  --success: #2f633b;
+  --danger: #9d2f23;
+  --font-body: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --page: min(1180px, calc(100% - 2.5rem));
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

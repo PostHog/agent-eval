@@ -1,0 +1,79 @@
+.article {
+  padding-bottom: clamp(5rem, 10vw, 9rem);
+}
+
+.article > header,
+.body,
+.article > footer {
+  width: min(760px, calc(100% - 2.5rem));
+  margin-inline: auto;
+}
+
+.article > header {
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+.article > header .supporting-text {
+  margin-top: 2rem;
+}
+
+.article h1 {
+  max-width: 12ch;
+  margin-top: 0.5rem;
+}
+
+.article > header > p:last-child {
+  max-width: 42rem;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.image {
+  position: relative;
+  min-height: min(65vw, 52rem);
+  background: var(--sand);
+}
+
+.image img {
+  object-fit: cover;
+}
+
+.body {
+  padding-block: clamp(4rem, 8vw, 7rem);
+}
+
+.body section + section {
+  margin-top: 3.5rem;
+}
+
+.body h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.body p {
+  max-width: 68ch;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.75;
+}
+
+.article > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  border-top: 1px solid var(--line);
+  padding-top: 2rem;
+}
+
+.article > footer h2 {
+  font-size: 2.4rem;
+}
+
+@media (max-width: 560px) {
+  .article > footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

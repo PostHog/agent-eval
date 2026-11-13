@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T21:10:00.000Z",
+  "title": "Design system: Northstar Supply",
+  "extensions": {
+    "colorMeta": {
+      "spruce": {
+        "role": "primary",
+        "displayName": "Trail spruce",
+        "canonical": "#253629"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Field paper",
+        "canonical": "#f3f0e8"
+      },
+      "clay": {
+        "role": "accent",
+        "displayName": "Trail clay",
+        "canonical": "#a65536"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Editorial display",
+        "purpose": "Route titles and major section headings."
+      },
+      "body": {
+        "displayName": "Field utility",
+        "purpose": "Body copy, controls, labels, and product facts."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Short image response after a direct hover action."
+      }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "560px" },
+      { "name": "mobile", "value": "760px" },
+      { "name": "tablet", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action on a route or form."
+    },
+    {
+      "name": "Product card",
+      "kind": "card",
+      "description": "A ruled product entry with a tall photograph and direct facts."
+    }
+  ],
+  "narrative": {
+    "northStar": "The working field guide",
+    "overview": "Practical outdoor commerce with editorial hierarchy and field-guide detail.",
+    "keyCharacteristics": [
+      "Earth colors",
+      "Large serif headings",
+      "Ruled lists",
+      "Flat surfaces"
+    ],
+    "rules": [
+      {
+        "name": "Flat by default",
+        "body": "Use color, rules, and spacing instead of shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": ["Use product facts and meaningful photography."],
+    "donts": ["Do not add gradients, glass effects, or decorative cards."]
+  }
+}

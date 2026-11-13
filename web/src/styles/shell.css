@@ -1,0 +1,114 @@
+.app {
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  min-height: 100vh;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-input);
+  border-right: 1px solid var(--color-line);
+  padding: 20px 12px;
+}
+.brand {
+  color: var(--color-text);
+  text-decoration: none;
+  padding: 4px 12px 24px;
+}
+.brand img {
+  display: block;
+  width: 134px;
+  height: auto;
+}
+.brand span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 14px;
+}
+.sidebar nav {
+  display: grid;
+  gap: 5px;
+}
+.sidebar nav a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--color-subtle);
+  text-decoration: none;
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+.nav-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  background: currentColor;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+}
+.sidebar nav a:nth-child(3),
+.sidebar nav a:nth-child(7) {
+  margin-top: 16px;
+}
+.sidebar nav a[aria-current="page"] {
+  background: var(--color-selected);
+  color: var(--color-accent);
+}
+.sidebar nav a:hover {
+  background: var(--color-hover);
+}
+.sidebar-note {
+  margin-top: auto;
+  padding: 24px 12px 0;
+  border-top: 1px solid var(--color-line);
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.sidebar-note img {
+  display: block;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+.sidebar-note strong {
+  display: block;
+  color: var(--color-subtle);
+  font-size: 12px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.main-shell {
+  min-width: 0;
+}
+.topbar {
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-subtle);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.topbar > span:not(.local-badge) {
+  color: var(--color-muted);
+}
+.breadcrumb-link {
+  text-decoration: none;
+  color: var(--color-subtle);
+}
+.breadcrumb-link:hover {
+  color: var(--color-text);
+}
+.local-badge {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-accent);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  padding: 1px 8px;
+}

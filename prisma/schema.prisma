@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Eval {
+  id            String         @id @default(uuid())
+  title         String
+  prompt        String
+  revision      Int            @default(1)
+  environmentId String?
+  personaId     String?
+  judge         Json
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  environment   Environment?   @relation(fields: [environmentId], references: [id], onDelete: Restrict)
+  persona       Persona?       @relation(fields: [personaId], references: [id], onDelete: Restrict)
+  criteria      Criterion[]
+  models        ModelProfile[]
+  skills        EvalSkill[]
+  mcps          EvalMcp[]
+  sessions      Session[]
+}
+
+model Criterion {
+  id          String @id @default(uuid())
+  evalId      String
+  position    Int
+  description String
+  eval        Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+
+  @@unique([evalId, position])
+}
+
+model ModelProfile {
+  id             String @id @default(uuid())
+  evalId         String
+  position       Int
+  model          String
+  harness        String @default("pi")
+  effort         String
+  count          Int
+  timeoutSeconds Int
+  maxTurns       Int
+  eval           Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+
+  @@unique([evalId, position])
+}
+
+model Environment {
+  id            String   @id @default(uuid())
+  title         String
+  workspacePath String?
+  description   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  evals         Eval[]
+}
+
+model Persona {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  evals       Eval[]
+}
+
+model Skill {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  directory   String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  evals       EvalSkill[]
+}
+
+model Mcp {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  command     String
+  arguments   Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  evals       EvalMcp[]
+}
+
+model EvalSkill {
+  evalId  String
+  skillId String
+  eval    Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@id([evalId, skillId])
+}
+
+model EvalMcp {
+  evalId String
+  mcpId  String
+  eval   Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  mcp    Mcp    @relation(fields: [mcpId], references: [id], onDelete: Restrict)
+
+  @@id([evalId, mcpId])
+}
+
+model Session {
+  id             String            @id @default(uuid())
+  evalId         String
+  batchId        String
+  model          String
+  harness        String @default("pi")
+  status         String
+  snapshot       Json
+  agentResult    Json?
+  judgeResult    Json?
+  verdict        String?
+  error          String?
+  inputTokens    Int?
+  outputTokens   Int?
+  cacheRead      Int?
+  cacheWrite     Int?
+  totalTokens    Int?
+  costUsd        Float?
+  durationMs     Int?
+  createdAt      DateTime          @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  eval           Eval              @relation(fields: [evalId], references: [id], onDelete: Restrict)
+  decisions      SessionDecision[]
+  events         SessionEvent[]
+  artifacts      SessionArtifact[]
+
+  @@index([evalId, createdAt])
+  @@index([batchId])
+  @@index([status])
+}
+
+model SessionDecision {
+  id                   String  @id @default(uuid())
+  sessionId            String
+  criterionSnapshotId  String
+  criterionDescription String
+  passed               Boolean
+  feedback             String
+  session              Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, criterionSnapshotId])
+}
+
+model SessionEvent {
+  id        Int      @id @default(autoincrement())
+  sessionId String
+  sequence  Int
+  phase     String
+  event     Json
+  createdAt DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, sequence])
+}
+
+model SessionArtifact {
+  id        String  @id @default(uuid())
+  sessionId String
+  path      String
+  phase     String
+  content   Bytes
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, phase, path])
+}
+
+model Credential {
+  provider String @id
+  encryptedValue String
+  updatedAt DateTime @updatedAt
+}

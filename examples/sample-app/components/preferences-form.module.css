@@ -1,0 +1,80 @@
+.form {
+  border-top: 1px solid var(--line);
+}
+
+.form section {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 1fr);
+  gap: clamp(2rem, 8vw, 8rem);
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-block: 2rem;
+}
+
+.form h2 {
+  font-size: 2rem;
+}
+
+.form p {
+  max-width: 34rem;
+  color: var(--muted);
+}
+
+.form select {
+  width: 100%;
+}
+
+.checkboxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.checkboxes label,
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface);
+}
+
+.checkboxes span {
+  text-transform: capitalize;
+}
+
+.checkboxes input,
+.switch input {
+  min-height: auto;
+  accent-color: var(--spruce);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 2rem;
+}
+
+.actions p {
+  margin: 0;
+  color: var(--success);
+}
+
+@media (max-width: 700px) {
+  .form section,
+  .checkboxes {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
