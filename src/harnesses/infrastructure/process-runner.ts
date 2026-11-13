@@ -56,7 +56,9 @@ export async function runProcess(command: ProcessCommand, input: HarnessInput) {
   child.stderr.on("data", (chunk: Buffer) => {
     stderr = (stderr + chunk.toString()).slice(-8000);
   });
-  child.stdin.on("error", (error: Error) => {
+  child.stdin.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code === "EPIPE") return;
+
     failure = error;
     stop();
   });
