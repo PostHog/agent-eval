@@ -16,9 +16,10 @@ export interface Credential {
 export interface Resource {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   workspacePath?: string | null;
-  directory?: string;
+  filePath?: string | null;
+  content?: string | null;
   command?: string;
   arguments?: string[];
 }

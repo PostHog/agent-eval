@@ -66,17 +66,16 @@ for (const [kind, field] of [
     fireEvent.change(screen.getByLabelText("Title"), {
       target: { value: "New resource" },
     });
-    fireEvent.change(
-      screen.getByLabelText(
-        kind === "persona" ? "Persona instructions" : "Description",
-      ),
-      { target: { value: "Test instructions" } },
-    );
-
     if (kind === "skill")
+      fireEvent.change(screen.getByLabelText("Skill instructions"), {
+        target: { value: "Test instructions" },
+      });
+    else
       fireEvent.change(
-        screen.getByLabelText("Skill folder containing SKILL.md"),
-        { target: { value: "/tmp/skill" } },
+        screen.getByLabelText(
+          kind === "persona" ? "Persona instructions" : "Description",
+        ),
+        { target: { value: "Test instructions" } },
       );
 
     if (kind === "MCP server")

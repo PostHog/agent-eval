@@ -1,0 +1,105 @@
+name: Release executables
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            target: darwin-x64
+          - os: macos-15
+            target: darwin-arm64
+          - os: ubuntu-24.04
+            target: linux-x64
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+          - os: windows-2025
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun run compile:binary
+      - name: Smoke test executable
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          release/agent-eval --no-open --port 3199 --data "$RUNNER_TEMP/agent-eval-smoke" &
+          pid=$!
+          trap 'kill "$pid"' EXIT
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:3199/ >/dev/null && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Smoke test executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $process = Start-Process -FilePath release/agent-eval.exe -ArgumentList "--no-open", "--port", "3199", "--data", "$env:RUNNER_TEMP/agent-eval-smoke" -PassThru
+          try {
+            foreach ($attempt in 1..30) {
+              try {
+                Invoke-WebRequest http://127.0.0.1:3199/ -UseBasicParsing | Out-Null
+                exit 0
+              } catch {
+                Start-Sleep -Seconds 1
+              }
+            }
+            exit 1
+          } finally {
+            Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+          }
+      - name: Package executable
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mv release/agent-eval release/agent-eval-${{ matrix.target }}
+          tar -C release -czf release/agent-eval-${{ matrix.target }}.tar.gz agent-eval-${{ matrix.target }}
+          shasum -a 256 release/agent-eval-${{ matrix.target }}.tar.gz > release/agent-eval-${{ matrix.target }}.tar.gz.sha256
+      - name: Package executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Move-Item release/agent-eval.exe release/agent-eval-${{ matrix.target }}.exe
+          Compress-Archive release/agent-eval-${{ matrix.target }}.exe release/agent-eval-${{ matrix.target }}.zip
+          $hash = (Get-FileHash release/agent-eval-${{ matrix.target }}.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  agent-eval-${{ matrix.target }}.zip" | Set-Content release/agent-eval-${{ matrix.target }}.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-${{ matrix.target }}
+          path: |
+            release/*.tar.gz
+            release/*.zip
+            release/*.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create release and upload executables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+          gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber

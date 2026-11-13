@@ -45,9 +45,16 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
       title: "Engineer",
       description: "Verify all changes.",
     });
+    const skill = Resource.create({
+      kind: "skill",
+      title: "Inspect the code",
+      filePath: null,
+      content: "Read app.ts before making changes.",
+    });
 
     await catalog.save(environment);
     await catalog.save(persona);
+    await catalog.save(skill);
 
     const vault = new KeyVault(db);
 
@@ -78,6 +85,7 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
       judge: model,
       environmentId: environment.value.id,
       personaId: persona.value.id,
+      skillIds: [skill.value.id],
     });
 
     await assert.rejects(catalog.delete("persona", persona.value.id));
@@ -99,6 +107,10 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
           assert.equal(
             await readFile(join(input.workspace, "app.ts"), "utf8"),
             "original",
+          );
+          assert.match(
+            await readFile(join(input.skills[0] ?? "", "SKILL.md"), "utf8"),
+            /Read app\.ts before making changes/,
           );
           await writeFile(join(input.workspace, "app.ts"), "changed");
           await writeFile(

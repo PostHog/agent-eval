@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import { Injectable } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
@@ -9,6 +8,7 @@ import { ApplicationModule } from "./application.module.js";
 import { ApiErrorFilter } from "./http/api-error-filter.js";
 import { Database } from "./infrastructure/database.js";
 import { migrateDatabase } from "./infrastructure/migrations.js";
+import { serveWebAssets } from "./infrastructure/static-assets.js";
 
 interface ServeOptions {
   port?: number;
@@ -58,7 +58,7 @@ export class ServeCommand extends CommandRunner {
         next();
       },
     );
-    app.useStaticAssets(fileURLToPath(new URL("../web/dist", import.meta.url)));
+    serveWebAssets(app);
 
     // Native harness processes cannot resume after an application restart.
     await app.get(Database).session.updateMany({

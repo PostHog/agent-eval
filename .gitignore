@@ -2,6 +2,7 @@ node_modules/
 .next/
 *.tsbuildinfo
 dist/
+release/
 runs/
 .agent-eval/
 *.db

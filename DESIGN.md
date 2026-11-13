@@ -36,6 +36,8 @@ updates the eval draft; Cancel discards changes. New evals start with no models
 and no judge. Explicit Add actions open configuration dialogs; only complete
 selections appear in the model and judge sections. Inline resource creation
 saves to the resource library and selects the result in the draft.
+Skills have one title and either inline instructions or one local file path.
+They do not have descriptions.
 API keys use provider rows with explicit key sources. Add, override, replace,
 and remove actions open focused dialogs; key fields stay hidden until editing.
 

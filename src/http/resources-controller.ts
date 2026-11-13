@@ -1,5 +1,4 @@
-import { readFile, realpath, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { realpath, stat } from "node:fs/promises";
 import {
   Body,
   Controller,
@@ -64,12 +63,16 @@ export class ResourcesController {
       value.kind === "environment"
         ? value.workspacePath
         : value.kind === "skill"
-          ? value.directory
+          ? value.filePath
           : null;
 
-    if (path && !(await stat(await realpath(path))).isDirectory())
-      throw new Error("Choose an existing directory.");
-    if (value.kind === "skill")
-      await readFile(join(value.directory, "SKILL.md"));
+    if (!path) return;
+
+    const entry = await stat(await realpath(path));
+
+    if (value.kind === "skill" && !entry.isFile())
+      throw new Error("Choose an existing skill file.");
+    if (value.kind === "environment" && !entry.isDirectory())
+      throw new Error("Choose an existing workspace folder.");
   }
 }

@@ -21,7 +21,7 @@ export const resourceInfo = {
     singular: "skill",
     description:
       "Make reusable instructions available to the agent. Select the skills to include in each eval.",
-    hint: "Choose a local folder that contains a SKILL.md file and any supporting files.",
+    hint: "Write the instructions here, or choose one local file. Each session receives its own saved copy.",
   },
   mcps: {
     kind: "mcp",

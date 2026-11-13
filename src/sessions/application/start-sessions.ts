@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import {
   Inject,
   Injectable,
@@ -77,13 +78,19 @@ export class StartSessions implements OnModuleDestroy {
       evaluation: data,
       environment,
       persona,
-      skills: data.skillIds.map((id) => {
-        const skill = resources.skills.find((entry) => entry.id === id);
+      skills: await Promise.all(
+        data.skillIds.map(async (id) => {
+          const skill = resources.skills.find((entry) => entry.id === id);
 
-        if (!skill) throw new Error(`Skill not found: ${id}`);
+          if (!skill) throw new Error(`Skill not found: ${id}`);
 
-        return skill;
-      }),
+          const content =
+            skill.content ??
+            (skill.filePath ? await readFile(skill.filePath, "utf8") : "");
+
+          return { title: skill.title, content };
+        }),
+      ),
       mcps: data.mcpIds.map((id) => {
         const mcp = resources.mcps.find((entry) => entry.id === id);
 

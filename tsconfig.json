@@ -12,6 +12,7 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "types": ["bun", "node"],
     "outDir": "dist",
     "rootDir": "."
   },

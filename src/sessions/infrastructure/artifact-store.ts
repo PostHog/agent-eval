@@ -45,11 +45,15 @@ export class ArtifactStore extends WorkspaceStore {
         );
       else await mkdir(join(root, "workspace"));
 
-      for (const [index, skill] of snapshot.skills.entries())
-        await copySnapshot(
-          resolve(skill.directory),
-          join(root, "skills", String(index)),
+      for (const [index, skill] of snapshot.skills.entries()) {
+        const directory = join(root, "skills", String(index));
+
+        await mkdir(directory, { recursive: true });
+        await writeFile(
+          join(directory, "SKILL.md"),
+          skillDocument(skill.title, skill.content),
         );
+      }
       for (const id of sessionIds) await this.capture(id, root, "input");
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -102,4 +106,14 @@ export class ArtifactStore extends WorkspaceStore {
       await writeFile(target, file.content);
     }
   }
+}
+
+export function skillDocument(title: string, content: string): string {
+  const name =
+    title
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/^-|-$/g, "") || "skill";
+
+  return `---\nname: ${name}\ndescription: ${JSON.stringify(title)}\n---\n${content.trim()}\n`;
 }

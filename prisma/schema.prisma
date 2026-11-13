@@ -71,13 +71,13 @@ model Persona {
 }
 
 model Skill {
-  id          String      @id @default(uuid())
-  title       String
-  description String
-  directory   String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  evals       EvalSkill[]
+  id        String      @id @default(uuid())
+  title     String
+  filePath  String?
+  content   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  evals     EvalSkill[]
 }
 
 model Mcp {

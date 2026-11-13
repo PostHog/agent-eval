@@ -47,10 +47,7 @@ export function ConfigurationPanel({ session }: { session: Session }) {
           {snapshot.skills.length ? (
             <ul>
               {snapshot.skills.map((skill) => (
-                <li key={skill.directory}>
-                  {skill.title}
-                  <small>{skill.directory}</small>
-                </li>
+                <li key={skill.title}>{skill.title}</li>
               ))}
             </ul>
           ) : (

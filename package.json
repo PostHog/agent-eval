@@ -3,25 +3,28 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.4",
   "bin": {
     "agent-eval": "dist/cli.js"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "bun": ">=1.4.4"
   },
   "scripts": {
-    "dev": "npm run build && node dist/cli.js serve",
-    "dev:server": "node --import tsx src/cli.ts serve --no-open",
-    "dev:web": "vite --config web/vite.config.ts",
-    "start": "node dist/cli.js serve",
-    "build": "node --import tsx scripts/build.ts",
-    "db:generate": "prisma generate",
-    "typecheck": "tsc --noEmit && tsc -p web/tsconfig.json --noEmit",
-    "lint": "biome check .",
-    "format": "biome check --write .",
-    "test": "node --import tsx --test test/*.test.ts && npm run test:web",
-    "test:web": "tsx --tsconfig web/tsconfig.json --test web/test/*.test.tsx",
-    "check": "npm run typecheck && npm run lint && npm test && npm run build"
+    "dev": "bun run build && bun dist/cli.js serve",
+    "dev:server": "bun --watch src/cli.ts serve --no-open",
+    "dev:web": "bunx vite --config web/vite.config.ts",
+    "start": "bun dist/cli.js serve",
+    "build": "bun scripts/build.ts",
+    "compile": "bun run build && bun scripts/compile.ts",
+    "compile:binary": "bun scripts/compile.ts",
+    "db:generate": "bunx prisma generate",
+    "typecheck": "bunx tsc --noEmit && bunx tsc -p web/tsconfig.json --noEmit",
+    "lint": "bunx biome check .",
+    "format": "bunx biome check --write .",
+    "test": "bun test test/*.test.ts web/test/*.test.tsx",
+    "test:web": "bun test web/test/*.test.tsx",
+    "check": "bun run typecheck && bun run lint && bun test && bun run build"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "1.1.0",
@@ -50,6 +53,7 @@
     "@biomejs/biome": "2.2.4",
     "@tailwindcss/vite": "4.3.5",
     "@testing-library/react": "^16.3.3",
+    "@types/bun": "1.4.4",
     "@types/express": "5.0.6",
     "@types/jsdom": "^30.0.0",
     "@types/node": "22.19.19",
@@ -59,7 +63,6 @@
     "jsdom": "^29.1.1",
     "prisma": "6.19.3",
     "tailwindcss": "4.3.5",
-    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vite": "7.3.8"
   },

@@ -26,7 +26,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
   const info = resourceInfo[kind];
   const filtered =
     data?.[kind].filter((resource) =>
-      `${resource.title} ${resource.description}`
+      `${resource.title} ${resource.description ?? ""} ${resource.filePath ?? ""}`
         .toLowerCase()
         .includes(search.trim().toLowerCase()),
     ) ?? [];
@@ -121,7 +121,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
-                    <TableHead>Description</TableHead>
+                    {kind !== "skills" && <TableHead>Description</TableHead>}
                     {kind !== "personas" && (
                       <TableHead>Configuration</TableHead>
                     )}
@@ -132,17 +132,21 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                   {filtered.map((resource) => (
                     <TableRow key={resource.id}>
                       <TableCell>{resource.title}</TableCell>
-                      <TableCell>
-                        <p className="cell-description">
-                          {resource.description || "No description"}
-                        </p>
-                      </TableCell>
+                      {kind !== "skills" && (
+                        <TableCell>
+                          <p className="cell-description">
+                            {resource.description || "No description"}
+                          </p>
+                        </TableCell>
+                      )}
                       {kind !== "personas" && (
                         <TableCell className="resource-path">
                           {resource.workspacePath ??
-                            resource.directory ??
+                            resource.filePath ??
                             resource.command ??
-                            "Empty workspace"}
+                            (kind === "skills"
+                              ? "Inline instructions"
+                              : "Empty workspace")}
                         </TableCell>
                       )}
                       <TableCell>

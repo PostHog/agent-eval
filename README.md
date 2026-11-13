@@ -2,7 +2,7 @@
 
 # agent-eval
 
-Run coding agents against copies of a project. Compare their results against saved criteria in a local web application. Requires Node.js 22.19 or later.
+Run coding agents against copies of a project. Compare their results against saved criteria in a local web application.
 
 agent-eval allows you to see how coding agents behave in specific environments and with specific prompts. At the core, you have evals, which allow you to specify a set of criteria of what agents are supposed to. Then you select which models and harnesses you'd like to test on, and which environment (project, repository, folder, etc...). Then, upon running, it spawns isolated agents on a copy of the provided workspace, and a judge evaluates whether the agent fulfilled the acceptance criteria.
 
@@ -10,20 +10,41 @@ agent-eval allows you to see how coding agents behave in specific environments a
 
 ![Evaluation results with coding sessions, criteria, duration, and cost](images/demo1.png)
 
-## Start
+## Install
+
+Download the archive for your computer from the [latest release](https://github.com/PostHog/agent-eval/releases/latest):
+
+| Platform | Download |
+| --- | --- |
+| macOS Apple silicon | `agent-eval-darwin-arm64.tar.gz` |
+| macOS Intel | `agent-eval-darwin-x64.tar.gz` |
+| Linux ARM64 | `agent-eval-linux-arm64.tar.gz` |
+| Linux x64 | `agent-eval-linux-x64.tar.gz` |
+| Windows x64 | `agent-eval-windows-x64.zip` |
+
+Extract the archive and run the `agent-eval-*` executable. It includes Bun, the server, database migrations, and the web app. You do not need to install a JavaScript runtime. The release also includes a SHA-256 checksum for each archive.
+
+The CLI starts the application at http://127.0.0.1:3100 and opens it. Use the same executable to view previous sessions. Press Ctrl+C to stop.
 
 ```sh
-npm ci
-cp .env.example .env
-npm run build
-npm start
+./agent-eval-darwin-arm64 --port 3200 --data ./.agent-eval --no-open
+./agent-eval-darwin-arm64 --help
 ```
 
-The CLI starts NestJS at http://127.0.0.1:3100 and opens the app. Use the same command to view previous sessions. Press Ctrl+C to stop.
+## Build from source
+
+Install [Bun 1.4.4 or later](https://bun.sh/), then run:
 
 ```sh
-npm start -- --port 3200 --data ./.agent-eval --no-open
-node dist/cli.js serve --help
+bun install --frozen-lockfile
+bun run build
+bun run start
+```
+
+To create a standalone executable for your current platform:
+
+```sh
+bun run compile
 ```
 
 Evals, resources, sessions, traces, files, judgments, and usage are saved in SQLite under `.agent-eval/`. The CLI applies committed Prisma migrations on startup. The old YAML runner and file report viewer have been removed. Existing `runs/` folders remain unchanged and are not imported.
@@ -32,7 +53,7 @@ Evals, resources, sessions, traces, files, judgments, and usage are saved in SQL
 
 1. Open **API keys**. Save the provider keys, or set them in `.env`.
 2. Open **Environments**. Add a local project folder. Use `examples/sample-app` for the included Next.js storefront.
-3. Add personas, skill folders, and stdio MCP servers as needed.
+3. Add personas, skills, and stdio MCP servers as needed. A skill has one title and either inline instructions or one local file path. It has no separate description.
 4. Open **Evals**, then **New eval**. Add the prompt, criteria, environment, and optional resources.
 5. Select a harness, model, effort, count, timeout, and turn limit for each model profile. Select the judge harness and model.
 6. Save the eval, then select **Run eval**.
@@ -54,7 +75,7 @@ The **Sessions** page lists executions. Open a session to view its prompt, perso
 
 The **Harnesses** screen shows executable availability and model choices. Catalogs come from the installed Pi model registry. A listed model can still be unavailable to your account. Native harnesses use their own provider protocols and permissions.
 
-Pi provides file tools, shell tools, HTTP fetching, and configured stdio MCP tools. Native harnesses use their own tools. Skills are copied into each harness's skill directory. A persona is added to the session instructions. MCP configuration supports stdio commands and argument lists.
+Pi provides file tools, shell tools, HTTP fetching, and configured stdio MCP tools. Native harnesses use their own tools. Skill text is saved with each session and copied into each harness's skill directory. A persona is added to the session instructions. MCP configuration supports stdio commands and argument lists.
 
 Timeouts use **seconds**. Effort support depends on the model and harness. Native turn limits count events exposed by each harness and are not directly comparable. Codex exposes task turns, so its turn cap does not bound every internal model request. Use a timeout as well.
 
@@ -98,11 +119,11 @@ Pi SDK execution, tools, limits, and trace formatting are contained in `src/harn
 ## Development
 
 ```sh
-npm run dev
-npm run check
+bun run dev
+bun run check
 ```
 
-For separate processes, build once, then run `npm run dev:server` and `npm run dev:web` in separate terminals.
+For separate processes, run `bun run dev:server` and `bun run dev:web` in separate terminals.
 
 `check` runs strict TypeScript checks, Biome, tests, and the production build. Tests use temporary SQLite databases and controlled harnesses. They do not make paid model requests.
 

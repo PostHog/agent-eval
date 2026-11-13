@@ -40,13 +40,18 @@ export class PrismaCatalog extends ResourceRepository {
           update: data,
         });
         break;
-      case "persona":
+      case "persona": {
+        if (resource.value.kind !== "persona") break;
+
+        const { kind: _kind, ...value } = resource.value;
+
         await this.db.persona.upsert({
           where: { id: data.id },
-          create: data,
-          update: data,
+          create: value,
+          update: value,
         });
         break;
+      }
       case "skill": {
         const value = resource.value;
 
@@ -56,13 +61,13 @@ export class PrismaCatalog extends ResourceRepository {
             create: {
               id: value.id,
               title: value.title,
-              description: value.description,
-              directory: value.directory,
+              filePath: value.filePath,
+              content: value.content,
             },
             update: {
               title: value.title,
-              description: value.description,
-              directory: value.directory,
+              filePath: value.filePath,
+              content: value.content,
             },
           });
 

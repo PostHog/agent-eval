@@ -6,7 +6,8 @@ test("web fetch returns evidence and handles errors, truncation, and cancellatio
   const originalFetch = globalThis.fetch;
 
   try {
-    globalThis.fetch = async () => new Response("Installation documentation");
+    globalThis.fetch = (async () =>
+      new Response("Installation documentation")) as unknown as typeof fetch;
 
     assert.match(
       await fetchPage("https://example.com/docs"),
@@ -15,19 +16,21 @@ test("web fetch returns evidence and handles errors, truncation, and cancellatio
 
     await assert.rejects(fetchPage("file:///etc/passwd"), /HTTP or HTTPS/);
 
-    globalThis.fetch = async () => new Response("Unavailable", { status: 503 });
+    globalThis.fetch = (async () =>
+      new Response("Unavailable", { status: 503 })) as unknown as typeof fetch;
 
     await assert.rejects(fetchPage("https://example.com"), /HTTP 503/);
 
-    globalThis.fetch = async () => new Response("a".repeat(60_000));
+    globalThis.fetch = (async () =>
+      new Response("a".repeat(60_000))) as unknown as typeof fetch;
 
     assert.match(await fetchPage("https://example.com"), /Response truncated/);
 
-    globalThis.fetch = async (_url, options) => {
+    globalThis.fetch = (async (_url, options) => {
       options?.signal?.throwIfAborted();
 
       return new Response("Unexpected");
-    };
+    }) as typeof fetch;
 
     await assert.rejects(
       fetchPage("https://example.com", AbortSignal.abort()),

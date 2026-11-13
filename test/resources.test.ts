@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
+import { Resource } from "../src/catalog/domain/resource.js";
 import { createSession } from "../src/harnesses/infrastructure/pi/runtime.js";
+import { skillDocument } from "../src/sessions/infrastructure/artifact-store.js";
 import { fixture } from "./fixture.js";
 
 test("Pi creates a session with only the supplied tools and skills", async () => {
@@ -43,4 +45,27 @@ test("Pi creates a session with only the supplied tools and skills", async () =>
   } finally {
     await rm(f.root, { recursive: true, force: true });
   }
+});
+
+test("skills use exactly one inline or file source", () => {
+  const inline = Resource.create({
+    kind: "skill",
+    title: "Review TypeScript",
+    filePath: null,
+    content: "Check every changed TypeScript file.",
+  });
+
+  assert.equal(inline.value.kind, "skill");
+  assert.match(
+    skillDocument("Review TypeScript", "Check the code."),
+    /name: review-typescript/,
+  );
+  assert.throws(() =>
+    Resource.create({
+      kind: "skill",
+      title: "Invalid",
+      filePath: "/tmp/skill.md",
+      content: "Two sources",
+    }),
+  );
 });

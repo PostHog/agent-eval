@@ -1,6 +1,7 @@
 import { Button, Input, Textarea } from "@posthog/quill";
 import { type FormEvent, useState } from "react";
 import { api } from "../api.js";
+import { Choice } from "../Choice.js";
 import { Field, Notice } from "../components.js";
 import { StatusIcon } from "../status/StatusIcon.js";
 import type { Resource } from "../types.js";
@@ -25,7 +26,11 @@ export function ResourceForm({
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [path, setPath] = useState(
-    initial?.workspacePath ?? initial?.directory ?? initial?.command ?? "",
+    initial?.workspacePath ?? initial?.filePath ?? initial?.command ?? "",
+  );
+  const [content, setContent] = useState(initial?.content ?? "");
+  const [skillSource, setSkillSource] = useState<"inline" | "file">(
+    initial?.filePath ? "file" : "inline",
   );
   const [args, setArgs] = useState<{ id: string; value: string }[]>(() =>
     (initial?.arguments ?? []).map((value) => ({
@@ -46,9 +51,14 @@ export function ResourceForm({
       const value = {
         kind: resourceInfo[kind].kind,
         title,
-        description,
+        ...(kind === "skills" ? {} : { description }),
         ...(kind === "environments" ? { workspacePath: path || null } : {}),
-        ...(kind === "skills" ? { directory: path } : {}),
+        ...(kind === "skills"
+          ? {
+              filePath: skillSource === "file" ? path : null,
+              content: skillSource === "inline" ? content : null,
+            }
+          : {}),
         ...(kind === "mcps"
           ? { command: path, arguments: args.map((argument) => argument.value) }
           : {}),
@@ -86,24 +96,59 @@ export function ResourceForm({
           onChange={(event) => setTitle(event.target.value)}
         />
       </Field>
-      <Field
-        label={kind === "personas" ? "Persona instructions" : "Description"}
-      >
-        <Textarea
-          required={kind === "personas"}
-          rows={4}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-        />
-      </Field>
-      {kind !== "personas" && (
+      {kind !== "skills" && (
+        <Field
+          label={kind === "personas" ? "Persona instructions" : "Description"}
+        >
+          <Textarea
+            required={kind === "personas"}
+            rows={4}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+        </Field>
+      )}
+      {kind === "skills" && (
+        <>
+          <Field label="Source">
+            <Choice
+              value={skillSource}
+              onValueChange={(value) =>
+                setSkillSource(value as "inline" | "file")
+              }
+              options={[
+                { value: "inline", label: "Write instructions here" },
+                { value: "file", label: "Use a local file" },
+              ]}
+            />
+          </Field>
+          {skillSource === "inline" ? (
+            <Field label="Skill instructions">
+              <Textarea
+                required
+                rows={12}
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+              />
+            </Field>
+          ) : (
+            <Field label="Skill file">
+              <Input
+                required
+                value={path}
+                placeholder="/absolute/path/to/skill.md"
+                onChange={(event) => setPath(event.target.value)}
+              />
+            </Field>
+          )}
+        </>
+      )}
+      {kind !== "personas" && kind !== "skills" && (
         <Field
           label={
             kind === "environments"
               ? "Workspace folder (leave empty for an empty workspace)"
-              : kind === "skills"
-                ? "Skill folder containing SKILL.md"
-                : "MCP executable"
+              : "MCP executable"
           }
         >
           <Input
