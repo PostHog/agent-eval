@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@posthog/quill";
 import posthog from "posthog-js";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
@@ -13,4 +14,9 @@ if (import.meta.env.VITE_PUBLIC_POSTHOG_KEY) {
 
 const root = document.getElementById("root");
 
-if (root) createRoot(root).render(<App />);
+if (root)
+  createRoot(root).render(
+    <TooltipProvider>
+      <App />
+    </TooltipProvider>,
+  );

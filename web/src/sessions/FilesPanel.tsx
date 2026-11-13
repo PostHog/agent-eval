@@ -1,6 +1,8 @@
+import { Button, Input } from "@posthog/quill";
 import { useRef, useState } from "react";
 import { useApi } from "../api.js";
-import { Notice } from "../components.js";
+import { Choice } from "../Choice.js";
+import { Field, Notice } from "../components.js";
 import { EmptyState, RequestState } from "../PageState.js";
 import type { Artifact } from "../types.js";
 
@@ -46,25 +48,25 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
   return (
     <>
       <div className="toolbar">
-        <label>
-          Files{" "}
-          <select
+        <Field label="Files">
+          <Choice
             value={phase}
-            onChange={(event) => {
+            onValueChange={(next) => {
               request.current++;
-              setPhase(event.target.value);
+              setPhase(next);
               setSelected(undefined);
               setFailure("");
               setSearch("");
             }}
-          >
-            <option value="input">Original input</option>
-            <option value="output">Final workspace</option>
-            <option value="agent-runtime">Agent runtime</option>
-            <option value="judge-runtime">Judge runtime</option>
-          </select>
-        </label>
-        <input
+            options={[
+              { value: "input", label: "Original input" },
+              { value: "output", label: "Final workspace" },
+              { value: "agent-runtime", label: "Agent runtime" },
+              { value: "judge-runtime", label: "Judge runtime" },
+            ]}
+          />
+        </Field>
+        <Input
           type="search"
           aria-label="Search file paths"
           placeholder="Search file paths"
@@ -90,7 +92,7 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
         <div className="file-browser">
           <nav aria-label="Session files">
             {filtered.map((file) => (
-              <button
+              <Button
                 type="button"
                 key={file.id}
                 className={selected?.id === file.id ? "selected" : ""}
@@ -98,14 +100,14 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
                 onClick={() => void read(file)}
               >
                 {file.path}
-              </button>
+              </Button>
             ))}
             {filtered.length === 0 && (
               <p className="muted">
                 No matching files.{" "}
-                <button type="button" onClick={() => setSearch("")}>
+                <Button type="button" onClick={() => setSearch("")}>
                   Clear search
-                </button>
+                </Button>
               </p>
             )}
           </nav>

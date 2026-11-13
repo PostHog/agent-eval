@@ -1,4 +1,13 @@
-import { useMemo, useRef, useState } from "react";
+import {
+  Button,
+  Checkbox,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Input,
+} from "@posthog/quill";
+import { useId, useMemo, useRef, useState } from "react";
+import { Choice } from "../Choice.js";
 import { Notice, Status } from "../components.js";
 import { ModelReference } from "../models/ModelReference.js";
 import { LoadingState } from "../PageState.js";
@@ -25,6 +34,8 @@ export function LogPanel({
   session: Session;
   active: boolean;
 }) {
+  const rawId = useId();
+
   const { events, error } = useSessionEvents(session.id, active);
   const [filter, setFilter] = useState<string>("focus");
   const [phase, setPhase] = useState("agent");
@@ -62,7 +73,7 @@ export function LogPanel({
       <div className="transcript-toolbar">
         <fieldset className="transcript-filters" aria-label="Filter transcript">
           {filters.map((kind) => (
-            <button
+            <Button
               type="button"
               key={kind}
               className={`filter-${kind}`}
@@ -76,11 +87,11 @@ export function LogPanel({
                   ? "tools"
                   : kind}{" "}
               <span>{count(kind)}</span>
-            </button>
+            </Button>
           ))}
         </fieldset>
         <div className="transcript-options">
-          <input
+          <Input
             type="search"
             aria-label="Search transcript"
             placeholder="Search transcript"
@@ -88,26 +99,23 @@ export function LogPanel({
             disabled={raw}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <select
+          <Choice
             aria-label="Execution phase"
             value={phase}
-            onChange={(event) => setPhase(event.target.value)}
-          >
-            <option value="agent">Agent</option>
-            <option value="judge">Judge</option>
-          </select>
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={raw}
-              onChange={(event) => setRaw(event.target.checked)}
-            />
+            onValueChange={setPhase}
+            options={[
+              { value: "agent", label: "Agent" },
+              { value: "judge", label: "Judge" },
+            ]}
+          />
+          <label className="checkbox" htmlFor={rawId}>
+            <Checkbox id={rawId} checked={raw} onCheckedChange={setRaw} />
             Raw events
           </label>
           {search && (
-            <button type="button" onClick={() => setSearch("")}>
+            <Button type="button" onClick={() => setSearch("")}>
               Clear search
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -130,25 +138,27 @@ export function LogPanel({
           ) && <div className="transcript-prompt">{prompt}</div>}
         {raw
           ? phaseEvents.map((event) => (
-              <details key={event.id} className="raw-event">
-                <summary>
+              <Collapsible key={event.id} className="raw-event">
+                <CollapsibleTrigger>
                   Event {event.sequence} ·{" "}
                   {new Date(event.createdAt).toLocaleTimeString()}
-                </summary>
-                <pre>{JSON.stringify(event.event, null, 2)}</pre>
-              </details>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <pre>{JSON.stringify(event.event, null, 2)}</pre>
+                </CollapsibleContent>
+              </Collapsible>
             ))
           : shown.map((entry) => (
               <TranscriptRow key={entry.id} entry={entry} />
             ))}
         {!raw && visible.length > shown.length && (
-          <button
+          <Button
             type="button"
             className="load-transcript"
             onClick={() => setMore(true)}
           >
             Show {visible.length - shown.length} more entries
-          </button>
+          </Button>
         )}
         {!raw &&
           visible.length === 0 &&
@@ -158,7 +168,7 @@ export function LogPanel({
             <p className="empty">No entries match this filter and search.</p>
           ))}
       </div>
-      <button
+      <Button
         type="button"
         className="back-to-top"
         onClick={() =>
@@ -166,7 +176,7 @@ export function LogPanel({
         }
       >
         Back to top
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Badge } from "@posthog/quill";
 import { type ReactNode, useEffect, useState } from "react";
 import { EvalDetail } from "./evals/EvalDetail.js";
 import { EvalEditor } from "./evals/EvalEditor.js";
@@ -6,19 +7,9 @@ import { ModelCatalog } from "./models/ModelReference.js";
 import { CredentialsPage } from "./resources/CredentialsPage.js";
 import { HarnessesPage } from "./resources/HarnessesPage.js";
 import { ResourcePage } from "./resources/ResourcePage.js";
+import { navigationGroups, Sidebar } from "./Sidebar.js";
 import { SessionDetail } from "./sessions/SessionDetail.js";
 import { SessionList } from "./sessions/SessionList.js";
-
-const navigation = [
-  ["evals", "Evals"],
-  ["sessions", "Coding sessions"],
-  ["environments", "Environments"],
-  ["skills", "Skills"],
-  ["personas", "Personas"],
-  ["mcps", "MCP servers"],
-  ["harnesses", "Harnesses"],
-  ["credentials", "API keys"],
-];
 
 export function App() {
   const [route, setRoute] = useState(location.hash.slice(1) || "evals");
@@ -64,46 +55,19 @@ export function App() {
   return (
     <ModelCatalog>
       <div className="app">
-        <aside className="sidebar">
-          <a className="brand" href="#evals">
-            <img
-              src="/brand/posthog-logo-white.svg"
-              alt="PostHog"
-              width="134"
-              height="24"
-            />
-            <span>Agent eval</span>
-          </a>
-          <nav aria-label="Main navigation">
-            {navigation.map(([path, title]) => (
-              <a
-                key={path}
-                href={`#${path}`}
-                aria-current={page === path ? "page" : undefined}
-              >
-                <span
-                  className="nav-icon"
-                  aria-hidden="true"
-                  style={{ maskImage: `url(/brand/${path}.svg)` }}
-                />
-                {title}
-              </a>
-            ))}
-          </nav>
-          <p className="sidebar-note">
-            <img src="/brand/research.svg" alt="" width="76" height="76" />
-            <strong>Local research workspace</strong>
-            Your evals, sessions, and reports stay on this computer.
-          </p>
-        </aside>
+        <Sidebar page={page} />
         <div className="main-shell">
           <header className="topbar">
             <a className="breadcrumb-link" href="#evals">
-              Agent eval
+              agent-eval
             </a>{" "}
             <span>/</span>{" "}
-            {navigation.find(([path]) => path === page)?.[1] ?? "Report"}
-            <span className="local-badge">Local</span>
+            {navigationGroups
+              .flatMap((group) => group.links)
+              .find(([path]) => path === page)?.[1] ?? "Report"}
+            <Badge variant="info" className="ml-auto">
+              Local
+            </Badge>
           </header>
           <main key={route}>{content}</main>
         </div>

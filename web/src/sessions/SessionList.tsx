@@ -1,8 +1,20 @@
+import {
+  Button,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { useState } from "react";
 import { useApi } from "../api.js";
+import { Choice } from "../Choice.js";
 import {
   CheckBar,
   duration,
+  Field,
   money,
   Notice,
   PageTitle,
@@ -19,9 +31,11 @@ export function SessionList() {
   return (
     <>
       <PageTitle title="Coding sessions">
-        <a className="button" href="#evals">
-          Go to evals
-        </a>
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<a href="#evals">Go to evals</a>}
+        />
       </PageTitle>
       <p className="description">
         Find a session, inspect its trace, and see why it passed or failed.
@@ -67,43 +81,41 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
   return (
     <>
       <div className="toolbar">
-        <input
+        <Input
           type="search"
           aria-label="Search sessions"
           placeholder="Search eval, model, or environment"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <label>
-          Harness / model{" "}
-          <select
+        <Field label="Harness / model">
+          <Choice
             value={model}
-            onChange={(event) => setModel(event.target.value)}
-          >
-            <option value="">All</option>
-            {models.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Result{" "}
-          <select
+            onValueChange={setModel}
+            options={[
+              { value: "", label: "All" },
+              ...models.map((model) => ({ value: model, label: model })),
+            ]}
+          />
+        </Field>
+        <Field label="Result">
+          <Choice
             value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            <option value="">All sessions</option>
-            <option value="active">In progress</option>
-            <option value="review">Needs review</option>
-            <option value="completed">Completed</option>
-            <option value="failed">Failed session</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </label>
+            onValueChange={setStatus}
+            options={[
+              { value: "", label: "All sessions" },
+              { value: "active", label: "In progress" },
+              { value: "review", label: "Needs review" },
+              { value: "completed", label: "Completed" },
+              { value: "failed", label: "Failed session" },
+              { value: "cancelled", label: "Cancelled" },
+            ]}
+          />
+        </Field>
         {(search || model || status) && (
-          <button type="button" onClick={clear}>
+          <Button type="button" onClick={clear}>
             Clear filters
-          </button>
+          </Button>
         )}
         <span className="muted">
           {filtered.length} of {sessions.length} sessions
@@ -111,23 +123,23 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
       </div>
       {filtered.length > 0 && (
         <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Harness / model</th>
-                <th>Eval</th>
-                <th>Criteria</th>
-                <th>Judge verdict</th>
-                <th>Status</th>
-                <th>Duration</th>
-                <th>Est. cost</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table fullWidth size="sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Harness / model</TableHead>
+                <TableHead>Eval</TableHead>
+                <TableHead>Criteria</TableHead>
+                <TableHead>Judge verdict</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Est. cost</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((session) => (
-                <tr key={session.id}>
-                  <td>
+                <TableRow key={session.id}>
+                  <TableCell>
                     <ModelReference
                       harness={session.harness}
                       model={session.model}
@@ -140,40 +152,42 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
                         View session
                       </a>
                     </small>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <a href={`#evals/${session.evalId}`}>
                       {session.eval.title}
                     </a>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <CheckBar
                       decisions={session.decisions}
                       criteria={session.snapshot.evaluation.criteria}
                     />
-                  </td>
-                  <td className="verdict-preview">
+                  </TableCell>
+                  <TableCell className="verdict-preview">
                     <p className="cell-description">
                       {session.error ?? session.verdict ?? "Awaiting judgment"}
                     </p>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <Status value={session.status} />
-                  </td>
-                  <td>{duration(session.durationMs)}</td>
-                  <td>{money(session.costUsd)}</td>
-                  <td>{new Date(session.createdAt).toLocaleString()}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell>{duration(session.durationMs)}</TableCell>
+                  <TableCell>{money(session.costUsd)}</TableCell>
+                  <TableCell>
+                    {new Date(session.createdAt).toLocaleString()}
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
       {filtered.length === 0 && (
         <EmptyState title="No sessions match these filters">
-          <button type="button" onClick={clear}>
+          <Button type="button" onClick={clear}>
             Clear filters
-          </button>
+          </Button>
         </EmptyState>
       )}
     </>

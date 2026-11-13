@@ -1,3 +1,10 @@
+import {
+  Button,
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyTitle,
+} from "@posthog/quill";
 import type { ReactNode } from "react";
 import { Notice } from "./components.js";
 import { StatusIcon } from "./status/StatusIcon.js";
@@ -21,9 +28,9 @@ export function RequestState({
   return error ? (
     <div className="request-state">
       <Notice error={error} />
-      <button type="button" onClick={retry}>
+      <Button type="button" onClick={retry}>
         Try again
-      </button>
+      </Button>
     </div>
   ) : (
     <LoadingState />
@@ -38,10 +45,12 @@ export function EmptyState({
   children: ReactNode;
 }) {
   return (
-    <div className="empty">
-      <h2>{title}</h2>
-      {children}
-    </div>
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle>{title}</EmptyTitle>
+      </EmptyHeader>
+      <EmptyContent>{children}</EmptyContent>
+    </Empty>
   );
 }
 

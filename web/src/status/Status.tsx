@@ -1,3 +1,4 @@
+import { Badge } from "@posthog/quill";
 import { StatusIcon, type StatusIconName } from "./StatusIcon.js";
 
 const states: Record<
@@ -41,12 +42,22 @@ export function Status({ value }: { value: string }) {
   const state = states[value];
 
   return (
-    <span
-      className={`status ${state ? value : "unknown"}`}
+    <Badge
+      variant={
+        value === "completed"
+          ? "success"
+          : value === "failed"
+            ? "destructive"
+            : value === "running" || value === "judging"
+              ? "info"
+              : value === "queued"
+                ? "warning"
+                : "default"
+      }
       title={state?.description}
     >
       <StatusIcon name={state?.icon ?? "info"} />
       {state?.label ?? value}
-    </span>
+    </Badge>
   );
 }

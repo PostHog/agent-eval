@@ -1,3 +1,8 @@
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@posthog/quill";
 import { StatusIcon } from "../../status/StatusIcon.js";
 import { Markdown } from "../Markdown.js";
 import type { TranscriptEntry } from "./types.js";
@@ -36,15 +41,17 @@ export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
             <code>{entry.text}</code>
           </div>
           {entry.output ? (
-            <details className="tool-output">
-              <summary>
+            <Collapsible className="tool-output">
+              <CollapsibleTrigger>
                 <span className={`tool-result-status ${entry.status}`}>
                   {entry.status === "failed" ? "Failed" : "Result"}
                 </span>{" "}
                 {entry.output.replaceAll(/\s+/g, " ").slice(0, 180)}
-              </summary>
-              <pre>{entry.output}</pre>
-            </details>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <pre>{entry.output}</pre>
+              </CollapsibleContent>
+            </Collapsible>
           ) : (
             <span className="tool-pending">
               {entry.status === "running"
@@ -56,10 +63,12 @@ export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
           )}
         </div>
       ) : entry.kind === "thinking" ? (
-        <details className="thinking-block">
-          <summary>Thinking…</summary>
-          <Markdown text={entry.text} />
-        </details>
+        <Collapsible className="thinking-block">
+          <CollapsibleTrigger>Thinking…</CollapsibleTrigger>
+          <CollapsibleContent>
+            <Markdown text={entry.text} />
+          </CollapsibleContent>
+        </Collapsible>
       ) : entry.kind === "system" ? (
         <p className="transcript-error">
           {entry.title} {entry.text}

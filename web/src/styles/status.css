@@ -3,58 +3,12 @@
   flex: none;
   vertical-align: -3px;
 }
-.status-spinner {
-  animation: status-spin 1s linear infinite;
-}
-@keyframes status-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.status,
 .status-note,
 .loading-state,
 .feedback {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-}
-.status {
-  --status-color: var(--color-muted);
-  color: var(--status-color);
-  border: 1px solid color-mix(in srgb, var(--status-color) 25%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--status-color) 7%,
-    var(--color-background)
-  );
-  border-radius: 4px;
-  padding: 3px 7px;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 18px;
-  white-space: nowrap;
-}
-.status.completed {
-  --status-color: var(--color-success);
-}
-.status.failed {
-  --status-color: var(--color-failure);
-}
-.status.running {
-  --status-color: var(--color-accent);
-}
-.status.judging {
-  --status-color: var(--color-tool);
-}
-.status.queued {
-  --status-color: var(--color-warning);
-}
-.status.cancelled {
-  --status-color: var(--color-muted);
-}
-button {
-  gap: 6px;
 }
 .error {
   display: flex;
@@ -70,7 +24,7 @@ button {
 .eval-active {
   margin-top: 6px;
   display: flex;
-  color: var(--color-accent);
+  color: var(--info-foreground);
   font-size: 12px;
 }
 .active-run-notice,
@@ -84,23 +38,23 @@ button {
 .active-run-notice {
   justify-content: space-between;
   padding: 12px 0;
-  color: var(--color-accent);
-  border-block: 1px solid var(--color-line);
+  color: var(--info-foreground);
+  border-block: 1px solid var(--border);
 }
 .run-progress {
-  --progress-color: var(--color-accent);
+  --progress-color: var(--info-foreground);
   padding: 16px 0;
   margin: 16px 0 24px;
-  border-block: 1px solid var(--color-line);
+  border-block: 1px solid var(--border);
 }
 .run-progress.complete {
-  --progress-color: var(--color-success);
+  --progress-color: var(--success-foreground);
 }
 .run-progress.unknown {
-  --progress-color: var(--color-muted);
+  --progress-color: var(--muted-foreground);
 }
 .run-progress.interrupted {
-  --progress-color: var(--color-warning);
+  --progress-color: var(--warning-foreground);
 }
 .run-progress-heading {
   justify-content: space-between;
@@ -110,30 +64,8 @@ button {
 }
 .run-progress-heading > span {
   font-variant-numeric: tabular-nums;
-  color: var(--color-subtle);
+  color: var(--foreground);
   font-size: 12px;
-}
-.run-progress-track {
-  appearance: none;
-  display: block;
-  width: 100%;
-  height: 6px;
-  margin: 12px 0 14px;
-  border: 0;
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--color-line);
-  color: var(--progress-color);
-  accent-color: var(--progress-color);
-}
-.run-progress-track::-webkit-progress-bar {
-  background: var(--color-line);
-}
-.run-progress-track::-webkit-progress-value {
-  background: var(--progress-color);
-}
-.run-progress-track::-moz-progress-bar {
-  background: var(--progress-color);
 }
 .run-progress-counts > span {
   display: inline-flex;
@@ -163,13 +95,13 @@ button {
   display: block;
   height: 4px;
   width: 100%;
-  background: var(--color-line);
+  background: var(--border);
   border: 0;
   border-radius: 2px;
   overflow: hidden;
 }
 .acceptance-meter::-webkit-meter-bar {
-  background: var(--color-line);
+  background: var(--border);
   border: 0;
   border-radius: 2px;
   height: 4px;
@@ -183,19 +115,14 @@ button {
 .tool-state {
   display: inline-flex;
   align-self: center;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .tool-state.running {
-  color: var(--color-accent);
+  color: var(--info-foreground);
 }
 .tool-state.passed {
-  color: var(--color-success);
+  color: var(--success-foreground);
 }
 .tool-state.failed {
-  color: var(--color-failure);
-}
-@media (prefers-reduced-motion: reduce) {
-  .status-spinner {
-    animation: none;
-  }
+  color: var(--destructive-foreground);
 }

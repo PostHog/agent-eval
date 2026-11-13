@@ -1,0 +1,161 @@
+.section-heading,
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.section-heading h2,
+.section-heading h3,
+.dialog-header h2 {
+  margin: 0;
+}
+.criteria-editor-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.criteria-editor-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.criterion-summary {
+  display: grid;
+  height: auto;
+  white-space: normal;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  padding: 14px 8px;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+  font-weight: 400;
+}
+.criterion-summary > span:nth-child(2) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.edit-affordance {
+  color: var(--info-foreground);
+  font-size: 12px;
+}
+.model-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.model-summary-list,
+.eval-model-section > .model-summary,
+.model-selection-empty {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+.model-summary-list:empty {
+  display: none;
+}
+.model-summary-list .model-summary:last-child {
+  border-bottom: 0;
+}
+.model-selection-empty {
+  padding: 20px;
+  border-style: dashed;
+}
+.model-selection-empty p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+}
+.eval-model-section > .muted {
+  margin: 8px 0 16px;
+  max-width: 75ch;
+}
+.model-summary-info {
+  flex: 1;
+  min-width: min(260px, 100%);
+  overflow-wrap: anywhere;
+}
+.model-summary-info p {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+.session-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+.eval-resource-grid {
+  gap: 20px 24px;
+}
+.resource-selection .section-heading {
+  margin-bottom: 10px;
+}
+.resource-selection select {
+  width: 100%;
+}
+.resource-options {
+  max-height: 180px;
+  overflow-y: auto;
+}
+.resource-options .checkbox {
+  display: flex;
+  overflow-wrap: anywhere;
+}
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.dialog-actions > span {
+  flex: 1;
+  font-size: 12px;
+}
+.dialog-body .resource-form {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.editor-tabs {
+  margin-bottom: 14px;
+}
+.editor-tabs > span {
+  margin-left: auto;
+  font-size: 12px;
+}
+.criterion-preview {
+  min-height: 280px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .dialog-actions > span {
+    flex-basis: 100%;
+  }
+  .criterion-summary {
+    gap: 8px;
+  }
+  .criterion-summary .edit-affordance {
+    display: none;
+  }
+}
+
+.dialog-body {
+  padding: 4px;
+}

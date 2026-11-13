@@ -1,3 +1,8 @@
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@posthog/quill";
 import { CheckBar } from "../CheckBar.js";
 import { StatusIcon } from "../status/StatusIcon.js";
 import type { Session } from "../types.js";
@@ -23,12 +28,12 @@ export function SessionJudgment({ session }: { session: Session }) {
         );
 
         return (
-          <details
-            open={decision ? !decision.passed : false}
+          <Collapsible
+            defaultOpen={decision ? !decision.passed : false}
             key={criterion.id}
             className="decision"
           >
-            <summary>
+            <CollapsibleTrigger>
               <span
                 className={`status-note ${!decision ? "muted" : decision.passed ? "pass" : "fail"}`}
               >
@@ -44,12 +49,14 @@ export function SessionJudgment({ session }: { session: Session }) {
                     : "Failed"}
               </span>{" "}
               {index + 1}. {criterion.description}
-            </summary>
-            <p>
-              {decision?.feedback ??
-                "The judge has not returned a decision for this criterion."}
-            </p>
-          </details>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <p>
+                {decision?.feedback ??
+                  "The judge has not returned a decision for this criterion."}
+              </p>
+            </CollapsibleContent>
+          </Collapsible>
         );
       })}
       <p className="muted">

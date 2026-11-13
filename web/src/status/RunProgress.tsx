@@ -1,3 +1,4 @@
+import { Progress } from "@posthog/quill";
 import { summarizeRun } from "./run-progress.js";
 import { Status } from "./Status.js";
 import { StatusIcon } from "./StatusIcon.js";
@@ -45,8 +46,9 @@ export function RunProgress({ sessions }: { sessions: { status: string }[] }) {
           {finished} / {total} sessions finished
         </span>
       </div>
-      <progress
-        className="run-progress-track"
+      <Progress
+        className="my-3"
+        variant={interrupted ? "warning" : finishedRun ? "success" : "info"}
         value={finished}
         max={total}
         aria-label="Finished sessions"

@@ -22,52 +22,32 @@ main {
 }
 .description {
   max-width: 82ch;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   margin-bottom: 30px;
 }
 .muted {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .error {
-  color: var(--color-failure);
+  color: var(--destructive-foreground);
   padding: 12px 0;
   overflow-wrap: anywhere;
 }
 .pass {
-  color: var(--color-success);
+  color: var(--success-foreground);
 }
 .fail {
-  color: var(--color-failure);
+  color: var(--destructive-foreground);
 }
 .empty {
   padding: 55px 0;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .empty h2 {
-  color: var(--color-text);
+  color: var(--foreground);
 }
 .table-scroll {
   overflow-x: auto;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-th {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-muted);
-}
-td,
-th {
-  border-bottom: 1px solid var(--color-line);
-  padding: 12px 10px;
-  vertical-align: top;
-}
-td:first-child,
-th:first-child {
-  padding-left: 0;
 }
 .table-scroll td a {
   text-decoration: none;
@@ -75,11 +55,8 @@ th:first-child {
 .table-scroll td a:hover {
   text-decoration: underline;
 }
-tbody tr:hover {
-  background: var(--color-panel);
-}
 .cell-description {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   margin: 4px 0 0;
   max-width: 60ch;
   overflow: hidden;
@@ -99,18 +76,18 @@ tbody tr:hover {
 }
 .prompt-block {
   white-space: pre-wrap;
-  background: var(--color-panel);
+  background: var(--card);
   padding: 14px;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--border);
   margin-bottom: 22px;
   overflow-wrap: anywhere;
 }
 .context-panel {
-  border-left: 1px solid var(--color-line);
+  border-left: 1px solid var(--border);
   padding-left: 24px;
 }
 dt {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   font-size: 12px;
   margin-bottom: 5px;
 }
@@ -125,10 +102,17 @@ dd {
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
-  border-block: 1px solid var(--color-line);
+  border-block: 1px solid var(--border);
   padding: 16px 0;
   margin-bottom: 12px;
 }
 .stats-row strong {
   margin-left: 8px;
+}
+
+.toolbar .field {
+  margin-bottom: 0;
+}
+.toolbar > input[type="search"] {
+  width: min(100%, 320px);
 }

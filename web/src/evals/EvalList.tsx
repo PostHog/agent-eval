@@ -1,3 +1,13 @@
+import {
+  Button,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { useState } from "react";
 import { useApi } from "../api.js";
 import { Acceptance, Notice, PageTitle } from "../components.js";
@@ -28,9 +38,11 @@ export function EvalList() {
   return (
     <>
       <PageTitle title="Evals">
-        <a className="button primary" href="#evals/new">
-          New eval
-        </a>
+        <Button
+          nativeButton={false}
+          variant="primary"
+          render={<a href="#evals/new">New eval</a>}
+        />
       </PageTitle>
       <p className="description">
         Define a task, choose its resources, and compare how each harness and
@@ -42,7 +54,7 @@ export function EvalList() {
         <RequestState error={error} retry={refresh} />
       )}
       <div className="toolbar">
-        <input
+        <Input
           aria-label="Search evals"
           type="search"
           placeholder="Search evals"
@@ -60,23 +72,23 @@ export function EvalList() {
             eval. Open an eval to compare a single run.
           </p>
           <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Eval</th>
-                  <th>Criteria</th>
-                  <th>Last session</th>
+            <Table fullWidth size="sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Eval</TableHead>
+                  <TableHead>Criteria</TableHead>
+                  <TableHead>Last session</TableHead>
                   {models.map((model) => (
-                    <th key={model}>
+                    <TableHead key={model}>
                       <ModelKey value={model} />
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filtered.map((item) => (
-                  <tr key={item.id}>
-                    <td>
+                  <TableRow key={item.id}>
+                    <TableCell>
                       <a href={`#evals/${item.id}`}>{item.title}</a>
                       {item.sessions.some(isActive) && (
                         <span className="eval-active status-note">
@@ -85,15 +97,15 @@ export function EvalList() {
                         </span>
                       )}
                       <p className="cell-description">{item.prompt}</p>
-                    </td>
-                    <td>{item.criteria.length}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell>{item.criteria.length}</TableCell>
+                    <TableCell>
                       {item.sessions[0]
                         ? new Date(item.sessions[0].createdAt).toLocaleString()
                         : "Not run"}
-                    </td>
+                    </TableCell>
                     {models.map((model) => (
-                      <td key={model}>
+                      <TableCell key={model}>
                         <Acceptance
                           decisions={item.sessions
                             .filter(
@@ -105,20 +117,20 @@ export function EvalList() {
                               passed: passesSession(session),
                             }))}
                         />
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </>
       )}
       {data && data.length > 0 && filtered.length === 0 && (
         <EmptyState title="No matching evals">
-          <button type="button" onClick={() => setSearch("")}>
+          <Button type="button" onClick={() => setSearch("")}>
             Clear search
-          </button>
+          </Button>
         </EmptyState>
       )}
       {data?.length === 0 && (
@@ -132,9 +144,11 @@ export function EvalList() {
             First time here? <a href="#credentials">Add an API key</a> and{" "}
             <a href="#harnesses">check your harness</a>.
           </p>
-          <a className="button primary" href="#evals/new">
-            Create eval
-          </a>
+          <Button
+            nativeButton={false}
+            variant="primary"
+            render={<a href="#evals/new">Create eval</a>}
+          />
         </div>
       )}
     </>

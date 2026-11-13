@@ -1,3 +1,8 @@
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@posthog/quill";
 import { ModelReference } from "../models/ModelReference.js";
 import type { Session } from "../types.js";
 
@@ -68,10 +73,14 @@ export function ConfigurationPanel({ session }: { session: Session }) {
           )}
         </dd>
       </dl>
-      <details>
-        <summary>Full configuration (JSON)</summary>
-        <pre className="configuration">{JSON.stringify(snapshot, null, 2)}</pre>
-      </details>
+      <Collapsible>
+        <CollapsibleTrigger>Full configuration (JSON)</CollapsibleTrigger>
+        <CollapsibleContent>
+          <pre className="configuration">
+            {JSON.stringify(snapshot, null, 2)}
+          </pre>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

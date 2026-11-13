@@ -1,3 +1,16 @@
+import {
+  Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { useState } from "react";
 import { useApi } from "../api.js";
 import { Notice, PageTitle } from "../components.js";
@@ -15,10 +28,12 @@ export function HarnessesPage() {
   return (
     <>
       <PageTitle title="Harnesses">
-        <a className="button" href="#credentials">
-          Manage API keys
-        </a>
-        <button
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<a href="#credentials">Manage API keys</a>}
+        />
+        <Button
           type="button"
           disabled={loading || credentials.loading}
           onClick={() => {
@@ -28,7 +43,7 @@ export function HarnessesPage() {
         >
           {(loading || credentials.loading) && <StatusIcon name="spinner" />}
           {loading || credentials.loading ? "Checking…" : "Refresh status"}
-        </button>
+        </Button>
       </PageTitle>
       <p className="description">
         Choose how agents run your evals. Each harness needs an installed
@@ -42,37 +57,39 @@ export function HarnessesPage() {
         <>
           <Notice error={error} />
           <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Harness</th>
-                  <th>Installation</th>
-                  <th>API key</th>
-                  <th>Models</th>
-                  <th>MCP support</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table fullWidth size="sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Harness</TableHead>
+                  <TableHead>Installation</TableHead>
+                  <TableHead>API key</TableHead>
+                  <TableHead>Models</TableHead>
+                  <TableHead>MCP support</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {data.map((harness) => {
                   const key = credentials.data?.find(
                     (item) => item.provider === harness.provider,
                   );
 
                   return (
-                    <tr key={harness.id}>
-                      <td>
+                    <TableRow key={harness.id}>
+                      <TableCell>
                         <span className="model-reference">
                           <HarnessIcon harness={harness.id} />
                           {harness.title}
                         </span>
-                      </td>
-                      <td className={harness.installed ? "pass" : "fail"}>
+                      </TableCell>
+                      <TableCell
+                        className={harness.installed ? "pass" : "fail"}
+                      >
                         {harness.installed ? "Installed" : "Not installed"}
                         {!harness.installed && (
                           <small>Install {harness.title}, then refresh.</small>
                         )}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         <span className={key?.configured ? "pass" : "muted"}>
                           {key
                             ? key.configured
@@ -87,20 +104,20 @@ export function HarnessesPage() {
                             settings
                           </a>
                         </small>
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         <HarnessModels harness={harness} />
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {harness.supportsMcp
                           ? "Supported (stdio)"
                           : "Not supported"}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <p className="section-note">
             Once your harness and key are configured,{" "}
@@ -117,25 +134,27 @@ function HarnessModels({ harness }: { harness: Harness }) {
   const models = searchModels(harness.models, query);
 
   return (
-    <details>
-      <summary>{harness.models.length} models</summary>
-      <input
-        className="catalog-search"
-        type="search"
-        aria-label={`Search ${harness.title} models`}
-        placeholder="Search models"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-      <ul className="model-catalog">
-        {models.map((model) => (
-          <li key={model.id}>
-            {model.name}
-            <small>{model.id}</small>
-          </li>
-        ))}
-      </ul>
-      {models.length === 0 && <p className="muted">No matching models.</p>}
-    </details>
+    <Collapsible>
+      <CollapsibleTrigger>{harness.models.length} models</CollapsibleTrigger>
+      <CollapsibleContent>
+        <Input
+          className="catalog-search"
+          type="search"
+          aria-label={`Search ${harness.title} models`}
+          placeholder="Search models"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <ul className="model-catalog">
+          {models.map((model) => (
+            <li key={model.id}>
+              {model.name}
+              <small>{model.id}</small>
+            </li>
+          ))}
+        </ul>
+        {models.length === 0 && <p className="muted">No matching models.</p>}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

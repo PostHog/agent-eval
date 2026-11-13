@@ -1,86 +1,48 @@
-.model-select {
-  justify-content: space-between;
-  gap: 12px;
-  text-align: left;
-  min-width: 0;
-  background: var(--color-input);
-}
-.model-select > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.model-select > span:last-child {
-  font-size: 11px;
-  flex: none;
-}
-.model-dialog {
-  margin: auto;
-  padding: 20px;
-  width: min(560px, calc(100vw - 32px));
-  max-height: calc(100dvh - 48px);
-  border: 1px solid var(--color-line);
-  border-radius: 8px;
-  background: var(--color-panel);
-  color: var(--color-text);
-  box-shadow: 0 16px 64px #0008;
-}
-.model-dialog::backdrop {
-  background: #0009;
-}
-.model-dialog header {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 16px;
+.model-search {
   margin-bottom: 20px;
 }
-.model-dialog h2 {
-  margin-bottom: 6px;
-  font-size: 18px;
-}
-.model-dialog header p {
-  margin: 0;
-}
-.model-dialog label {
+.model-search > label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
-.model-dialog input {
+.model-search > input {
   width: 100%;
 }
 .model-result-count {
   display: block;
+  margin: 10px 0 8px;
   font-size: 12px;
-  color: var(--color-muted);
-  margin: 14px 0 8px;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
 }
 .model-results {
   margin: 0;
   padding: 3px;
   list-style: none;
-  max-height: 42dvh;
+  height: min(220px, 30dvh);
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-.model-results li + li {
-  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
 }
 .model-results button {
   width: 100%;
+  height: auto;
+  white-space: normal;
   text-align: left;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px;
+  padding: 8px 10px;
   border-color: transparent;
   background: transparent;
 }
 .model-results button:hover {
-  background: var(--color-hover);
+  background: var(--accent);
 }
 .model-results button[aria-pressed="true"] {
-  background: var(--color-selected);
-  border-color: var(--color-accent);
+  background: var(--accent);
+  border-color: var(--info-foreground);
 }
 .model-results strong,
 .model-results code {
@@ -89,20 +51,10 @@
 }
 .model-results code {
   margin-top: 3px;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   font: 11px / 1.5 var(--font-mono);
 }
 .model-results button > span:last-child:not(:first-child) {
   font-size: 11px;
-  color: var(--color-accent);
-}
-.model-dialog footer {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--color-line);
-  font-size: 11px;
-}
-.model-no-results {
-  padding: 18px 0;
-  color: var(--color-muted);
+  color: var(--info-foreground);
 }

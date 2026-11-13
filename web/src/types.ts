@@ -4,8 +4,9 @@ import type { HarnessResult } from "../../src/harnesses/domain/harness.js";
 import type { ExecutionSnapshot } from "../../src/sessions/domain/execution-snapshot.js";
 
 export type { EvaluationData, ModelSettingsData };
-export type EvalDraft = Omit<EvaluationData, "id" | "revision"> & {
+export type EvalDraft = Omit<EvaluationData, "id" | "revision" | "judge"> & {
   revision?: number;
+  judge: ModelSettingsData | null;
 };
 export interface Credential {
   provider: string;

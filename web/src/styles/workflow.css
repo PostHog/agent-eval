@@ -4,20 +4,20 @@
 }
 .loading-state,
 .section-note {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 .loading-state {
   padding: 24px 0;
 }
 .feedback {
-  color: var(--color-success);
+  color: var(--success-foreground);
 }
 .info-note {
   padding: 12px;
-  border: 1px solid var(--color-line);
-  background: var(--color-panel);
-  color: var(--color-warning);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--warning-foreground);
 }
 .section-note {
   margin: 14px 0;
@@ -42,25 +42,6 @@
 .argument-fields {
   margin-bottom: 18px;
 }
-.credential-panel {
-  max-width: 850px;
-  border-bottom: 1px solid var(--color-line);
-}
-.credential-panel > summary {
-  padding: 18px 0;
-  color: var(--color-text);
-}
-.credential-panel > summary > span {
-  display: inline-block;
-  margin-left: 16px;
-  font-size: 12px;
-}
-.credential-panel .credential-form {
-  border: 0;
-  padding: 6px 0 20px;
-  margin: 0;
-  background: transparent;
-}
 .catalog-search {
   margin-top: 12px;
   width: 100%;
@@ -76,7 +57,7 @@
 }
 .model-setup-note {
   grid-column: 1 / -1;
-  color: var(--color-warning);
+  color: var(--warning-foreground);
   margin: 0 0 14px;
 }
 .configuration-summary {
@@ -98,10 +79,4 @@
 }
 .form-actions .section-note {
   margin-top: 0;
-}
-.sidebar {
-  overflow-y: auto;
-}
-.sidebar-note {
-  flex-shrink: 0;
 }

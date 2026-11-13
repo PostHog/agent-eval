@@ -1,21 +1,34 @@
+import {
+  Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@posthog/quill";
 import { useState } from "react";
 import { useApi } from "../api.js";
 import { Notice, PageTitle } from "../components.js";
 import { Feedback, RequestState } from "../PageState.js";
 import type { Credential } from "../types.js";
 import { CredentialForm } from "./CredentialForm.js";
+import { CredentialRow } from "./CredentialRow.js";
 import { providerInfo } from "./provider-info.js";
 
 export function CredentialsPage() {
   const { data, error, refresh } = useApi<Credential[]>("/credentials");
   const [message, setMessage] = useState("");
+  const [editing, setEditing] = useState<{
+    credential: Credential;
+    remove: boolean;
+  }>();
 
   return (
     <>
       <PageTitle title="API keys">
-        <a className="button" href="#harnesses">
-          Check harnesses
-        </a>
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<a href="#harnesses">Check harnesses</a>}
+        />
       </PageTitle>
       <p className="description">
         Add a key for the harness you want to use. You do not need keys for
@@ -28,28 +41,59 @@ export function CredentialsPage() {
         <RequestState error={error} retry={refresh} />
       )}
       <div className="credentials">
+        {data && (
+          <div className="credentials-heading" aria-hidden="true">
+            <span>Provider / harness</span>
+            <span>Key source</span>
+            <span>Actions</span>
+          </div>
+        )}
         {data?.map((credential) => (
-          <CredentialForm
-            key={`${credential.provider}-${credential.source}-${credential.configured}`}
+          <CredentialRow
+            key={credential.provider}
             credential={credential}
-            onSaved={() => {
-              setMessage(
-                `${providerInfo[credential.provider]?.name ?? credential.provider} key settings updated.`,
-              );
-              refresh();
+            onEdit={() => {
+              setMessage("");
+              setEditing({ credential, remove: false });
+            }}
+            onRemove={() => {
+              setMessage("");
+              setEditing({ credential, remove: true });
             }}
           />
         ))}
       </div>
-      <details className="section">
-        <summary>Key storage and environment overrides</summary>
-        <p className="section-note">
-          Keys are encrypted in SQLite. The encryption key stays in the local
-          application data directory; back up both files together. A saved key
-          overrides the environment key for that provider. Removing the saved
-          key restores the environment fallback.
-        </p>
-      </details>
+      {editing && (
+        <CredentialForm
+          credential={editing.credential}
+          remove={editing.remove}
+          onClose={() => setEditing(undefined)}
+          onSaved={() => {
+            setMessage(
+              `${providerInfo[editing.credential.provider]?.name ?? editing.credential.provider} ${editing.remove ? "saved key removed" : "key saved"}.`,
+            );
+            setEditing(undefined);
+            refresh();
+          }}
+        />
+      )}
+      <p className="section-note">
+        A saved key takes priority over the provider’s environment variable.
+        Remove the saved key to use the environment again.
+      </p>
+      <Collapsible className="credential-storage">
+        <CollapsibleTrigger>How keys are stored</CollapsibleTrigger>
+        <CollapsibleContent>
+          <p className="section-note">
+            Keys are encrypted in SQLite. The encryption key stays in the local
+            application data directory; back up both files together. A saved key
+            overrides the environment key for that provider. Removing the saved
+            key restores the environment fallback. Environment keys come from
+            the server’s environment or its .env file. Restart the server after
+            changing those values.
+          </p>
+        </CollapsibleContent>
+      </Collapsible>
     </>
   );
 }

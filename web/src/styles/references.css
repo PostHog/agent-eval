@@ -3,7 +3,7 @@
   gap: 7px;
   align-items: center;
   white-space: nowrap;
-  color: var(--color-accent);
+  color: var(--info-foreground);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 400;
@@ -15,7 +15,7 @@
   width: 19px;
   height: 19px;
   flex: none;
-  background: var(--color-input);
+  background: var(--background);
   border-radius: 3px;
   color: #eee;
   font-size: 10px;
@@ -40,28 +40,15 @@
   background: transparent;
   cursor: help;
 }
-.tooltip {
-  position: fixed;
-  z-index: 1000;
-  max-width: min(320px, calc(100vw - 24px));
-  padding: 7px 10px;
-  background: var(--color-text);
-  color: var(--color-input);
-  border-radius: 3px;
-  font: 13px / 1.45 var(--font-sans);
-  box-shadow: 0 4px 16px #0004;
-  pointer-events: none;
-  overflow-wrap: anywhere;
-}
 .criteria-disclosure {
-  border-block: 1px solid var(--color-line);
+  border-block: 1px solid var(--border);
 }
-.criteria-disclosure > summary {
+.criteria-disclosure > [data-slot="collapsible-trigger"] {
   padding: 13px 0;
-  color: var(--color-text);
+  color: var(--foreground);
   font-weight: 700;
 }
-.criteria-disclosure > summary span {
+.criteria-disclosure > [data-slot="collapsible-trigger"] span {
   margin-left: 10px;
   font-weight: 400;
   font-size: 12px;
@@ -104,11 +91,11 @@
 .eval-outcome {
   font-weight: 400;
 }
-.decision summary {
+.decision [data-slot="collapsible-trigger"] {
   font-size: 12px;
   font-weight: 700;
 }
-.decision summary > span {
+.decision [data-slot="collapsible-trigger"] > span {
   display: inline-block;
   border: 1px solid currentColor;
   padding: 1px 5px;

@@ -1,32 +1,45 @@
+import { Button, Input } from "@posthog/quill";
 import { type FormEvent, useState } from "react";
 import { api } from "../api.js";
 import { Field, Notice } from "../components.js";
-import { StatusIcon } from "../status/StatusIcon.js";
+import { Dialog } from "../Dialog.js";
 import type { Credential } from "../types.js";
 import { providerInfo } from "./provider-info.js";
 
 export function CredentialForm({
   credential,
+  remove = false,
   onSaved,
+  onClose,
 }: {
   credential: Credential;
+  remove?: boolean;
   onSaved: () => void;
+  onClose: () => void;
 }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const provider = providerInfo[credential.provider];
+  const name = provider?.name ?? credential.provider;
+  const action = remove ? "Remove saved key" : "Save key";
 
-  async function save(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
+
+    if (busy || (!remove && !value.trim())) return;
+
     setBusy(true);
     setError("");
 
     try {
-      await api(`/credentials/${credential.provider}`, {
-        method: "PUT",
-        body: JSON.stringify({ key: value }),
-      });
+      await api(
+        `/credentials/${credential.provider}`,
+        remove
+          ? { method: "DELETE" }
+          : { method: "PUT", body: JSON.stringify({ key: value.trim() }) },
+      );
+
       setValue("");
       onSaved();
     } catch (error) {
@@ -36,78 +49,60 @@ export function CredentialForm({
     }
   }
 
-  async function remove() {
-    if (
-      !confirm(
-        "Remove the saved key? An environment key will still be used if one is configured.",
-      )
-    )
-      return;
-
-    setError("");
-    setBusy(true);
-
-    try {
-      await api(`/credentials/${credential.provider}`, { method: "DELETE" });
-      onSaved();
-    } catch (error) {
-      setError(String(error));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <details className="credential-panel" open={!credential.configured}>
-      <summary>
-        <strong>{provider?.name ?? credential.provider}</strong>
-        <span className="muted">{provider?.harnesses}</span>
-        <span className={credential.configured ? "pass" : "muted"}>
-          {credential.configured
-            ? credential.source === "database"
-              ? "Saved locally"
-              : "From environment"
-            : "No key"}
-        </span>
-      </summary>
-      <form className="credential-form" onSubmit={save}>
+    <Dialog
+      title={`${remove ? "Remove" : credential.source === "environment" ? "Override" : credential.configured ? "Replace" : "Add"} ${name} key`}
+      onClose={onClose}
+      busy={busy}
+    >
+      <form onSubmit={submit}>
         <p className="muted">
-          {credential.configured
-            ? "Enter a new key to replace the key used for future sessions. Stored keys are never displayed."
-            : `Add a key to run ${provider?.harnesses ?? credential.provider} sessions.`}
+          {remove
+            ? `Remove the saved ${name} key from this app? Future ${provider?.harnesses ?? name} sessions will use the environment key if one is set. Otherwise, they will need a new key.`
+            : `Used by ${provider?.harnesses ?? name}. This change applies to future sessions.`}
         </p>
+        {!remove && (
+          <>
+            {credential.source === "environment" && (
+              <p className="info-note">
+                A key is already loaded from <code>{provider?.variable}</code>.
+                Saving a key here takes priority. Your environment file will not
+                change.
+              </p>
+            )}
+            <Field label={`${name} API key`}>
+              <Input
+                required
+                type="password"
+                autoComplete="new-password"
+                spellCheck={false}
+                disabled={busy}
+                value={value}
+                placeholder="Paste your API key"
+                onChange={(event) => setValue(event.target.value)}
+              />
+            </Field>
+            <p className="section-note">
+              The key is encrypted and stored locally. Saved keys are never
+              displayed.
+            </p>
+          </>
+        )}
         <Notice error={error} />
-        <Field label="API key">
-          <input
-            required
-            type="password"
-            autoComplete="new-password"
-            disabled={busy}
-            value={value}
-            placeholder={
-              credential.configured
-                ? "Enter a replacement key"
-                : "Enter an API key"
-            }
-            onChange={(event) => setValue(event.target.value)}
-          />
-        </Field>
-        <div className="actions">
-          <button type="submit" className="primary" disabled={busy || !value}>
-            {busy && <StatusIcon name="spinner" />}
-            {busy
-              ? "Updating…"
-              : credential.configured
-                ? "Replace key"
-                : "Save key"}
-          </button>
-          {credential.source === "database" && (
-            <button type="button" disabled={busy} onClick={() => void remove()}>
-              Remove saved key
-            </button>
-          )}
-        </div>
+        <footer className="dialog-actions">
+          <Button type="button" disabled={busy} onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant={remove ? "destructive" : "primary"}
+            loading={busy}
+            disabled={!remove && !value.trim()}
+          >
+            {action}
+          </Button>
+        </footer>
       </form>
-    </details>
+    </Dialog>
   );
 }

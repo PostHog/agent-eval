@@ -1,12 +1,12 @@
 .transcript {
-  background: var(--color-input);
-  border: 1px solid var(--color-line);
+  background: var(--background);
+  border: 1px solid var(--border);
   min-width: 0;
 }
 .transcript-toolbar {
   padding: 12px;
-  border-bottom: 1px solid var(--color-line);
-  background: var(--color-background);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
 }
 .transcript-filters {
   border: 0;
@@ -24,16 +24,16 @@
     11px / 1.4 Consolas,
     monospace;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .transcript-filters button span {
   margin-left: 6px;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .transcript-filters button[aria-pressed="true"] {
-  color: var(--color-text);
-  background: var(--color-selected);
-  border-color: var(--color-accent);
+  color: var(--foreground);
+  background: var(--accent);
+  border-color: var(--info-foreground);
 }
 .transcript-filters .filter-tool {
   border-color: #106fb2;
@@ -52,12 +52,7 @@
   align-items: center;
   gap: 16px;
   margin-top: 10px;
-  color: var(--color-muted);
-  font-size: 11px;
-}
-.transcript-options select {
-  min-height: 26px;
-  padding: 2px 6px;
+  color: var(--muted-foreground);
   font-size: 11px;
 }
 .transcript-scroll {
@@ -86,11 +81,11 @@
   margin: 0;
 }
 .transcript-intro dt {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .transcript-prompt {
-  border-block: 1px solid var(--color-line);
-  background: var(--color-panel);
+  border-block: 1px solid var(--border);
+  background: var(--card);
   padding: 7px 12px;
   margin-bottom: 22px;
   white-space: pre-wrap;
@@ -105,7 +100,7 @@
   right: calc(100% + 9px);
   top: 1px;
   font-size: 9px;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
 .tool-command {
   display: flex;
@@ -113,21 +108,21 @@
   align-items: baseline;
 }
 .tool-command strong {
-  color: var(--color-tool);
+  color: var(--completed-foreground);
   font-weight: 700;
   flex: none;
 }
 .tool-command code {
-  color: var(--color-accent);
+  color: var(--info-foreground);
   white-space: pre-wrap;
   font: inherit;
 }
 .tool-output {
   margin: 3px 0 0 14px;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
-.tool-output > summary {
-  color: var(--color-muted);
+.tool-output > [data-slot="collapsible-trigger"] {
+  color: var(--muted-foreground);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -138,15 +133,15 @@
   margin-right: 6px;
 }
 .tool-result-status.passed {
-  color: var(--color-success);
+  color: var(--success-foreground);
 }
 .tool-result-status.failed {
-  color: var(--color-failure);
+  color: var(--destructive-foreground);
 }
 .tool-output pre {
   padding: 12px;
-  border: 1px solid var(--color-line);
-  background: var(--color-panel);
+  border: 1px solid var(--border);
+  background: var(--card);
   max-height: 400px;
   overflow: auto;
   font-size: 11px;
@@ -155,17 +150,17 @@
   display: block;
   margin-left: 14px;
   font-size: 11px;
-  color: var(--color-muted);
+  color: var(--muted-foreground);
 }
-.thinking-block > summary {
-  color: var(--color-reasoning);
+.thinking-block > [data-slot="collapsible-trigger"] {
+  color: var(--warning-foreground);
   font-weight: 700;
 }
 .transcript-markdown {
-  color: var(--color-text);
+  color: var(--foreground);
 }
 .thinking-block .transcript-markdown {
-  color: var(--color-subtle);
+  color: var(--foreground);
   padding-top: 10px;
 }
 .transcript-markdown p {
@@ -189,14 +184,14 @@
   margin-bottom: 5px;
 }
 .transcript-markdown :not(pre) > code {
-  background: var(--color-hover);
+  background: var(--accent);
   border-radius: 3px;
   padding: 1px 4px;
 }
 .transcript-markdown pre {
-  background: var(--color-panel);
+  background: var(--card);
   padding: 12px;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--border);
   overflow: auto;
   font: inherit;
 }
@@ -210,14 +205,14 @@
 }
 .transcript-markdown blockquote {
   margin: 12px 0;
-  border-left: 1px solid var(--color-muted);
+  border-left: 1px solid var(--muted-foreground);
   padding-left: 12px;
 }
 .transcript-error {
-  color: var(--color-failure);
+  color: var(--destructive-foreground);
 }
 .transcript-user {
-  background: var(--color-panel);
+  background: var(--card);
   padding: 7px 10px;
 }
 .raw-event {

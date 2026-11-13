@@ -3,7 +3,7 @@
   margin-bottom: 12px;
 }
 .session-model {
-  color: var(--color-accent);
+  color: var(--info-foreground);
   margin-top: -12px;
 }
 .session-metadata {
@@ -22,31 +22,10 @@
   gap: 26px;
   align-items: start;
 }
-.tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.tabs button {
-  background: transparent;
-}
-.tabs button[aria-pressed="true"] {
-  background: var(--color-selected);
-  border-color: var(--color-accent);
-}
-.section-tabs {
-  border-bottom: 1px solid var(--color-line);
-  padding-bottom: 12px;
-  margin-bottom: 0;
-}
-details > summary {
-  cursor: pointer;
-  color: var(--color-accent);
-}
 .judgment {
-  background: var(--color-panel);
+  background: var(--card);
   padding: 16px;
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--border);
   border-radius: 4px;
 }
 .judgment > p {
@@ -54,13 +33,13 @@ details > summary {
 }
 .decision {
   padding: 14px 0;
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--border);
 }
-.decision summary {
-  color: var(--color-text);
+.decision [data-slot="collapsible-trigger"] {
+  color: var(--foreground);
 }
 .decision p {
-  color: var(--color-subtle);
+  color: var(--foreground);
   white-space: pre-wrap;
   margin: 12px 0 0;
 }
@@ -76,15 +55,15 @@ details > summary {
   border-radius: 1px;
 }
 .check-bar .passed {
-  background: var(--color-success);
+  background: var(--success-foreground);
 }
 .check-bar .failed {
-  background: var(--color-failure);
+  background: var(--destructive-foreground);
 }
 .file-browser {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr);
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--border);
   min-height: 420px;
 }
 .file-browser nav {
@@ -94,7 +73,7 @@ details > summary {
   padding: 10px;
   max-height: 700px;
   overflow: auto;
-  border-right: 1px solid var(--color-line);
+  border-right: 1px solid var(--border);
 }
 .file-browser nav button {
   display: block;
@@ -103,7 +82,7 @@ details > summary {
   font-size: 12px;
 }
 .file-browser nav .selected {
-  border-color: var(--color-accent);
+  border-color: var(--info-foreground);
 }
 .file-browser section {
   padding: 16px;
@@ -113,7 +92,7 @@ details > summary {
 }
 .configuration {
   padding: 20px;
-  background: var(--color-input);
+  background: var(--background);
   max-height: 800px;
   overflow: auto;
 }

@@ -1,3 +1,4 @@
+import { FieldLabel, Field as QuillField } from "@posthog/quill";
 import { cloneElement, type ReactElement, type ReactNode, useId } from "react";
 import { StatusIcon } from "./status/StatusIcon.js";
 
@@ -55,9 +56,9 @@ export function Field({
   const id = useId();
 
   return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
+    <QuillField className="field">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       {cloneElement(children, { id })}
-    </div>
+    </QuillField>
   );
 }

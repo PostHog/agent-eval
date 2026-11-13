@@ -1,3 +1,4 @@
+import { Button, Input } from "@posthog/quill";
 export function ArgumentFields({
   value,
   onChange,
@@ -10,7 +11,7 @@ export function ArgumentFields({
       <legend>Arguments</legend>
       {value.map((argument, index) => (
         <div className="criterion-input" key={argument.id}>
-          <input
+          <Input
             aria-label={`Argument ${index + 1}`}
             value={argument.value}
             onChange={(event) =>
@@ -23,7 +24,7 @@ export function ArgumentFields({
               )
             }
           />
-          <button
+          <Button
             type="button"
             aria-label={`Remove argument ${index + 1}`}
             onClick={() =>
@@ -31,17 +32,17 @@ export function ArgumentFields({
             }
           >
             Remove
-          </button>
+          </Button>
         </div>
       ))}
-      <button
+      <Button
         type="button"
         onClick={() =>
           onChange([...value, { id: crypto.randomUUID(), value: "" }])
         }
       >
         Add argument
-      </button>
+      </Button>
     </fieldset>
   );
 }

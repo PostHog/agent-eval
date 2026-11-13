@@ -1,3 +1,13 @@
+import {
+  Button,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { useState } from "react";
 import { api, useApi } from "../api.js";
 import { Notice, PageTitle } from "../components.js";
@@ -47,14 +57,14 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
   return (
     <>
       <PageTitle title={info.title}>
-        <button
+        <Button
           type="button"
-          className="primary"
+          variant="primary"
           disabled={editing !== null}
           onClick={() => setEditing("new")}
         >
           Add {info.singular}
-        </button>
+        </Button>
       </PageTitle>
       <p className="description">{info.description}</p>
       <Notice error={failure || (data ? error : undefined)} />
@@ -80,15 +90,15 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
         <EmptyState title={`No ${info.title.toLowerCase()} yet`}>
           <p>{info.hint}</p>
           {editing === null && (
-            <button type="button" onClick={() => setEditing("new")}>
+            <Button type="button" onClick={() => setEditing("new")}>
               Add {info.singular}
-            </button>
+            </Button>
           )}
         </EmptyState>
       ) : (
         <>
           <div className="toolbar">
-            <input
+            <Input
               type="search"
               aria-label={`Search ${info.title.toLowerCase()}`}
               placeholder={`Search ${info.title.toLowerCase()}`}
@@ -101,62 +111,64 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
           </div>
           {filtered.length === 0 ? (
             <EmptyState title="No matching resources">
-              <button type="button" onClick={() => setSearch("")}>
+              <Button type="button" onClick={() => setSearch("")}>
                 Clear search
-              </button>
+              </Button>
             </EmptyState>
           ) : (
             <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    {kind !== "personas" && <th>Configuration</th>}
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table fullWidth size="sm">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Description</TableHead>
+                    {kind !== "personas" && (
+                      <TableHead>Configuration</TableHead>
+                    )}
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filtered.map((resource) => (
-                    <tr key={resource.id}>
-                      <td>{resource.title}</td>
-                      <td>
+                    <TableRow key={resource.id}>
+                      <TableCell>{resource.title}</TableCell>
+                      <TableCell>
                         <p className="cell-description">
                           {resource.description || "No description"}
                         </p>
-                      </td>
+                      </TableCell>
                       {kind !== "personas" && (
-                        <td className="resource-path">
+                        <TableCell className="resource-path">
                           {resource.workspacePath ??
                             resource.directory ??
                             resource.command ??
                             "Empty workspace"}
-                        </td>
+                        </TableCell>
                       )}
-                      <td>
+                      <TableCell>
                         <div className="actions">
-                          <button
+                          <Button
                             type="button"
                             disabled={editing !== null}
                             aria-label={`Edit ${resource.title}`}
                             onClick={() => setEditing(resource)}
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             disabled={Boolean(removing) || editing !== null}
                             aria-label={`Delete ${resource.title}`}
                             onClick={() => void remove(resource)}
                           >
                             {removing === resource.id ? "Deleting…" : "Delete"}
-                          </button>
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
           <p className="section-note">

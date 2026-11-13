@@ -1,3 +1,10 @@
+import {
+  Button,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@posthog/quill";
 import { useState } from "react";
 import { api, useApi } from "../api.js";
 import { Notice, PageTitle, Status } from "../components.js";
@@ -60,14 +67,14 @@ export function SessionDetail({ id }: { id: string }) {
         >
           <Status value={session.status} />
           {active && (
-            <button
+            <Button
               type="button"
               disabled={cancelling}
               onClick={() => void cancel()}
             >
               {cancelling && <StatusIcon name="spinner" />}
               {cancelling ? "Cancelling…" : "Cancel session"}
-            </button>
+            </Button>
           )}
         </PageTitle>
         <ModelReference harness={session.harness} model={session.model} />
@@ -77,36 +84,22 @@ export function SessionDetail({ id }: { id: string }) {
       <SessionMetadata session={session} />
       <div className="session-layout">
         <section>
-          <div className="tabs section-tabs">
-            <button
-              type="button"
-              aria-pressed={tab === "logs"}
-              onClick={() => setTab("logs")}
-            >
-              Logs
-            </button>
-            <button
-              type="button"
-              aria-pressed={tab === "files"}
-              onClick={() => setTab("files")}
-            >
-              Files
-            </button>
-            <button
-              type="button"
-              aria-pressed={tab === "configuration"}
-              onClick={() => setTab("configuration")}
-            >
-              Configuration
-            </button>
-          </div>
-          {tab === "logs" ? (
-            <LogPanel session={session} active={active} />
-          ) : tab === "files" ? (
-            <FilesPanel id={id} active={active} />
-          ) : (
-            <ConfigurationPanel session={session} />
-          )}
+          <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
+            <TabsList variant="line" aria-label="Session views">
+              <TabsTrigger value="logs">Logs</TabsTrigger>
+              <TabsTrigger value="files">Files</TabsTrigger>
+              <TabsTrigger value="configuration">Configuration</TabsTrigger>
+            </TabsList>
+            <TabsContent value="logs">
+              <LogPanel session={session} active={active} />
+            </TabsContent>
+            <TabsContent value="files">
+              <FilesPanel id={id} active={active} />
+            </TabsContent>
+            <TabsContent value="configuration">
+              <ConfigurationPanel session={session} />
+            </TabsContent>
+          </Tabs>
         </section>
         <SessionJudgment session={session} />
       </div>

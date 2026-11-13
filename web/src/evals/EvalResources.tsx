@@ -1,5 +1,11 @@
-import { Field } from "../components.js";
-import type { EvalDraft, Resources } from "../types.js";
+import { Button } from "@posthog/quill";
+import { useState } from "react";
+import type { ResourceKind } from "../resources/resource-info.js";
+import type { EvalDraft, Resource, Resources } from "../types.js";
+import { ResourceDialog } from "./ResourceDialog.js";
+import { ResourceSelection } from "./ResourceSelection.js";
+
+const kinds = ["environments", "personas", "skills", "mcps"] as const;
 
 export function EvalResources({
   value,
@@ -14,100 +20,87 @@ export function EvalResources({
   refreshResources: () => void;
   resourcesLoading: boolean;
 }) {
+  const [creating, setCreating] = useState<ResourceKind | null>(null);
+  const [created, setCreated] = useState<Resources>({
+    environments: [],
+    personas: [],
+    skills: [],
+    mcps: [],
+  });
+
+  function saved(kind: ResourceKind, resource: Resource) {
+    // Keep the new option visible while the catalog refresh is in flight.
+    setCreated((current) => ({
+      ...current,
+      [kind]: [...current[kind], resource],
+    }));
+
+    const key = {
+      environments: "environmentId",
+      personas: "personaId",
+      skills: "skillIds",
+      mcps: "mcpIds",
+    } as const;
+    const field = key[kind];
+
+    onChange({
+      ...value,
+      [field]:
+        field === "skillIds" || field === "mcpIds"
+          ? [...value[field], resource.id]
+          : resource.id,
+    });
+    setCreating(null);
+    refreshResources();
+  }
+
   return (
     <section>
-      <h2>Environment and resources</h2>
-      <p className="muted">
-        Each session receives its own copy of the environment folder. Resources
-        are optional.
-      </p>
-      <div className="resource-links">
-        <a href="#environments" target="_blank" rel="noopener">
-          Manage environments
-        </a>
-        <a href="#personas" target="_blank" rel="noopener">
-          Manage personas
-        </a>
-        <button
+      <div className="section-heading">
+        <h2>Environment and resources</h2>
+        <Button
           type="button"
           disabled={resourcesLoading}
           onClick={refreshResources}
         >
-          {resourcesLoading ? "Loading resources…" : "Refresh resources"}
-        </button>
+          {resourcesLoading ? "Refreshing…" : "Refresh resources"}
+        </Button>
       </div>
-      <div className="form-grid">
-        <Field label="Environment">
-          <select
-            value={value.environmentId ?? ""}
-            onChange={(event) =>
-              onChange({
-                ...value,
-                environmentId: event.target.value || null,
-              })
-            }
-          >
-            <option value="">Empty workspace</option>
-            {resources?.environments.map((resource) => (
-              <option value={resource.id} key={resource.id}>
-                {resource.title}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Persona">
-          <select
-            value={value.personaId ?? ""}
-            onChange={(event) =>
-              onChange({ ...value, personaId: event.target.value || null })
-            }
-          >
-            <option value="">No persona</option>
-            {resources?.personas.map((resource) => (
-              <option value={resource.id} key={resource.id}>
-                {resource.title}
-              </option>
-            ))}
-          </select>
-        </Field>
+      <p className="muted">
+        Each session gets its own copy of the environment folder. All resources
+        are optional.
+      </p>
+      <div className="form-grid eval-resource-grid">
+        {kinds.map((kind) => {
+          const options = resources?.[kind] ?? [];
+          const merged = [
+            ...options,
+            ...created[kind].filter(
+              (resource) =>
+                !options.some((option) => option.id === resource.id),
+            ),
+          ];
+
+          return (
+            <ResourceSelection
+              key={kind}
+              kind={kind}
+              resources={merged}
+              value={value}
+              onChange={onChange}
+              onCreate={() => setCreating(kind)}
+              loading={resourcesLoading}
+            />
+          );
+        })}
       </div>
-      <div className="form-grid">
-        {(["skills", "mcps"] as const).map((kind) => (
-          <fieldset key={kind}>
-            <legend>{kind === "skills" ? "Skills" : "MCP servers"}</legend>
-            {resources?.[kind].length === 0 && (
-              <p className="muted">
-                No resources yet.{" "}
-                <a href={`#${kind}`} target="_blank" rel="noopener">
-                  Add {kind === "skills" ? "skills" : "MCP servers"} in a new
-                  tab
-                </a>
-                , then select Refresh resources here.
-              </p>
-            )}
-            {resources?.[kind].map((resource) => {
-              const key = kind === "skills" ? "skillIds" : "mcpIds";
-              return (
-                <label className="checkbox" key={resource.id}>
-                  <input
-                    type="checkbox"
-                    checked={value[key].includes(resource.id)}
-                    onChange={(event) =>
-                      onChange({
-                        ...value,
-                        [key]: event.target.checked
-                          ? [...value[key], resource.id]
-                          : value[key].filter((id) => id !== resource.id),
-                      })
-                    }
-                  />
-                  {resource.title}
-                </label>
-              );
-            })}
-          </fieldset>
-        ))}
-      </div>
+      {creating && (
+        <ResourceDialog
+          kind={creating}
+          onClose={() => setCreating(null)}
+          onSaved={(resource) => saved(creating, resource)}
+        />
+      )}
     </section>
   );
 }

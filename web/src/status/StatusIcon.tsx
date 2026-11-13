@@ -1,3 +1,4 @@
+import { Spinner } from "@posthog/quill";
 export type StatusIconName =
   | "spinner"
   | "check"
@@ -7,9 +8,17 @@ export type StatusIconName =
   | "info";
 
 export function StatusIcon({ name }: { name: StatusIconName }) {
+  if (name === "spinner")
+    return (
+      <Spinner
+        className="status-icon motion-reduce:animate-none"
+        aria-hidden="true"
+      />
+    );
+
   return (
     <svg
-      className={`status-icon ${name === "spinner" ? "status-spinner" : ""}`}
+      className="status-icon"
       width="16"
       height="16"
       viewBox="0 0 16 16"
@@ -21,14 +30,7 @@ export function StatusIcon({ name }: { name: StatusIconName }) {
       aria-hidden="true"
       focusable="false"
     >
-      {name === "spinner" ? (
-        <>
-          <circle cx="8" cy="8" r="6" opacity="0.2" />
-          <path d="M8 2a6 6 0 0 1 6 6" />
-        </>
-      ) : (
-        <circle cx="8" cy="8" r="6" />
-      )}
+      <circle cx="8" cy="8" r="6" />
       {name === "check" && <path d="m5 8 2 2 4-4" />}
       {name === "error" && <path d="M8 4.5v4M8 11h.01" />}
       {name === "clock" && <path d="M8 4.5V8l2 1.5" />}

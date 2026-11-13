@@ -1,3 +1,14 @@
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { duration, money, number } from "../components.js";
 import { ModelKey } from "../models/ModelReference.js";
 import type { Session } from "../types.js";
@@ -98,50 +109,58 @@ export function UsageSummary({ sessions }: { sessions: Session[] }) {
         {executions} executions. Missing usage is not zero usage. Provider
         prices can differ from these estimates.
       </p>
-      <details>
-        <summary>Usage by harness and model</summary>
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Harness / model</th>
-                <th>Executions</th>
-                <th>Input</th>
-                <th>Output</th>
-                <th>Cached</th>
-                <th>Total tokens</th>
-                <th>Estimated USD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...groups.entries()].map(([key, value]) => (
-                <tr key={key}>
-                  <td>
-                    <ModelKey value={key} />
-                  </td>
-                  <td>{value.executions}</td>
-                  <td>{value.measured ? number(value.input) : "—"}</td>
-                  <td>{value.measured ? number(value.output) : "—"}</td>
-                  <td>{value.measured ? number(value.cache) : "—"}</td>
-                  <td>
-                    {value.measured ? number(value.total) : "Unavailable"}
-                    {value.measured > 0 &&
-                      value.measured < value.executions && (
-                        <small>Partial usage</small>
+      <Collapsible>
+        <CollapsibleTrigger>Usage by harness and model</CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="table-scroll">
+            <Table fullWidth size="sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Harness / model</TableHead>
+                  <TableHead>Executions</TableHead>
+                  <TableHead>Input</TableHead>
+                  <TableHead>Output</TableHead>
+                  <TableHead>Cached</TableHead>
+                  <TableHead>Total tokens</TableHead>
+                  <TableHead>Estimated USD</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...groups.entries()].map(([key, value]) => (
+                  <TableRow key={key}>
+                    <TableCell>
+                      <ModelKey value={key} />
+                    </TableCell>
+                    <TableCell>{value.executions}</TableCell>
+                    <TableCell>
+                      {value.measured ? number(value.input) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {value.measured ? number(value.output) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {value.measured ? number(value.cache) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {value.measured ? number(value.total) : "Unavailable"}
+                      {value.measured > 0 &&
+                        value.measured < value.executions && (
+                          <small>Partial usage</small>
+                        )}
+                    </TableCell>
+                    <TableCell>
+                      {value.priced ? money(value.cost) : "Unavailable"}
+                      {value.priced > 0 && value.priced < value.executions && (
+                        <small>Partial cost</small>
                       )}
-                  </td>
-                  <td>
-                    {value.priced ? money(value.cost) : "Unavailable"}
-                    {value.priced > 0 && value.priced < value.executions && (
-                      <small>Partial cost</small>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </section>
   );
 }

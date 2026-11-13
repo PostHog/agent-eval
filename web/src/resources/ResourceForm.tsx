@@ -1,3 +1,4 @@
+import { Button, Input, Textarea } from "@posthog/quill";
 import { type FormEvent, useState } from "react";
 import { api } from "../api.js";
 import { Field, Notice } from "../components.js";
@@ -11,11 +12,15 @@ export function ResourceForm({
   initial,
   onClose,
   onSaved,
+  onSavingChange,
+  hideTitle = false,
 }: {
   kind: ResourceKind;
   initial?: Resource;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (resource: Resource) => void;
+  onSavingChange?: (saving: boolean) => void;
+  hideTitle?: boolean;
 }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -34,6 +39,7 @@ export function ResourceForm({
   async function save(event: FormEvent) {
     event.preventDefault();
     setSaving(true);
+    onSavingChange?.(true);
     setError("");
 
     try {
@@ -48,27 +54,33 @@ export function ResourceForm({
           : {}),
       };
 
-      await api(initial ? `/resources/${initial.id}` : "/resources", {
-        method: initial ? "PUT" : "POST",
-        body: JSON.stringify(value),
-      });
-      onSaved();
+      const saved = await api<Resource>(
+        initial ? `/resources/${initial.id}` : "/resources",
+        {
+          method: initial ? "PUT" : "POST",
+          body: JSON.stringify(value),
+        },
+      );
+      onSaved(saved);
     } catch (error) {
       setError(String(error));
     } finally {
       setSaving(false);
+      onSavingChange?.(false);
     }
   }
 
   return (
     <form className="resource-form" onSubmit={save}>
-      <h2>
-        {initial ? "Edit" : "Add"} {resourceInfo[kind].singular}
-      </h2>
+      {!hideTitle && (
+        <h2>
+          {initial ? "Edit" : "Add"} {resourceInfo[kind].singular}
+        </h2>
+      )}
       <p className="muted">{resourceInfo[kind].hint}</p>
       <Notice error={error} />
       <Field label="Title">
-        <input
+        <Input
           required
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -77,7 +89,7 @@ export function ResourceForm({
       <Field
         label={kind === "personas" ? "Persona instructions" : "Description"}
       >
-        <textarea
+        <Textarea
           required={kind === "personas"}
           rows={4}
           value={description}
@@ -94,7 +106,7 @@ export function ResourceForm({
                 : "MCP executable"
           }
         >
-          <input
+          <Input
             required={kind !== "environments"}
             value={path}
             placeholder={kind === "mcps" ? "npx" : "/absolute/path/to/folder"}
@@ -104,13 +116,13 @@ export function ResourceForm({
       )}
       {kind === "mcps" && <ArgumentFields value={args} onChange={setArgs} />}
       <div className="actions">
-        <button type="submit" className="primary" disabled={saving}>
+        <Button type="submit" variant="primary" disabled={saving}>
           {saving && <StatusIcon name="spinner" />}
           {saving ? "Saving..." : `Save ${resourceInfo[kind].singular}`}
-        </button>
-        <button type="button" disabled={saving} onClick={onClose}>
+        </Button>
+        <Button type="button" disabled={saving} onClick={onClose}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

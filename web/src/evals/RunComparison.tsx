@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { Acceptance, money } from "../components.js";
 import { ModelKey } from "../models/ModelReference.js";
 import { isActive } from "../sessions/session-filters.js";
@@ -23,17 +31,17 @@ export function RunComparison({
     <section className="section">
       <h2>Acceptance by harness and model</h2>
       <div className="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Harness / model</th>
-              <th>Sessions</th>
-              <th>Criteria passed</th>
-              <th>Sessions passing all criteria</th>
-              <th>Session cost (USD, incl. judge)</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table fullWidth size="sm">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Harness / model</TableHead>
+              <TableHead>Sessions</TableHead>
+              <TableHead>Criteria passed</TableHead>
+              <TableHead>Sessions passing all criteria</TableHead>
+              <TableHead>Session cost (USD, incl. judge)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {models.map((model) => {
               const group = sessions.filter(
                 (session) => `${session.harness}/${session.model}` === model,
@@ -41,26 +49,26 @@ export function RunComparison({
               const finished = group.filter((session) => !isActive(session));
 
               return (
-                <tr key={model}>
-                  <td>
+                <TableRow key={model}>
+                  <TableCell>
                     <ModelKey value={model} />
-                  </td>
-                  <td>{group.length}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell>{group.length}</TableCell>
+                  <TableCell>
                     <Acceptance
                       decisions={definition.criteria.flatMap((criterion) =>
                         criterionDecisions(finished, criterion.id),
                       )}
                     />
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <Acceptance
                       decisions={finished.map((session) => ({
                         passed: passesSession(session),
                       }))}
                     />
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     {group.some((session) => session.costUsd !== null)
                       ? money(
                           group.reduce(
@@ -73,12 +81,12 @@ export function RunComparison({
                       group.some((session) => session.costUsd === null) && (
                         <small>Partial cost</small>
                       )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

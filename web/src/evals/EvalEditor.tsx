@@ -1,3 +1,4 @@
+import { Button, Input, Textarea } from "@posthog/quill";
 import { type FormEvent, useState } from "react";
 import { api, useApi } from "../api.js";
 import { Field, Notice, PageTitle } from "../components.js";
@@ -12,7 +13,6 @@ import type {
 import { EvalCriteria } from "./EvalCriteria.js";
 import { EvalModels } from "./EvalModels.js";
 import { EvalResources } from "./EvalResources.js";
-import { defaultModel, ModelPicker } from "./ModelPicker.js";
 
 export function EvalEditor({ id }: { id?: string }) {
   return id ? <ExistingEditor id={id} /> : <Editor />;
@@ -38,8 +38,8 @@ function Editor({ initial }: { initial?: EvaluationData }) {
       personaId: null,
       skillIds: [],
       mcpIds: [],
-      models: [{ ...defaultModel }],
-      judge: { ...defaultModel },
+      models: [],
+      judge: null,
     },
   );
   const {
@@ -59,8 +59,20 @@ function Editor({ initial }: { initial?: EvaluationData }) {
   async function save(event: FormEvent) {
     event.preventDefault();
 
-    if ([...value.models, value.judge].some((model) => !model.model)) {
-      setError("Choose a model for each session configuration and the judge.");
+    if (value.criteria.some((criterion) => !criterion.description.trim())) {
+      setError("Add text to each criterion before saving the eval.");
+
+      return;
+    }
+
+    if (!value.models.length) {
+      setError("Add at least one model before saving the eval.");
+
+      return;
+    }
+
+    if (!value.judge) {
+      setError("Add a judge before saving the eval.");
 
       return;
     }
@@ -86,12 +98,13 @@ function Editor({ initial }: { initial?: EvaluationData }) {
   return (
     <>
       <PageTitle title={initial ? "Edit eval" : "New eval"}>
-        <a
-          className="button"
-          href={initial ? `#evals/${initial.id}` : "#evals"}
-        >
-          Cancel
-        </a>
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={
+            <a href={initial ? `#evals/${initial.id}` : "#evals"}>Cancel</a>
+          }
+        />
       </PageTitle>
       <p className="description">
         Define the task and what success means. Save the eval, then run it from
@@ -99,15 +112,15 @@ function Editor({ initial }: { initial?: EvaluationData }) {
       </p>
       <Notice error={resourceError || harnessError} />
       {harnessError && (
-        <button type="button" onClick={refreshHarnesses}>
+        <Button type="button" onClick={refreshHarnesses}>
           Retry loading harnesses
-        </button>
+        </Button>
       )}
       <form onSubmit={save} className="editor">
         <section>
           <h2>Task</h2>
           <Field label="Title">
-            <input
+            <Input
               required
               maxLength={200}
               value={value.title}
@@ -117,7 +130,7 @@ function Editor({ initial }: { initial?: EvaluationData }) {
             />
           </Field>
           <Field label="Prompt">
-            <textarea
+            <Textarea
               required
               rows={5}
               value={value.prompt}
@@ -136,19 +149,6 @@ function Editor({ initial }: { initial?: EvaluationData }) {
           resourcesLoading={resourcesLoading}
         />
         <EvalModels value={value} onChange={setValue} harnesses={harnesses} />
-        <section>
-          <h2>Judge</h2>
-          <p className="muted">
-            Each session receives its own judgment. Judge usage contributes to
-            the session cost.
-          </p>
-          <ModelPicker
-            judge
-            value={value.judge}
-            harnesses={harnesses ?? []}
-            onChange={(judge) => setValue({ ...value, judge })}
-          />
-        </section>
         <div className="form-actions">
           <Notice error={error} />
           <p className="section-note">
@@ -160,14 +160,14 @@ function Editor({ initial }: { initial?: EvaluationData }) {
             )}{" "}
             sessions per run · one judgment per session
           </p>
-          <button
-            className="primary"
+          <Button
+            variant="primary"
             disabled={saving || !harnesses}
             type="submit"
           >
             {saving && <StatusIcon name="spinner" />}
             {saving ? "Saving..." : "Save eval"}
-          </button>
+          </Button>
         </div>
       </form>
     </>

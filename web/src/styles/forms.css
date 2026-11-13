@@ -2,7 +2,7 @@
   max-width: 1100px;
 }
 .editor section {
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--border);
   padding-top: 26px;
   margin-top: 32px;
 }
@@ -13,7 +13,7 @@
   min-width: 0;
 }
 .field > span {
-  color: var(--color-subtle);
+  color: var(--foreground);
   font-size: 13px;
 }
 .form-grid {
@@ -33,36 +33,31 @@
   min-width: 0;
 }
 .criterion-input > span {
-  color: var(--color-muted);
+  color: var(--muted-foreground);
   min-width: 20px;
-}
-.model-row {
-  border-bottom: 1px solid var(--color-line);
-  padding-bottom: 18px;
-  margin-bottom: 22px;
 }
 .model-fields {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 .form-actions {
   position: sticky;
   bottom: 0;
-  background: var(--color-background);
+  background: var(--background);
   padding: 18px 0;
   margin-top: 24px;
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--border);
 }
 fieldset {
-  border: 1px solid var(--color-line);
+  border: 1px solid var(--border);
   border-radius: 4px;
   padding: 16px;
   margin: 0;
 }
 legend {
   padding-inline: 6px;
-  color: var(--color-subtle);
+  color: var(--foreground);
 }
 .checkbox {
   display: inline-flex;
@@ -71,27 +66,13 @@ legend {
   margin-right: 18px;
   padding-block: 6px;
 }
-input[type="checkbox"] {
-  accent-color: var(--color-accent);
-}
-.resource-form,
-.credential-form {
+.resource-form {
   padding: 24px;
-  background: var(--color-panel);
-  border: 1px solid var(--color-line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 5px;
   margin-bottom: 24px;
   max-width: 850px;
-}
-.credentials {
-  display: grid;
-  gap: 0;
-}
-.credential-form .toolbar {
-  margin-top: 0;
-}
-.credential-form h2 {
-  margin: 0;
 }
 .model-catalog {
   max-height: 350px;

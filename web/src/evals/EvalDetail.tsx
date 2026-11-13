@@ -1,6 +1,19 @@
+import {
+  Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@posthog/quill";
 import { useState } from "react";
 import { api, useApi } from "../api.js";
-import { Acceptance, Notice, PageTitle } from "../components.js";
+import { Choice } from "../Choice.js";
+import { Acceptance, Field, Notice, PageTitle } from "../components.js";
 import { ModelKey } from "../models/ModelReference.js";
 import { Feedback, RequestState } from "../PageState.js";
 import { SessionsTable } from "../sessions/SessionList.js";
@@ -70,12 +83,14 @@ export function EvalDetail({ id }: { id: string }) {
   return (
     <>
       <PageTitle title={evaluation.title}>
-        <a className="button" href={`#evals/${id}/edit`}>
-          Edit eval
-        </a>
-        <button
+        <Button
+          nativeButton={false}
+          variant="outline"
+          render={<a href={`#evals/${id}/edit`}>Edit eval</a>}
+        />
+        <Button
           type="button"
-          className="primary"
+          variant="primary"
           disabled={starting}
           onClick={() => void run()}
         >
@@ -83,7 +98,7 @@ export function EvalDetail({ id }: { id: string }) {
           {starting
             ? "Preparing sessions..."
             : `Run ${count} ${running ? "more " : ""}${count === 1 ? "session" : "sessions"}`}
-        </button>
+        </Button>
       </PageTitle>
       <Notice error={runError || (allSessions ? sessionsError : undefined)} />
       <Feedback message={message} />
@@ -101,12 +116,12 @@ export function EvalDetail({ id }: { id: string }) {
             {activeElsewhere.length === 1 ? "session is" : "sessions are"}{" "}
             active in other runs.
           </span>
-          <button
+          <Button
             type="button"
             onClick={() => setBatch(activeElsewhere[0]?.batchId ?? "latest")}
           >
             View active run
-          </button>
+          </Button>
         </div>
       )}
       <p className="section-note">
@@ -115,25 +130,20 @@ export function EvalDetail({ id }: { id: string }) {
         usage.
       </p>
       <div className="toolbar">
-        <label>
-          Run{" "}
-          <select
+        <Field label="Run">
+          <Choice
             value={batch}
             disabled={batches.length === 0}
-            onChange={(event) => setBatch(event.target.value)}
-          >
-            <option value="latest">Latest run</option>
-            {batches.map((id) => (
-              <option key={id} value={id}>
-                {new Date(
-                  (allSessions ?? []).find((session) => session.batchId === id)
-                    ?.createdAt ?? "",
-                ).toLocaleString()}{" "}
-                / {id.slice(0, 8)}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setBatch}
+            options={[
+              { value: "latest", label: "Latest run" },
+              ...batches.map((id) => ({
+                value: id,
+                label: `${new Date((allSessions ?? []).find((session) => session.batchId === id)?.createdAt ?? "").toLocaleString()} / ${id.slice(0, 8)}`,
+              })),
+            ]}
+          />
+        </Field>
         <span className="muted">
           Showing revision {definition.revision}; current revision{" "}
           {evaluation.revision}
@@ -151,55 +161,60 @@ export function EvalDetail({ id }: { id: string }) {
         <section>
           <h2>Prompt</h2>
           <p className="prompt-block">{definition.prompt}</p>
-          <details className="criteria-disclosure">
-            <summary>
+          <Collapsible className="criteria-disclosure" defaultOpen>
+            <CollapsibleTrigger>
               Criteria{" "}
               <span className="muted">{definition.criteria.length} checks</span>
-            </summary>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Criterion</th>
-                    {models.map((model) => (
-                      <th key={model}>
-                        <ModelKey value={model} />
-                      </th>
-                    ))}
-                    <th>Finished sessions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {definition.criteria.map((criterion, index) => (
-                    <tr key={criterion.id}>
-                      <td>
-                        {index + 1}. {criterion.description}
-                      </td>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="table-scroll">
+                <Table fullWidth size="sm">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Criterion</TableHead>
                       {models.map((model) => (
-                        <td key={model}>
+                        <TableHead key={model}>
+                          <ModelKey value={model} />
+                        </TableHead>
+                      ))}
+                      <TableHead>Finished sessions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {definition.criteria.map((criterion, index) => (
+                      <TableRow key={criterion.id}>
+                        <TableCell>
+                          {index + 1}. {criterion.description}
+                        </TableCell>
+                        {models.map((model) => (
+                          <TableCell key={model}>
+                            <Acceptance
+                              decisions={criterionDecisions(
+                                finished.filter(
+                                  (session) =>
+                                    `${session.harness}/${session.model}` ===
+                                    model,
+                                ),
+                                criterion.id,
+                              )}
+                            />
+                          </TableCell>
+                        ))}
+                        <TableCell>
                           <Acceptance
                             decisions={criterionDecisions(
-                              finished.filter(
-                                (session) =>
-                                  `${session.harness}/${session.model}` ===
-                                  model,
-                              ),
+                              finished,
                               criterion.id,
                             )}
                           />
-                        </td>
-                      ))}
-                      <td>
-                        <Acceptance
-                          decisions={criterionDecisions(finished, criterion.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </section>
         <EvalConfiguration
           definition={definition}
