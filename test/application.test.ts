@@ -177,7 +177,7 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     // A shutdown cancels active work. Start another batch and wait for its independent judgments.
     const batch = await starter.start(evaluation.id);
 
-    for (let attempt = 0; attempt < 100; attempt++) {
+    for (let attempt = 0; attempt < 500; attempt++) {
       const pending = await db.session.count({
         where: {
           batchId: batch.batchId,

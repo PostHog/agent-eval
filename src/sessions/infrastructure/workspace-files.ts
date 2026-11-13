@@ -1,5 +1,5 @@
 import { copyFile, mkdir, readdir } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { isAbsolute, join, relative, sep } from "node:path";
 
 const excluded = new Set([
   ".git",
@@ -16,7 +16,7 @@ export function contains(parent: string, child: string): boolean {
 
   return (
     path === "" ||
-    (path !== ".." && !path.startsWith("../") && !path.startsWith("/"))
+    (path !== ".." && !path.startsWith(`..${sep}`) && !isAbsolute(path))
   );
 }
 

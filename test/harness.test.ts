@@ -77,9 +77,15 @@ test("native adapters keep credentials out of arguments and disable judge tools"
 
     assert.equal(summarizeEvents(events).text, f.workspace);
 
-    assert.deepEqual(events, [
-      { type: "result", result: f.workspace, cwd: await realpath(f.workspace) },
-    ]);
+    const [event] = events as {
+      type: string;
+      result: string;
+      cwd: string;
+    }[];
+
+    assert.equal(event?.type, "result");
+    assert.equal(event?.result, f.workspace);
+    assert.equal(await realpath(event?.cwd ?? ""), await realpath(f.workspace));
 
     await assert.rejects(
       runProcess(

@@ -11,9 +11,13 @@ test("Codex quota errors survive a nonzero exit with empty stderr", async () => 
   const previousPath = process.env.PATH;
 
   try {
+    const windows = process.platform === "win32";
+
     await writeFile(
-      join(f.root, "codex"),
-      `#!${process.execPath}\nconsole.log(JSON.stringify({type:"turn.failed",error:{message:"Quota exceeded. Check your plan and billing details."}}));\nprocess.exitCode=1;\n`,
+      join(f.root, windows ? "codex.cmd" : "codex"),
+      windows
+        ? '@echo {"type":"turn.failed","error":{"message":"Quota exceeded. Check your plan and billing details."}}\r\n@exit /b 1\r\n'
+        : `#!${process.execPath}\nconsole.log(JSON.stringify({type:"turn.failed",error:{message:"Quota exceeded. Check your plan and billing details."}}));\nprocess.exitCode=1;\n`,
       { mode: 0o700 },
     );
 
