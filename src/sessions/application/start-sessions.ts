@@ -5,23 +5,25 @@ import {
   Injectable,
   NotFoundException,
   type OnModuleDestroy,
+  Optional,
 } from "@nestjs/common";
-import pLimit from "p-limit";
 import { z } from "zod";
+import { AnalyticsService } from "../../analytics/analytics-service.js";
 import { ResourceRepository } from "../../catalog/domain/resource-repository.js";
 import { CredentialStore } from "../../credentials/provider.js";
 import { EvaluationRepository } from "../../evaluations/domain/evaluation-repository.js";
 import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
+import { SettingsService } from "../../settings/application/settings-service.js";
 import { DEFAULT_DOCKERFILE } from "../domain/default-dockerfile.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { Session } from "../domain/session.js";
 import { SessionRepository } from "../domain/session-repository.js";
 import { WorkspaceStore } from "../domain/workspace-store.js";
+import { SessionQueue } from "./session-queue.js";
 import { SessionWorker } from "./session-worker.js";
 
 @Injectable()
 export class StartSessions implements OnModuleDestroy {
-  private readonly queue = pLimit(2);
   private readonly active = new Map<
     string,
     {
@@ -39,14 +41,20 @@ export class StartSessions implements OnModuleDestroy {
     @Inject(SessionWorker) private readonly worker: SessionWorker,
     @Inject(HarnessRegistry) private readonly harnesses: HarnessRegistry,
     @Inject(CredentialStore) private readonly keys: CredentialStore,
+    @Inject(SettingsService) private readonly settings: SettingsService,
+    @Inject(SessionQueue) private readonly queue: SessionQueue,
+    @Optional()
+    @Inject(AnalyticsService)
+    private readonly analytics?: AnalyticsService,
   ) {}
 
   async start(evalId: string) {
     const evaluation = await this.evals.find(evalId);
 
-    if (!evaluation) throw new NotFoundException("Eval not found.");
+    if (!evaluation) throw new NotFoundException("Evaluation not found.");
 
     const data = evaluation.snapshot();
+    this.queue.setConcurrency((await this.settings.get()).sessionConcurrency);
 
     // Validate the complete batch before creating records or spending provider credits.
     const catalog = await this.harnesses.catalog();
@@ -56,7 +64,7 @@ export class StartSessions implements OnModuleDestroy {
 
       if (!harness?.installed)
         throw new Error(
-          `Install the ${settings.harness} harness before running this eval.`,
+          `Install the ${settings.harness} harness before running this evaluation.`,
         );
       if (!harness.models.some((model) => model.id === settings.model))
         throw new Error(
@@ -66,7 +74,7 @@ export class StartSessions implements OnModuleDestroy {
         !(await this.keys.read(this.harnesses.get(settings.harness).provider))
       )
         throw new Error(
-          `Add the ${harness.provider} API key before running this eval.`,
+          `Add the ${harness.provider} API key before running this evaluation.`,
         );
     }
     const resources = await this.catalog.list();
@@ -138,10 +146,12 @@ export class StartSessions implements OnModuleDestroy {
       };
 
       this.active.set(session.id, job);
-      job.task = this.queue(() =>
-        this.worker.execute(session, snapshot, job.controller.signal),
-      )
+      job.task = this.queue
+        .run(() =>
+          this.worker.execute(session, snapshot, job.controller.signal),
+        )
         .catch(async (error: unknown) => {
+          this.analytics?.exception(error, "session_queue");
           if (!["failed", "cancelled", "completed"].includes(session.status))
             session.fail(String(error));
 
@@ -149,6 +159,17 @@ export class StartSessions implements OnModuleDestroy {
         })
         .finally(() => this.active.delete(session.id));
     }
+
+    this.analytics?.capture("evaluation run started", {
+      evaluation_id: evalId,
+      batch_id: batchId,
+      session_count: created.length,
+      environment_mode: snapshot.environment?.executionMode ?? "local",
+    });
+    this.analytics?.info("Evaluation run started", {
+      session_count: created.length,
+      environment_mode: snapshot.environment?.executionMode ?? "local",
+    });
 
     return { batchId, sessionIds: created.map((session) => session.id) };
   }

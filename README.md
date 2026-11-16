@@ -58,9 +58,9 @@ Evals, resources, sessions, traces, files, judgments, and usage are saved in SQL
 5. Select a harness, model, effort, count, timeout, and turn limit for each model profile. Select the judge harness and model.
 6. Save the eval, then select **Run eval**.
 
-The app runs up to two sessions at a time. Each session gets a separate temporary workspace. A folder environment is copied. A repository environment is cloned. Agents do not edit the source folder or a previous session's workspace.
+The app uses the session concurrency limit in **Settings → General**. Each session gets a separate temporary workspace. A folder environment is copied. A repository environment is cloned. Agents do not edit the source folder or a previous session's workspace.
 
-An environment can run on this computer or in Docker. Docker environments can use the inspectable built-in image, a local Dockerfile, or inline Dockerfile content. The app builds the selected configuration, starts one container for each session, and mounts only that session's temporary files at `/agent-eval`. Pi shell commands, native harness processes, and MCP processes then run in that container. A Docker image for Codex, Claude Code, or OpenCode must include the selected harness executable. It must also include a POSIX `sh` shell.
+An environment can run on this computer or in Docker. Docker environments can use the inspectable built-in image, a local Dockerfile, or inline Dockerfile content. The app adds the selected native harness to the image, starts one container for each session, and mounts only that session's temporary files at `/agent-eval`. Pi shell commands, native harness processes, and MCP processes then run in that container. A custom image must include Node.js 22, npm, and a POSIX `sh` shell.
 
 Local folder and file fields accept a path or open the built-in filesystem picker. The picker reads paths from the machine that runs agent-eval.
 
@@ -81,6 +81,8 @@ The **Sessions** page lists executions. Open a session to view its prompt, perso
 
 The **Harnesses** screen shows executable availability and model choices. Catalogs come from the installed Pi model registry. A listed model can still be unavailable to your account. Native harnesses use their own provider protocols and permissions.
 
+Docker installs OpenCode 1.19.5 from npm and uses its `--variant` argument. Local OpenCode runs use v2 with `--standalone` and `provider/model#variant` syntax.
+
 Pi provides file tools, shell tools, HTTP fetching, and configured stdio MCP tools. Native harnesses use their own tools. Skill text is saved with each session and copied into each harness's skill directory. A persona is added to the session instructions. MCP configuration supports stdio commands and argument lists.
 
 Timeouts use **seconds**. Effort support depends on the model and harness. Native turn limits count events exposed by each harness and are not directly comparable. Codex exposes task turns, so its turn cap does not bound every internal model request. Use a timeout as well.
@@ -88,6 +90,10 @@ Timeouts use **seconds**. Effort support depends on the model and harness. Nativ
 ## Data and credentials
 
 UI keys are encrypted with AES-256-GCM. The encryption key is stored in `.agent-eval/credential.key`. Back up this file with the database. The UI never returns saved key values. A saved key overrides its environment variable. Removing it restores the environment fallback.
+
+Optional PostHog telemetry uses `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` on the server, and `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` in the web build. It records product actions, structured operational logs, and exceptions. Custom events do not include prompts, source files, transcripts, or provider credentials.
+
+AI Observability records one trace per coding session, with separate agent and judge spans, including judge retries. Pi, Claude, and OpenCode usage events become generations. Codex exposes turn totals, recorded as turn spans rather than individual generations. Generations include reported token/cache counts, supplied costs, and timing when available. Run spans also retain harness totals under `harness_*` properties without duplicating generation costs. Prompt, response, and tool contents are not uploaded. Traces use the coding session ID and are captured for new runs only.
 
 Local agent tools run with local process permissions. Docker environments isolate processes but are not a complete security boundary. A selected Dockerfile can run arbitrary commands while its image builds. Use trusted Dockerfiles and projects without credentials. Input copies omit dependencies, Git metadata, local agent state, `.env` files, and application data. Other sensitive files can still be copied. Symbolic links cause an error.
 

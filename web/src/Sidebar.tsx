@@ -1,12 +1,26 @@
 import { Button } from "@posthog/quill";
 import brandLogo from "../../images/agent-eval-logo-brand.png";
+import { useApi } from "./api.js";
+
+type ProviderCredit = {
+  provider: "openrouter" | "openai" | "anthropic";
+  balanceUsd: number | null;
+  status: "available" | "not_configured" | "unsupported" | "unavailable";
+  detail: string;
+};
+
+const providerNames = {
+  openrouter: "OpenRouter",
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+};
 
 export const navigationGroups: { title: string; links: [string, string][] }[] =
   [
     {
       title: "Workspace",
       links: [
-        ["evals", "Evals"],
+        ["evals", "Evaluations"],
         ["sessions", "Coding sessions"],
       ],
     },
@@ -22,6 +36,7 @@ export const navigationGroups: { title: string; links: [string, string][] }[] =
     {
       title: "Settings",
       links: [
+        ["settings", "General"],
         ["harnesses", "Harnesses"],
         ["credentials", "API keys"],
       ],
@@ -29,6 +44,8 @@ export const navigationGroups: { title: string; links: [string, string][] }[] =
   ];
 
 export function Sidebar({ page }: { page?: string }) {
+  const credits = useApi<ProviderCredit[]>("/provider-credits");
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -40,7 +57,7 @@ export function Sidebar({ page }: { page?: string }) {
           className="sidebar-create"
           render={
             <a href="#evals/new">
-              <span aria-hidden="true">+</span> New eval
+              <span aria-hidden="true">+</span> New evaluation
             </a>
           }
         />
@@ -74,6 +91,38 @@ export function Sidebar({ page }: { page?: string }) {
         ))}
       </nav>
       <footer className="sidebar-footer">
+        <section className="provider-credits" aria-label="Provider credits">
+          <header>
+            <strong>Provider credits</strong>
+            <button
+              type="button"
+              onClick={credits.refresh}
+              aria-label="Refresh credits"
+            >
+              ↻
+            </button>
+          </header>
+          {credits.data?.map((credit) => (
+            <div key={credit.provider} title={credit.detail}>
+              <span>{providerNames[credit.provider]}</span>
+              <strong
+                className={credit.status === "available" ? "pass" : "muted"}
+              >
+                {credit.balanceUsd === null
+                  ? credit.status === "not_configured"
+                    ? "Not set"
+                    : "Unavailable"
+                  : credit.balanceUsd.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                    })}
+              </strong>
+            </div>
+          ))}
+          {credits.loading && !credits.data ? (
+            <span className="muted">Checking…</span>
+          ) : null}
+        </section>
         <div className="workspace-note">
           <img src="/brand/research.svg" alt="" width="44" height="44" />
           <p>

@@ -12,7 +12,7 @@ export const resourceInfo = {
     title: "Personas",
     singular: "persona",
     description:
-      "Define how an agent should approach the task. Persona instructions are included with the eval prompt.",
+      "Define how an agent should approach the task. Persona instructions are included with the evaluation prompt.",
     hint: "Describe the role, experience level, and constraints the agent should follow.",
   },
   skills: {
@@ -20,7 +20,7 @@ export const resourceInfo = {
     title: "Skills",
     singular: "skill",
     description:
-      "Make reusable instructions available to the agent. Select the skills to include in each eval.",
+      "Make reusable instructions available to the agent. Select the skills to include in each evaluation.",
     hint: "Write the instructions here, or choose one local file. Each session receives its own saved copy.",
   },
   mcps: {

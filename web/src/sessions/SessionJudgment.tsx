@@ -11,7 +11,7 @@ import { isActive } from "./session-filters.js";
 export function SessionJudgment({ session }: { session: Session }) {
   return (
     <aside className="judgment">
-      <h2>Eval criteria</h2>
+      <h2>Evaluation criteria</h2>
       <CheckBar
         decisions={session.decisions}
         criteria={session.snapshot.evaluation.criteria}

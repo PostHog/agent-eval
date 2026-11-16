@@ -1,8 +1,11 @@
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
+import { AnalyticsService } from "./analytics/analytics-service.js";
 import { ResourceRepository } from "./catalog/domain/resource-repository.js";
 import { PrismaCatalog } from "./catalog/infrastructure/prisma-catalog.js";
 import { KeyVault } from "./credentials/key-vault.js";
 import { CredentialStore } from "./credentials/provider.js";
+import { ProviderCreditsService } from "./credits/provider-credits-service.js";
 import { EvaluationsService } from "./evaluations/application/evaluations-service.js";
 import { EvaluationRepository } from "./evaluations/domain/evaluation-repository.js";
 import { PrismaEvaluationRepository } from "./evaluations/infrastructure/prisma-evaluation-repository.js";
@@ -15,6 +18,7 @@ import { ResourcesController } from "./http/resources-controller.js";
 import { SessionsController } from "./http/sessions-controller.js";
 import { SettingsController } from "./http/settings-controller.js";
 import { Database } from "./infrastructure/database.js";
+import { SessionQueue } from "./sessions/application/session-queue.js";
 import { SessionWorker } from "./sessions/application/session-worker.js";
 import { StartSessions } from "./sessions/application/start-sessions.js";
 import { SessionRepository } from "./sessions/domain/session-repository.js";
@@ -23,15 +27,22 @@ import { WorkspaceStore } from "./sessions/domain/workspace-store.js";
 import { ArtifactStore } from "./sessions/infrastructure/artifact-store.js";
 import { PrismaSessionRepository } from "./sessions/infrastructure/prisma-session-repository.js";
 import { DefaultWorkspaceRuntimeFactory } from "./sessions/infrastructure/workspace-runtime-factory.js";
+import { SettingsService } from "./settings/application/settings-service.js";
+import { SettingsRepository } from "./settings/domain/settings-repository.js";
+import { PrismaSettingsRepository } from "./settings/infrastructure/prisma-settings-repository.js";
 
 // The composition root connects domain ports to infrastructure adapters.
 @Module({
   providers: [
     Database,
+    AnalyticsService,
     EvaluationsService,
     KeyVault,
     PiHarness,
+    ProviderCreditsService,
     SessionWorker,
+    SessionQueue,
+    SettingsService,
     StartSessions,
     { provide: HarnessRegistry, useClass: DefaultHarnessRegistry },
     { provide: ResourceRepository, useClass: PrismaCatalog },
@@ -43,6 +54,12 @@ import { DefaultWorkspaceRuntimeFactory } from "./sessions/infrastructure/worksp
     { provide: CredentialStore, useExisting: KeyVault },
     { provide: EvaluationRepository, useClass: PrismaEvaluationRepository },
     { provide: SessionRepository, useClass: PrismaSessionRepository },
+    { provide: SettingsRepository, useClass: PrismaSettingsRepository },
+    {
+      provide: APP_INTERCEPTOR,
+      inject: [AnalyticsService],
+      useFactory: (analytics: AnalyticsService) => analytics.interceptor(),
+    },
   ],
   controllers: [
     EvaluationsController,

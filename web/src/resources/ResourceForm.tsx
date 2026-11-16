@@ -330,7 +330,8 @@ export function ResourceForm({
                   />
                 )}
                 <p className="muted">
-                  Native harnesses require their executable in the image. Pi
+                  Agent-eval installs the selected native harness with npm. A
+                  custom final image must include Node.js 22, npm, and sh. Pi
                   only requires the commands that the agent uses.
                 </p>
               </div>

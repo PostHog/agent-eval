@@ -13,6 +13,7 @@ import type {
 import { EvalCriteria } from "./EvalCriteria.js";
 import { EvalModels } from "./EvalModels.js";
 import { EvalResources } from "./EvalResources.js";
+import { defaultModel } from "./ModelPicker.js";
 
 export function EvalEditor({ id }: { id?: string }) {
   return id ? <ExistingEditor id={id} /> : <Editor />;
@@ -38,8 +39,39 @@ function Editor({ initial }: { initial?: EvaluationData }) {
       personaId: null,
       skillIds: [],
       mcpIds: [],
-      models: [],
-      judge: null,
+      models: [
+        {
+          ...defaultModel,
+          harness: "claude",
+          model: "claude-opus-5-5",
+          effort: "high",
+        },
+        {
+          ...defaultModel,
+          harness: "codex",
+          model: "gpt-6.1-sol",
+          effort: "high",
+        },
+        {
+          ...defaultModel,
+          model: "~deepseek/deepseek-v4-flash-latest",
+          effort: "high",
+        },
+        {
+          ...defaultModel,
+          harness: "opencode",
+          model: "openrouter/moonshotai/kimi-k3",
+          effort: "high",
+        },
+        { ...defaultModel, model: "qwen/qwen3.8-flash", effort: "high" },
+        {
+          ...defaultModel,
+          harness: "claude",
+          model: "claude-sonnet-5-5",
+          effort: "high",
+        },
+      ],
+      judge: { ...defaultModel, model: "anthropic/claude-sonnet-5.5" },
     },
   );
   const {
@@ -60,19 +92,19 @@ function Editor({ initial }: { initial?: EvaluationData }) {
     event.preventDefault();
 
     if (value.criteria.some((criterion) => !criterion.description.trim())) {
-      setError("Add text to each criterion before saving the eval.");
+      setError("Add text to each criterion before saving the evaluation.");
 
       return;
     }
 
     if (!value.models.length) {
-      setError("Add at least one model before saving the eval.");
+      setError("Add at least one model before saving the evaluation.");
 
       return;
     }
 
     if (!value.judge) {
-      setError("Add a judge before saving the eval.");
+      setError("Add a judge before saving the evaluation.");
 
       return;
     }
@@ -97,7 +129,7 @@ function Editor({ initial }: { initial?: EvaluationData }) {
 
   return (
     <>
-      <PageTitle title={initial ? "Edit eval" : "New eval"}>
+      <PageTitle title={initial ? "Edit evaluation" : "New evaluation"}>
         <Button
           nativeButton={false}
           variant="outline"
@@ -107,8 +139,8 @@ function Editor({ initial }: { initial?: EvaluationData }) {
         />
       </PageTitle>
       <p className="description">
-        Define the task and what success means. Save the eval, then run it from
-        the report page.
+        Define the task and what success means. Save the evaluation, then run it
+        from the report page.
       </p>
       <Notice error={resourceError || harnessError} />
       {harnessError && (
@@ -166,7 +198,7 @@ function Editor({ initial }: { initial?: EvaluationData }) {
             type="submit"
           >
             {saving && <StatusIcon name="spinner" />}
-            {saving ? "Saving..." : "Save eval"}
+            {saving ? "Saving..." : "Save evaluation"}
           </Button>
         </div>
       </form>

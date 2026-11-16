@@ -34,7 +34,7 @@ export function SessionList() {
         <Button
           nativeButton={false}
           variant="outline"
-          render={<a href="#evals">Go to evals</a>}
+          render={<a href="#evals">Go to evaluations</a>}
         />
       </PageTitle>
       <p className="description">
@@ -74,7 +74,7 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
   if (sessions.length === 0)
     return (
       <EmptyState title="No sessions yet">
-        <p>Run an eval to compare models and inspect their work here.</p>
+        <p>Run an evaluation to compare models and inspect their work here.</p>
       </EmptyState>
     );
 
@@ -84,7 +84,7 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
         <Input
           type="search"
           aria-label="Search sessions"
-          placeholder="Search eval, model, or environment"
+          placeholder="Search evaluation, model, or environment"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -127,7 +127,7 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Harness / model</TableHead>
-                <TableHead>Eval</TableHead>
+                <TableHead>Evaluation</TableHead>
                 <TableHead>Criteria</TableHead>
                 <TableHead>Judge verdict</TableHead>
                 <TableHead>Status</TableHead>

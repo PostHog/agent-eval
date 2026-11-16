@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { createLocalBashOperations } from "@earendil-works/pi-coding-agent";
 import { Injectable } from "@nestjs/common";
@@ -8,6 +8,7 @@ import type {
   ProcessCommand,
   ShellOptions,
 } from "../../harnesses/domain/execution.js";
+import type { HarnessId } from "../../harnesses/domain/harness.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { WorkspaceRuntimeFactory } from "../domain/workspace-runtime.js";
 import { contains } from "./workspace-files.js";
@@ -40,14 +41,18 @@ class DockerWorkspaceRuntime implements HarnessRuntime {
     root: string,
     dockerfilePath: string | null,
     dockerfileContent: string | null,
+    harness: HarnessId,
     signal: AbortSignal,
   ) {
-    const dockerfile = dockerfilePath
-      ? resolve(dockerfilePath)
-      : await writeDockerfile(root, dockerfileContent);
+    const build = await prepareDockerBuild(
+      root,
+      dockerfilePath,
+      dockerfileContent,
+      harness,
+    );
     const image = (
       await control(
-        ["build", "--quiet", "--file", dockerfile, dirname(dockerfile)],
+        ["build", "--quiet", "--file", build.dockerfile, build.context],
         signal,
       )
     ).trim();
@@ -176,6 +181,7 @@ export class DefaultWorkspaceRuntimeFactory extends WorkspaceRuntimeFactory {
     root: string,
     _workspace: string,
     signal: AbortSignal,
+    harness: HarnessId,
   ): Promise<HarnessRuntime> {
     if (environment?.executionMode !== "docker")
       return new LocalWorkspaceRuntime();
@@ -191,19 +197,45 @@ export class DefaultWorkspaceRuntimeFactory extends WorkspaceRuntimeFactory {
       root,
       environment.dockerfilePath,
       environment.dockerfileContent,
+      harness,
       signal,
     );
   }
 }
 
-async function writeDockerfile(root: string, content: string | null) {
+const harnessPackages: Partial<Record<HarnessId, string>> = {
+  claude: "@anthropic-ai/claude-code@2.1.325",
+  codex: "@openai/codex@0.169.0",
+  opencode: "opencode-ai@1.19.5",
+};
+
+async function prepareDockerBuild(
+  root: string,
+  dockerfilePath: string | null,
+  dockerfileContent: string | null,
+  harness: HarnessId,
+) {
   const directory = resolve(root, "docker-build");
   const path = resolve(directory, "Dockerfile");
+  const sourcePath = dockerfilePath ? resolve(dockerfilePath) : null;
+  const content = sourcePath
+    ? await readFile(sourcePath, "utf8")
+    : (dockerfileContent ?? "");
+  const harnessPackage = harnessPackages[harness];
 
   await mkdir(directory, { recursive: true });
-  await writeFile(path, content ?? "", { mode: 0o600 });
+  await writeFile(
+    path,
+    harnessPackage
+      ? `${content.trimEnd()}\n\nRUN npm install --global ${harnessPackage}\n`
+      : content,
+    { mode: 0o600 },
+  );
 
-  return path;
+  return {
+    dockerfile: path,
+    context: sourcePath ? dirname(sourcePath) : directory,
+  };
 }
 
 function control(args: string[], signal?: AbortSignal): Promise<string> {

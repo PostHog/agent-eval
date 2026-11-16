@@ -46,7 +46,7 @@ export function HarnessesPage() {
         </Button>
       </PageTitle>
       <p className="description">
-        Choose how agents run your evals. Each harness needs an installed
+        Choose how agents run your evaluations. Each harness needs an installed
         adapter and an API key. A listed model does not guarantee that your
         provider account has access.
       </p>
@@ -121,7 +121,7 @@ export function HarnessesPage() {
           </div>
           <p className="section-note">
             Once your harness and key are configured,{" "}
-            <a href="#evals/new">create an eval</a>.
+            <a href="#evals/new">create an evaluation</a>.
           </p>
         </>
       )}

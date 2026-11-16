@@ -51,7 +51,9 @@ export class Evaluation {
       throw new Error("Criterion IDs must be unique.");
 
     if (models.reduce((count, model) => count + model.count, 0) > 100)
-      throw new Error("An eval cannot start more than 100 sessions at once.");
+      throw new Error(
+        "An evaluation cannot start more than 100 sessions at once.",
+      );
 
     return new Evaluation({
       ...data,
@@ -68,6 +70,17 @@ export class Evaluation {
   snapshot(): EvaluationData {
     // Callers receive a copy so an edit cannot change a historical session.
     return structuredClone(this.data);
+  }
+
+  duplicate(): Evaluation {
+    const { id: _id, revision: _revision, ...data } = this.snapshot();
+
+    return Evaluation.create({
+      ...data,
+      criteria: data.criteria.map((criterion) =>
+        Criterion.create(criterion.description),
+      ),
+    });
   }
 
   revise(input: Omit<EvaluationData, "id" | "revision">): void {

@@ -40,7 +40,7 @@ export function EvalModels({
         {!value.models.length && (
           <div className="model-selection-empty">
             <strong>No models selected</strong>
-            <p>Add at least one model to run this eval.</p>
+            <p>Add at least one model to run this evaluation.</p>
           </div>
         )}
         <div className="model-summary-list">

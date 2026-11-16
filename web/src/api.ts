@@ -1,18 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { analyticsHeaders, posthog } from "./analytics.js";
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, {
     ...options,
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...analyticsHeaders(),
+      ...options?.headers,
+    },
   });
   const result: unknown = await response.json();
 
-  if (!response.ok)
-    throw new Error(
+  if (!response.ok) {
+    const error = new Error(
       result && typeof result === "object" && "message" in result
         ? String(result.message)
         : "The request failed.",
     );
+
+    posthog.captureException(error, {
+      api_path: path,
+      status: response.status,
+    });
+    posthog.logger.error("API request failed", {
+      api_path: path,
+      status: response.status,
+    });
+    throw error;
+  }
 
   return result as T;
 }

@@ -91,6 +91,33 @@
   margin-top: auto;
   padding: 24px 8px 0;
 }
+.provider-credits {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--card) 72%, transparent);
+  font-size: 11px;
+}
+.provider-credits header,
+.provider-credits > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.provider-credits button {
+  border: 0;
+  padding: 0 2px;
+  color: var(--muted-foreground);
+  background: transparent;
+  cursor: pointer;
+}
+.provider-credits > div span {
+  color: var(--muted-foreground);
+}
 .workspace-note {
   display: flex;
   align-items: center;

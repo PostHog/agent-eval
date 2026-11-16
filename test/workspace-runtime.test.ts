@@ -51,6 +51,7 @@ test(
         root,
         workspace,
         new AbortController().signal,
+        "codex",
       );
       const command = await runtime.process(
         {
@@ -79,6 +80,10 @@ test(
         await readFile(command.args[5] ?? "", "utf8"),
         /HOG_TEST_KEY=secret/,
       );
+      assert.match(
+        await readFile(join(root, "docker-build", "Dockerfile"), "utf8"),
+        /RUN npm install --global @openai\/codex@0\.169\.0/,
+      );
 
       await runtime.shell("hog --version", workspace, {
         onData: () => {},
@@ -98,6 +103,7 @@ test(
         root,
         workspace,
         new AbortController().signal,
+        "pi",
       );
 
       assert.equal(
@@ -105,6 +111,27 @@ test(
         "FROM scratch\n",
       );
       await inline.close();
+
+      const openCode = await new DefaultWorkspaceRuntimeFactory().create(
+        {
+          title: "OpenCode Dockerfile",
+          workspacePath: null,
+          repositoryUrl: null,
+          executionMode: "docker",
+          dockerfilePath: dockerfile,
+          dockerfileContent: null,
+        },
+        root,
+        workspace,
+        new AbortController().signal,
+        "opencode",
+      );
+
+      assert.match(
+        await readFile(join(root, "docker-build", "Dockerfile"), "utf8"),
+        /RUN npm install --global opencode-ai@1\.19\.5/,
+      );
+      await openCode.close();
 
       const calls = await readFile(log, "utf8");
 

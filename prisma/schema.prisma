@@ -184,3 +184,9 @@ model Credential {
   encryptedValue String
   updatedAt DateTime @updatedAt
 }
+
+model AppSettings {
+  id                 String   @id
+  sessionConcurrency Int      @default(2)
+  updatedAt          DateTime @updatedAt
+}

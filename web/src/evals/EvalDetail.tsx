@@ -86,7 +86,7 @@ export function EvalDetail({ id }: { id: string }) {
         <Button
           nativeButton={false}
           variant="outline"
-          render={<a href={`#evals/${id}/edit`}>Edit eval</a>}
+          render={<a href={`#evals/${id}/edit`}>Edit evaluation</a>}
         />
         <Button
           type="button"
@@ -152,7 +152,7 @@ export function EvalDetail({ id }: { id: string }) {
       {definition.revision !== evaluation.revision && (
         <p className="info-note">
           You are viewing saved results from revision {definition.revision}.
-          Editing or running this eval uses the current revision{" "}
+          Editing or running this evaluation uses the current revision{" "}
           {evaluation.revision}.
         </p>
       )}

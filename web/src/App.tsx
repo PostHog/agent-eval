@@ -10,6 +10,7 @@ import { ResourcePage } from "./resources/ResourcePage.js";
 import { navigationGroups, Sidebar } from "./Sidebar.js";
 import { SessionDetail } from "./sessions/SessionDetail.js";
 import { SessionList } from "./sessions/SessionList.js";
+import { SettingsPage } from "./settings/SettingsPage.js";
 
 export function App() {
   const [route, setRoute] = useState(location.hash.slice(1) || "evals");
@@ -38,6 +39,7 @@ export function App() {
     content = id ? <SessionDetail id={id} /> : <SessionList />;
   else if (page === "credentials") content = <CredentialsPage />;
   else if (page === "harnesses") content = <HarnessesPage />;
+  else if (page === "settings") content = <SettingsPage />;
   else if (["environments", "skills", "personas", "mcps"].includes(page ?? ""))
     content = (
       <ResourcePage
@@ -48,7 +50,7 @@ export function App() {
   else
     content = (
       <p>
-        Page not found. <a href="#evals">Return to evals</a>.
+        Page not found. <a href="#evals">Return to evaluations</a>.
       </p>
     );
 

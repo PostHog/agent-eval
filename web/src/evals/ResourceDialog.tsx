@@ -22,7 +22,8 @@ export function ResourceDialog({
       busy={saving}
     >
       <p className="muted">
-        This resource will be saved to your library and selected for this eval.
+        This resource will be saved to your library and selected for this
+        evaluation.
       </p>
       <ResourceForm
         kind={kind}

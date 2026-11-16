@@ -34,7 +34,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
   async function remove(resource: Resource) {
     if (
       !confirm(
-        `Delete ${resource.title}? Resources used by an eval cannot be deleted.`,
+        `Delete ${resource.title}? Resources used by an evaluation cannot be deleted.`,
       )
     )
       return;
@@ -78,7 +78,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
           onSaved={() => {
             setEditing(null);
             setMessage(
-              "Saved. Select this resource when you edit an eval. Existing sessions keep their original configuration.",
+              "Saved. Select this resource when you edit an evaluation. Existing sessions keep their original configuration.",
             );
             refresh();
           }}
@@ -179,8 +179,8 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
             </div>
           )}
           <p className="section-note">
-            Changes apply to future sessions. <a href="#evals">Go to evals</a>{" "}
-            to use these resources.
+            Changes apply to future sessions.{" "}
+            <a href="#evals">Go to evaluations</a> to use these resources.
           </p>
         </>
       )}

@@ -52,7 +52,9 @@ export function ModelSettingsDialog({
         />
         <Notice error={error} />
         <footer className="dialog-actions">
-          <span className="muted">Changes apply when you save the eval.</span>
+          <span className="muted">
+            Changes apply when you save the evaluation.
+          </span>
           <Button type="button" onClick={onClose}>
             Cancel
           </Button>

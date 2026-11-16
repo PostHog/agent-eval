@@ -2,8 +2,10 @@ import { StatusIcon } from "./StatusIcon.js";
 
 export function Acceptance({
   decisions,
+  unit = "checks",
 }: {
   decisions: { passed: boolean }[];
+  unit?: "checks" | "sessions";
 }) {
   if (!decisions.length)
     return (
@@ -14,7 +16,7 @@ export function Acceptance({
     );
 
   const passed = decisions.filter((decision) => decision.passed).length;
-  const label = `${passed} of ${decisions.length} checks passed`;
+  const label = `${passed} of ${decisions.length} ${unit} passed`;
 
   return (
     <span

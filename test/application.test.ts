@@ -16,11 +16,14 @@ import type { Harness } from "../src/harnesses/domain/harness.js";
 import type { HarnessRegistry } from "../src/harnesses/domain/harness-registry.js";
 import { Database } from "../src/infrastructure/database.js";
 import { migrateDatabase } from "../src/infrastructure/migrations.js";
+import { SessionQueue } from "../src/sessions/application/session-queue.js";
 import { SessionWorker } from "../src/sessions/application/session-worker.js";
 import { StartSessions } from "../src/sessions/application/start-sessions.js";
 import { ArtifactStore } from "../src/sessions/infrastructure/artifact-store.js";
 import { PrismaSessionRepository } from "../src/sessions/infrastructure/prisma-session-repository.js";
 import { DefaultWorkspaceRuntimeFactory } from "../src/sessions/infrastructure/workspace-runtime-factory.js";
+import { SettingsService } from "../src/settings/application/settings-service.js";
+import { PrismaSettingsRepository } from "../src/settings/infrastructure/prisma-settings-repository.js";
 import { fixture } from "./fixture.js";
 
 test("SQLite saves eval revisions, encrypted credentials, independent judgments, logs, files, and usage", async () => {
@@ -160,6 +163,12 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     };
     const sessions = new PrismaSessionRepository(db);
     const artifacts = new ArtifactStore(db);
+    const settings = new SettingsService(new PrismaSettingsRepository(db));
+
+    assert.equal((await settings.get()).sessionConcurrency, 2);
+    await settings.update({ sessionConcurrency: 3 });
+    assert.equal((await settings.get()).sessionConcurrency, 3);
+
     const worker = new SessionWorker(
       sessions,
       artifacts,
@@ -175,6 +184,8 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
       worker,
       harnesses,
       vault,
+      settings,
+      new SessionQueue(),
     );
 
     await starter.start(evaluation.id);
@@ -222,6 +233,20 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
       );
       assert.ok(!session.artifacts.some((file) => file.path === ".env"));
     }
+
+    const duplicate = await evals.duplicate(evaluation.id);
+
+    assert.notEqual(duplicate.id, evaluation.id);
+    assert.equal(duplicate.revision, 1);
+    assert.equal(duplicate.title, evaluation.title);
+    assert.equal(duplicate.prompt, evaluation.prompt);
+    assert.deepEqual(duplicate.models, evaluation.models);
+    assert.deepEqual(duplicate.skillIds, evaluation.skillIds);
+    assert.notEqual(duplicate.criteria[0]?.id, evaluation.criteria[0]?.id);
+    assert.equal(
+      await db.session.count({ where: { evalId: duplicate.id } }),
+      0,
+    );
 
     const { id: _id, ...revision } = evaluation;
 

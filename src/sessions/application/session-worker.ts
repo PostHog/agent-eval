@@ -1,7 +1,9 @@
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
+import { AnalyticsService } from "../../analytics/analytics-service.js";
+import { observedHarness } from "../../analytics/observed-harness.js";
 import { CredentialStore } from "../../credentials/provider.js";
 import type { ModelSettingsData } from "../../evaluations/domain/model-settings.js";
 import type {
@@ -25,6 +27,9 @@ export class SessionWorker {
     @Inject(CredentialStore) private readonly keys: CredentialStore,
     @Inject(WorkspaceRuntimeFactory)
     private readonly runtimes: WorkspaceRuntimeFactory,
+    @Optional()
+    @Inject(AnalyticsService)
+    private readonly analytics?: AnalyticsService,
   ) {}
 
   async execute(
@@ -32,6 +37,7 @@ export class SessionWorker {
     snapshot: ExecutionSnapshot,
     signal: AbortSignal,
   ): Promise<void> {
+    const started = new Date();
     // Restore inputs, execute one harness, judge only its evidence, then persist the final state.
     const root = await mkdtemp(join(tmpdir(), "agent-eval-session-"));
     let agent: HarnessResult | undefined;
@@ -50,6 +56,7 @@ export class SessionWorker {
       await this.artifacts.restore(session.id, root, "input");
 
       const workspace = join(root, "workspace");
+      const adapter = this.harnesses.get(session.model.harness);
 
       await mkdir(workspace, { recursive: true });
       agentRuntime = await this.runtimes.create(
@@ -57,13 +64,12 @@ export class SessionWorker {
         root,
         workspace,
         signal,
+        adapter.id,
       );
 
       const skills = snapshot.skills.map((_, index) =>
         join(root, "skills", String(index)),
       );
-      const adapter = this.harnesses.get(session.model.harness);
-
       if (adapter.id !== "pi") {
         const { cp } = await import("node:fs/promises");
         const skillRoot =
@@ -79,7 +85,15 @@ export class SessionWorker {
           });
       }
 
-      agent = await adapter.run(
+      const agentHarness = this.analytics
+        ? observedHarness(
+            adapter,
+            this.analytics.captureAi,
+            session.id,
+            "agent",
+          )
+        : adapter;
+      agent = await agentHarness.run(
         await this.input(
           session,
           session.model,
@@ -123,6 +137,7 @@ export class SessionWorker {
         root,
         judgeWorkspace,
         signal,
+        snapshot.evaluation.judge.harness,
       );
       const judgeInput = await this.input(
         session,
@@ -137,8 +152,18 @@ export class SessionWorker {
         judgeRuntime,
       );
 
+      const judgeHarness = this.harnesses.get(
+        snapshot.evaluation.judge.harness,
+      );
       judge = await judgeSession(
-        this.harnesses.get(snapshot.evaluation.judge.harness),
+        this.analytics
+          ? observedHarness(
+              judgeHarness,
+              this.analytics.captureAi,
+              session.id,
+              "judge",
+            )
+          : judgeHarness,
         judgeInput,
         snapshot.evaluation.criteria.map((criterion) => criterion.id),
       );
@@ -159,6 +184,7 @@ export class SessionWorker {
       session.complete(JSON.parse(judge.text));
       await this.sessions.save(session, agent, judge);
     } catch (error) {
+      this.analytics?.exception(error, "session_execute");
       if (!["cancelled", "completed", "failed"].includes(session.status)) {
         if (signal.aborted) session.cancel();
         else
@@ -185,6 +211,38 @@ export class SessionWorker {
           );
       }
       await rm(root, { recursive: true, force: true });
+      const result = session.snapshot();
+      const decisions = result.judgment?.decisions ?? [];
+
+      this.analytics?.capture("agent session finished", {
+        session_id: session.id,
+        harness: session.model.harness,
+        model: session.model.model,
+        status: session.status,
+        criteria_passed: decisions.filter((decision) => decision.passed).length,
+        criteria_total: decisions.length,
+      });
+      this.analytics?.info("Agent session finished", {
+        harness: session.model.harness,
+        status: session.status,
+      });
+      this.analytics?.captureAi(
+        "$ai_trace",
+        {
+          $ai_trace_id: session.id,
+          $ai_session_id: null,
+          $ai_span_name: "Evaluation session",
+          $ai_latency: (Date.now() - started.getTime()) / 1000,
+          $ai_is_error: session.status === "failed",
+          status: session.status,
+          evaluation_id: snapshot.evaluation.id,
+          harness: session.model.harness,
+          criteria_passed: decisions.filter((decision) => decision.passed)
+            .length,
+          criteria_total: snapshot.evaluation.criteria.length,
+        },
+        started,
+      );
     }
   }
 

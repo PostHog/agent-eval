@@ -53,6 +53,33 @@ test("native adapters keep credentials out of arguments and disable judge tools"
           JSON.parse(command.env.OPENCODE_CONFIG_CONTENT ?? "{}").permission,
           "deny",
         );
+
+        for (const effort of ["low", "off"] as const) {
+          const dockerCommand = await externalCommand(id, {
+            ...input,
+            settings: { ...input.settings, effort },
+            runtime: {
+              kind: "docker",
+              process: async (value) => value,
+              shell: async () => ({ exitCode: 0 }),
+              close: async () => {},
+            },
+          });
+
+          assert.deepEqual(dockerCommand.args, [
+            "run",
+            "--format",
+            "json",
+            "--model",
+            "test",
+            ...(effort === "off" ? [] : ["--variant", "low"]),
+          ]);
+          assert.equal(
+            JSON.parse(dockerCommand.env.OPENCODE_CONFIG_CONTENT ?? "{}")
+              .permission,
+            "deny",
+          );
+        }
       }
     }
 
@@ -121,6 +148,42 @@ test("native errors preserve provider messages from structured stdout", () => {
     ]).error,
     "Authentication failed",
   );
+});
+
+test("Codex relies on the container boundary instead of its nested sandbox", async () => {
+  const f = await fixture();
+
+  try {
+    const command = await externalCommand("codex", {
+      label: "agent",
+      directory: f.root,
+      workspace: f.workspace,
+      skills: [],
+      prompt: "Test",
+      model: "test",
+      effort: "low",
+      tools: ["bash"],
+      timeout: 10,
+      maxTurns: 2,
+      apiKey: "secret-key",
+      signal: new AbortController().signal,
+      settings: { ...ModelSettings.create({ model: "test" }).value },
+      onRawEvent: async () => {},
+      runtime: {
+        kind: "docker",
+        process: async (value) => value,
+        shell: async () => ({ exitCode: 0 }),
+        close: async () => {},
+      },
+    });
+
+    assert.equal(
+      command.args[command.args.indexOf("--sandbox") + 1],
+      "danger-full-access",
+    );
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
 });
 
 test("native usage distinguishes unavailable cost and avoids double-counting Codex cached input", () => {

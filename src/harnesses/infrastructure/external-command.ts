@@ -39,7 +39,11 @@ export async function externalCommand(
         "--ignore-user-config",
         "--skip-git-repo-check",
         "--sandbox",
-        input.tools.length ? "workspace-write" : "read-only",
+        input.runtime?.kind === "docker"
+          ? "danger-full-access"
+          : input.tools.length
+            ? "workspace-write"
+            : "read-only",
         "-c",
         "sandbox_workspace_write.network_access=true",
         "-c",
@@ -121,15 +125,19 @@ export async function externalCommand(
     permission: input.tools.length ? "allow" : "deny",
   });
 
+  // Docker installs the published v1 CLI; local runs use v2's private server.
+  const docker = input.runtime?.kind === "docker";
+
   return {
     binary: "opencode",
     args: [
       "run",
-      "--standalone",
+      ...(docker ? [] : ["--standalone"]),
       "--format",
       "json",
       "--model",
-      `${model}${effort === "off" ? "" : `#${effort}`}`,
+      docker ? model : `${model}${effort === "off" ? "" : `#${effort}`}`,
+      ...(docker && effort !== "off" ? ["--variant", effort] : []),
     ],
     env,
   };

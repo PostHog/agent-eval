@@ -61,4 +61,9 @@ export class EvaluationsController {
   run(@Param("id") id: string) {
     return this.sessions.start(id);
   }
+
+  @Post(":id/duplicate")
+  duplicate(@Param("id") id: string) {
+    return this.evals.duplicate(id);
+  }
 }

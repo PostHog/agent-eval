@@ -13,11 +13,11 @@ export function ConfigurationPanel({ session }: { session: Session }) {
     <div className="configuration-summary">
       <h2>Saved session configuration</h2>
       <p className="muted">
-        This snapshot records the settings used for this session. Later eval
-        edits do not change it.
+        This snapshot records the settings used for this session. Later
+        evaluation edits do not change it.
       </p>
       <dl>
-        <dt>Eval revision</dt>
+        <dt>Evaluation revision</dt>
         <dd>{snapshot.evaluation.revision}</dd>
         <dt>Agent</dt>
         <dd>

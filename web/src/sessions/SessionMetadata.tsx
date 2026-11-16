@@ -53,7 +53,7 @@ export function SessionMetadata({ session }: { session: Session }) {
         <dd>{money(session.costUsd)}</dd>
       </div>
       <div>
-        <dt>Eval</dt>
+        <dt>Evaluation</dt>
         <dd className="eval-outcome">
           <span className="pass">
             {session.decisions.filter((decision) => decision.passed).length}{" "}

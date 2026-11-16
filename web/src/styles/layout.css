@@ -55,6 +55,11 @@ main {
 .table-scroll td a:hover {
   text-decoration: underline;
 }
+.evaluation-name-column {
+  min-width: 260px;
+  width: 34%;
+  padding-right: 32px;
+}
 .cell-description {
   color: var(--muted-foreground);
   margin: 4px 0 0;
