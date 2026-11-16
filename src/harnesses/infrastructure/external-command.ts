@@ -23,11 +23,14 @@ export async function externalCommand(
     // Codex accepts a per-run key without redefining its reserved OpenAI provider.
     env.CODEX_API_KEY = input.apiKey;
 
+    // With approval_policy="never", Codex rejects MCP calls unless each configured server pre-approves its tools.
     const mcpArgs = (input.mcps ?? []).flatMap((server, index) => [
       "-c",
       `mcp_servers.eval_${index}.command=${JSON.stringify(server.command)}`,
       "-c",
       `mcp_servers.eval_${index}.args=${JSON.stringify(server.arguments)}`,
+      "-c",
+      `mcp_servers.eval_${index}.default_tools_approval_mode="approve"`,
     ]);
 
     return {
