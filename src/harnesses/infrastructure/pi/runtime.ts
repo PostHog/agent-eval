@@ -2,9 +2,15 @@ import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
   createAgentSession,
+  createBashToolDefinition,
+  createEditToolDefinition,
+  createLsToolDefinition,
+  createReadToolDefinition,
+  createWriteToolDefinition,
   ModelRuntime,
   SessionManager,
   SettingsManager,
+  type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import type { HarnessRequest } from "../../domain/execution.js";
 import { writeJson } from "./json-file.js";
@@ -42,6 +48,22 @@ export async function createSession(request: HarnessRequest) {
   if (!model) throw new Error(`Unknown OpenRouter model: ${request.model}`);
 
   const mcp = await connectMcpTools(request);
+  const dockerTools: ToolDefinition[] =
+    request.runtime?.kind === "docker"
+      ? ([
+          createReadToolDefinition(request.workspace),
+          createBashToolDefinition(request.workspace, {
+            operations: { exec: request.runtime.shell.bind(request.runtime) },
+          }),
+          createEditToolDefinition(request.workspace),
+          createWriteToolDefinition(request.workspace),
+          createLsToolDefinition(request.workspace),
+        ] as unknown as ToolDefinition[])
+      : [];
+  const selectedTools =
+    request.runtime?.kind === "docker"
+      ? request.tools.filter((tool) => tool !== "grep" && tool !== "find")
+      : request.tools;
 
   const { session } = await createAgentSession({
     cwd: request.workspace,
@@ -49,9 +71,11 @@ export async function createSession(request: HarnessRequest) {
     modelRuntime,
     model,
     thinkingLevel: request.effort,
-    tools: [...request.tools, ...mcp.tools.map((tool) => tool.name)],
+    ...(dockerTools.length ? { noTools: "builtin" as const } : {}),
+    tools: [...selectedTools, ...mcp.tools.map((tool) => tool.name)],
     customTools: [
-      ...(request.tools.includes("web_fetch") ? [webFetchTool] : []),
+      ...dockerTools,
+      ...(selectedTools.includes("web_fetch") ? [webFetchTool] : []),
       ...mcp.tools,
     ],
     settingsManager,

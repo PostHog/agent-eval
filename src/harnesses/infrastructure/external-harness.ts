@@ -30,7 +30,10 @@ export class ExternalHarness implements Harness {
     let turn = 0;
 
     try {
-      const command = await externalCommand(this.id, input);
+      const localCommand = await externalCommand(this.id, input);
+      const command = input.runtime
+        ? await input.runtime.process(localCommand, input.workspace)
+        : localCommand;
 
       await writeFile(
         join(input.directory, "effective.json"),

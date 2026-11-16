@@ -26,7 +26,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
   const info = resourceInfo[kind];
   const filtered =
     data?.[kind].filter((resource) =>
-      `${resource.title} ${resource.description ?? ""} ${resource.filePath ?? ""}`
+      `${resource.title} ${resource.description ?? ""} ${resource.filePath ?? ""} ${resource.workspacePath ?? ""} ${resource.repositoryUrl ?? ""} ${resource.executionMode ?? ""}`
         .toLowerCase()
         .includes(search.trim().toLowerCase()),
     ) ?? [];
@@ -121,7 +121,9 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
-                    {kind !== "skills" && <TableHead>Description</TableHead>}
+                    {(kind === "personas" || kind === "mcps") && (
+                      <TableHead>Description</TableHead>
+                    )}
                     {kind !== "personas" && (
                       <TableHead>Configuration</TableHead>
                     )}
@@ -132,7 +134,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                   {filtered.map((resource) => (
                     <TableRow key={resource.id}>
                       <TableCell>{resource.title}</TableCell>
-                      {kind !== "skills" && (
+                      {(kind === "personas" || kind === "mcps") && (
                         <TableCell>
                           <p className="cell-description">
                             {resource.description || "No description"}
@@ -141,12 +143,13 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                       )}
                       {kind !== "personas" && (
                         <TableCell className="resource-path">
-                          {resource.workspacePath ??
-                            resource.filePath ??
-                            resource.command ??
-                            (kind === "skills"
-                              ? "Inline instructions"
-                              : "Empty workspace")}
+                          {kind === "environments"
+                            ? environmentConfiguration(resource)
+                            : (resource.filePath ??
+                              resource.command ??
+                              (kind === "skills"
+                                ? "Inline instructions"
+                                : "Empty workspace"))}
                         </TableCell>
                       )}
                       <TableCell>
@@ -183,4 +186,19 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
       )}
     </>
   );
+}
+
+function environmentConfiguration(resource: Resource) {
+  const source =
+    resource.repositoryUrl ?? resource.workspacePath ?? "Empty workspace";
+  const runtime =
+    resource.executionMode === "docker"
+      ? resource.dockerfilePath
+        ? "Docker · local Dockerfile"
+        : resource.dockerfileContent
+          ? "Docker · inline Dockerfile"
+          : "Docker · built-in image"
+      : "This computer";
+
+  return `${runtime} · ${source}`;
 }

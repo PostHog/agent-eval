@@ -12,6 +12,7 @@ import {
 import { z } from "zod";
 import { Resource } from "../catalog/domain/resource.js";
 import { ResourceRepository } from "../catalog/domain/resource-repository.js";
+import { DEFAULT_DOCKERFILE } from "../sessions/domain/default-dockerfile.js";
 
 @Controller("api/resources")
 export class ResourcesController {
@@ -22,6 +23,11 @@ export class ResourcesController {
   @Get()
   list() {
     return this.catalog.list();
+  }
+
+  @Get("default-dockerfile")
+  defaultDockerfile() {
+    return { content: DEFAULT_DOCKERFILE };
   }
 
   @Post()
@@ -59,20 +65,24 @@ export class ResourcesController {
 
   private async validatePath(resource: Resource): Promise<void> {
     const value = resource.value;
-    const path =
-      value.kind === "environment"
-        ? value.workspacePath
-        : value.kind === "skill"
-          ? value.filePath
-          : null;
 
-    if (!path) return;
+    if (value.kind === "skill" && value.filePath) {
+      const entry = await stat(await realpath(value.filePath));
 
-    const entry = await stat(await realpath(path));
+      if (!entry.isFile()) throw new Error("Choose an existing skill file.");
+    }
 
-    if (value.kind === "skill" && !entry.isFile())
-      throw new Error("Choose an existing skill file.");
-    if (value.kind === "environment" && !entry.isDirectory())
-      throw new Error("Choose an existing workspace folder.");
+    if (value.kind === "environment" && value.workspacePath) {
+      const entry = await stat(await realpath(value.workspacePath));
+
+      if (!entry.isDirectory())
+        throw new Error("Choose an existing workspace folder.");
+    }
+
+    if (value.kind === "environment" && value.dockerfilePath) {
+      const entry = await stat(await realpath(value.dockerfilePath));
+
+      if (!entry.isFile()) throw new Error("Choose an existing Dockerfile.");
+    }
   }
 }

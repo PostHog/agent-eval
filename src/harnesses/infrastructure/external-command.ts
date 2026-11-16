@@ -1,7 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { ProcessCommand } from "../domain/execution.js";
 import type { HarnessInput } from "../domain/harness.js";
-import type { ProcessCommand } from "./process-runner.js";
 
 export async function externalCommand(
   id: "codex" | "claude" | "opencode",

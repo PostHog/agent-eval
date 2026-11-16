@@ -18,6 +18,10 @@ export interface Resource {
   title: string;
   description?: string;
   workspacePath?: string | null;
+  repositoryUrl?: string | null;
+  executionMode?: "local" | "docker";
+  dockerfilePath?: string | null;
+  dockerfileContent?: string | null;
   filePath?: string | null;
   content?: string | null;
   command?: string;

@@ -20,6 +20,7 @@ import { SessionWorker } from "../src/sessions/application/session-worker.js";
 import { StartSessions } from "../src/sessions/application/start-sessions.js";
 import { ArtifactStore } from "../src/sessions/infrastructure/artifact-store.js";
 import { PrismaSessionRepository } from "../src/sessions/infrastructure/prisma-session-repository.js";
+import { DefaultWorkspaceRuntimeFactory } from "../src/sessions/infrastructure/workspace-runtime-factory.js";
 import { fixture } from "./fixture.js";
 
 test("SQLite saves eval revisions, encrypted credentials, independent judgments, logs, files, and usage", async () => {
@@ -37,7 +38,6 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     const environment = Resource.create({
       kind: "environment",
       title: "Sample",
-      description: "Test workspace",
       workspacePath: f.workspace,
     });
     const persona = Resource.create({
@@ -160,7 +160,13 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     };
     const sessions = new PrismaSessionRepository(db);
     const artifacts = new ArtifactStore(db);
-    const worker = new SessionWorker(sessions, artifacts, harnesses, vault);
+    const worker = new SessionWorker(
+      sessions,
+      artifacts,
+      harnesses,
+      vault,
+      new DefaultWorkspaceRuntimeFactory(),
+    );
     const starter = new StartSessions(
       new PrismaEvaluationRepository(db),
       catalog,

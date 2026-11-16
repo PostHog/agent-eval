@@ -19,7 +19,12 @@ export class PrismaCatalog extends ResourceRepository {
     ]);
 
     return {
-      environments,
+      environments: environments.map((environment) => ({
+        ...environment,
+        executionMode: z
+          .enum(["local", "docker"])
+          .parse(environment.executionMode),
+      })),
       personas,
       skills,
       mcps: mcps.map((mcp) => ({
@@ -36,7 +41,7 @@ export class PrismaCatalog extends ResourceRepository {
       case "environment":
         await this.db.environment.upsert({
           where: { id: data.id },
-          create: data as Extract<Resource["value"], { kind: "environment" }>,
+          create: data,
           update: data,
         });
         break;

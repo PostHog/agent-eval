@@ -74,6 +74,206 @@ legend {
   margin-bottom: 24px;
   max-width: 850px;
 }
+.environment-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+.environment-form > section {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 0;
+  padding: 18px;
+}
+.environment-section-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.environment-section-heading h3 {
+  font-size: 15px;
+  margin: 0 0 2px;
+}
+.environment-section-heading p {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+.environment-section-icon {
+  align-items: center;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--foreground);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 32px;
+  justify-content: center;
+  width: 32px;
+}
+.environment-subsection {
+  border-top: 1px solid var(--border);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.environment-subsection > .muted {
+  font-size: 12px;
+  margin: -2px 0 0;
+}
+.resource-icon {
+  flex: 0 0 auto;
+}
+.path-input,
+.path-picker-location {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.docker-default {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  padding: 14px;
+  margin: -4px 0 18px;
+}
+.docker-default p {
+  color: var(--muted-foreground);
+  margin: 4px 0 0;
+}
+.docker-default-title,
+.path-entry-name {
+  align-items: center;
+  display: inline-flex;
+  gap: 7px;
+}
+.inline-dockerfile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin: -4px 0 18px;
+  padding: 12px;
+}
+.inline-dockerfile-heading,
+.dockerfile-editor-heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.inline-dockerfile > p {
+  margin: 8px 0 0;
+}
+.inline-dockerfile pre {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--foreground);
+  font: 12px / 1.55 var(--font-mono);
+  margin: 12px 0 0;
+  max-height: 132px;
+  overflow: hidden;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+.dockerfile-editor-heading {
+  margin-bottom: 12px;
+}
+.dockerfile-editor-heading p {
+  margin: 3px 0 0;
+}
+.dockerfile-editor-heading > span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dockerfile-editor {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.dockerfile-editor .cm-editor {
+  background: var(--background);
+  color: var(--foreground);
+  font: 12px / 1.6 var(--font-mono);
+}
+.dockerfile-editor .cm-editor.cm-focused {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.dockerfile-editor .cm-gutters {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+.docker-default details {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.docker-default summary {
+  color: var(--accent);
+  cursor: pointer;
+  width: fit-content;
+}
+.docker-default pre {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--foreground);
+  font: 12px / 1.55 var(--font-mono);
+  margin: 10px 0 0;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre;
+}
+.path-picker {
+  min-height: 430px;
+}
+.path-picker-list {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-height: 300px;
+  max-height: 50vh;
+  margin: 12px 0 16px;
+  overflow: auto;
+}
+.path-picker-list > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 8px 12px;
+  text-align: left;
+  width: 100%;
+}
+@media (max-width: 760px) {
+  .environment-form {
+    grid-template-columns: 1fr;
+  }
+}
+.path-picker-list > button:hover,
+.path-picker-list > button:focus-visible {
+  background: var(--secondary);
+  outline: none;
+}
+.path-picker-list > button:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ring);
+}
+.empty-path {
+  color: var(--muted-foreground);
+  padding: 28px 12px;
+  text-align: center;
+}
 .model-catalog {
   max-height: 350px;
   overflow-y: auto;

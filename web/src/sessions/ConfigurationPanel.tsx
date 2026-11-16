@@ -33,7 +33,19 @@ export function ConfigurationPanel({ session }: { session: Session }) {
         <dt>Environment</dt>
         <dd>
           {snapshot.environment?.title ?? "Empty workspace"}
-          <small>{snapshot.environment?.workspacePath}</small>
+          {snapshot.environment && (
+            <small>
+              {snapshot.environment.executionMode === "docker"
+                ? snapshot.environment.dockerfilePath
+                  ? "Docker · local Dockerfile"
+                  : "Docker · saved Dockerfile"
+                : "This computer"}
+              {" · "}
+              {snapshot.environment.repositoryUrl ??
+                snapshot.environment.workspacePath ??
+                "Empty workspace"}
+            </small>
+          )}
         </dd>
         <dt>Persona</dt>
         <dd>

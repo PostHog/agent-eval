@@ -67,8 +67,8 @@ export function EvalResources({
         </Button>
       </div>
       <p className="muted">
-        Each session gets its own copy of the environment folder. All resources
-        are optional.
+        Each session gets an independent environment workspace and runtime. All
+        resources are optional.
       </p>
       <div className="form-grid eval-resource-grid">
         {kinds.map((kind) => {

@@ -52,13 +52,16 @@ model ModelProfile {
 }
 
 model Environment {
-  id            String   @id @default(uuid())
-  title         String
-  workspacePath String?
-  description   String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  evals         Eval[]
+  id             String   @id @default(uuid())
+  title          String
+  workspacePath  String?
+  repositoryUrl  String?
+  executionMode  String   @default("local")
+  dockerfilePath String?
+  dockerfileContent String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  evals          Eval[]
 }
 
 model Persona {

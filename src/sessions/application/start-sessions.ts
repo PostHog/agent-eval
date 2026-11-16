@@ -12,6 +12,7 @@ import { ResourceRepository } from "../../catalog/domain/resource-repository.js"
 import { CredentialStore } from "../../credentials/provider.js";
 import { EvaluationRepository } from "../../evaluations/domain/evaluation-repository.js";
 import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
+import { DEFAULT_DOCKERFILE } from "../domain/default-dockerfile.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { Session } from "../domain/session.js";
 import { SessionRepository } from "../domain/session-repository.js";
@@ -76,7 +77,12 @@ export class StartSessions implements OnModuleDestroy {
       resources.personas.find((entry) => entry.id === data.personaId) ?? null;
     const snapshot: ExecutionSnapshot = {
       evaluation: data,
-      environment,
+      environment:
+        environment?.executionMode === "docker" &&
+        !environment.dockerfilePath &&
+        !environment.dockerfileContent
+          ? { ...environment, dockerfileContent: DEFAULT_DOCKERFILE }
+          : environment,
       persona,
       skills: await Promise.all(
         data.skillIds.map(async (id) => {

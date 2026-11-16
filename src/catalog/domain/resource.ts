@@ -12,8 +12,11 @@ export const resourceSchema = z
       .object({
         ...common,
         kind: z.literal("environment"),
-        description: z.string().default(""),
         workspacePath: z.string().trim().min(1).nullable(),
+        repositoryUrl: z.string().trim().min(1).nullable().default(null),
+        executionMode: z.enum(["local", "docker"]).default("local"),
+        dockerfilePath: z.string().trim().min(1).nullable().default(null),
+        dockerfileContent: z.string().trim().min(1).nullable().default(null),
       })
       .strict(),
     z
@@ -50,6 +53,47 @@ export const resourceSchema = z
       context.addIssue({
         code: "custom",
         message: "Choose either a skill file or inline instructions.",
+      });
+
+    if (
+      resource.kind === "environment" &&
+      resource.workspacePath &&
+      resource.repositoryUrl
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Choose either a local folder or a Git repository.",
+      });
+
+    if (
+      resource.kind === "environment" &&
+      resource.repositoryUrl?.startsWith("-")
+    )
+      context.addIssue({
+        code: "custom",
+        message: "The Git repository cannot start with a hyphen.",
+      });
+
+    if (
+      resource.kind === "environment" &&
+      resource.executionMode === "docker" &&
+      resource.dockerfilePath &&
+      resource.dockerfileContent
+    )
+      context.addIssue({
+        code: "custom",
+        message:
+          "Choose either a Dockerfile path or inline Dockerfile content.",
+      });
+
+    if (
+      resource.kind === "environment" &&
+      resource.executionMode === "local" &&
+      (resource.dockerfilePath || resource.dockerfileContent)
+    )
+      context.addIssue({
+        code: "custom",
+        message: "A local environment cannot use a Dockerfile.",
       });
   });
 

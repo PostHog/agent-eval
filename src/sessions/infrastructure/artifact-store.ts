@@ -12,7 +12,8 @@ import { Inject, Injectable } from "@nestjs/common";
 import { Database } from "../../infrastructure/database.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { WorkspaceStore } from "../domain/workspace-store.js";
-import { contains, snapshot as copySnapshot } from "./workspace-files.js";
+import { contains } from "./workspace-files.js";
+import { prepareWorkspaceSource } from "./workspace-source.js";
 
 const ignored = new Set([
   "node_modules",
@@ -37,13 +38,11 @@ export class ArtifactStore extends WorkspaceStore {
     const root = await mkdtemp(join(tmpdir(), "agent-eval-input-"));
 
     try {
-      if (snapshot.environment?.workspacePath)
-        await copySnapshot(
-          resolve(snapshot.environment.workspacePath),
-          join(root, "workspace"),
-          [resolve(process.env.AGENT_EVAL_DATA_DIR ?? ".agent-eval")],
-        );
-      else await mkdir(join(root, "workspace"));
+      await prepareWorkspaceSource(
+        snapshot.environment,
+        join(root, "workspace"),
+        [resolve(process.env.AGENT_EVAL_DATA_DIR ?? ".agent-eval")],
+      );
 
       for (const [index, skill] of snapshot.skills.entries()) {
         const directory = join(root, "skills", String(index));

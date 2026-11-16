@@ -52,13 +52,19 @@ Evals, resources, sessions, traces, files, judgments, and usage are saved in SQL
 ## Workflow
 
 1. Open **API keys**. Save the provider keys, or set them in `.env`.
-2. Open **Environments**. Add a local project folder. Use `examples/sample-app` for the included Next.js storefront.
+2. Open **Environments**. Start empty, select a local project folder, or enter a Git repository. Use `examples/sample-app` for the included Next.js storefront.
 3. Add personas, skills, and stdio MCP servers as needed. A skill has one title and either inline instructions or one local file path. It has no separate description.
 4. Open **Evals**, then **New eval**. Add the prompt, criteria, environment, and optional resources.
 5. Select a harness, model, effort, count, timeout, and turn limit for each model profile. Select the judge harness and model.
 6. Save the eval, then select **Run eval**.
 
-The app runs up to two sessions at a time. Each session gets a separate temporary workspace. All sessions in a batch use the same saved project and skill inputs. Agents do not edit the source folder.
+The app runs up to two sessions at a time. Each session gets a separate temporary workspace. A folder environment is copied. A repository environment is cloned. Agents do not edit the source folder or a previous session's workspace.
+
+An environment can run on this computer or in Docker. Docker environments can use the inspectable built-in image, a local Dockerfile, or inline Dockerfile content. The app builds the selected configuration, starts one container for each session, and mounts only that session's temporary files at `/agent-eval`. Pi shell commands, native harness processes, and MCP processes then run in that container. A Docker image for Codex, Claude Code, or OpenCode must include the selected harness executable. It must also include a POSIX `sh` shell.
+
+Local folder and file fields accept a path or open the built-in filesystem picker. The picker reads paths from the machine that runs agent-eval.
+
+The included `examples/Dockerfile.posthog-cli` installs a pinned PostHog CLI. Select it as the Dockerfile and use the Pi harness to test `posthog-cli` without installing the command on the host. Docker must be installed and running.
 
 The eval page compares acceptance by model and criterion. Select a previous batch to view its saved configuration. Editing an eval creates a new revision. Previous sessions keep their original settings.
 
@@ -83,7 +89,7 @@ Timeouts use **seconds**. Effort support depends on the model and harness. Nativ
 
 UI keys are encrypted with AES-256-GCM. The encryption key is stored in `.agent-eval/credential.key`. Back up this file with the database. The UI never returns saved key values. A saved key overrides its environment variable. Removing it restores the environment fallback.
 
-Agent tools run with local process permissions. Project copies are not a security sandbox. Use projects without credentials. Input copies omit dependencies, Git metadata, local agent state, `.env` files, and application data. Other sensitive files can still be copied. Symbolic links cause an error.
+Local agent tools run with local process permissions. Docker environments isolate processes but are not a complete security boundary. A selected Dockerfile can run arbitrary commands while its image builds. Use trusted Dockerfiles and projects without credentials. Input copies omit dependencies, Git metadata, local agent state, `.env` files, and application data. Other sensitive files can still be copied. Symbolic links cause an error.
 
 Stopping the app cancels queued and active jobs. On restart, unfinished sessions are marked as failed. Native processes do not resume.
 
@@ -102,7 +108,7 @@ Saved inputs and effective settings support repeatable comparisons. Provider rou
 ## Architecture
 
 - `src/evaluations/domain`: Eval aggregate, Criterion and ModelSettings value objects, repository port.
-- `src/sessions/domain`: Session state transitions, judgments, workspace and session ports.
+- `src/sessions/domain`: Session state transitions, judgments, workspace source and runtime ports.
 - `src/catalog/domain`: Environment, persona, skill, and MCP resources.
 - `src/harnesses/domain`: Harness execution contract and registry port.
 - `application` folders: use cases that coordinate domain objects and ports.
@@ -112,7 +118,7 @@ Saved inputs and effective settings support repeatable comparisons. Provider rou
 - `web/src`: React screens, Vite, and Tailwind styles.
 - `prisma/migrations`: SQLite schema history.
 
-Execution: HTTP request → StartSessions → saved input snapshot → SessionWorker → selected Harness → individual judge → validated Session judgment → SQLite. Comments at these boundaries explain execution and ownership.
+Execution: HTTP request → StartSessions → saved input snapshot → prepared workspace → local or Docker runtime → selected Harness → individual judge → validated Session judgment → SQLite. Comments at these boundaries explain execution and ownership.
 
 Pi SDK execution, tools, limits, and trace formatting are contained in `src/harnesses/infrastructure/pi`. All harnesses share the execution contracts in `src/harnesses/domain`. Pi sends events to the session repository and returns its result to the worker. It does not write duplicate prompt, result, or JSONL report files.
 

@@ -12,6 +12,7 @@ import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import type { Session } from "../domain/session.js";
 import { SessionRepository } from "../domain/session-repository.js";
+import { WorkspaceRuntimeFactory } from "../domain/workspace-runtime.js";
 import { WorkspaceStore } from "../domain/workspace-store.js";
 import { judgeSession } from "./judge-session.js";
 
@@ -22,6 +23,8 @@ export class SessionWorker {
     @Inject(WorkspaceStore) private readonly artifacts: WorkspaceStore,
     @Inject(HarnessRegistry) private readonly harnesses: HarnessRegistry,
     @Inject(CredentialStore) private readonly keys: CredentialStore,
+    @Inject(WorkspaceRuntimeFactory)
+    private readonly runtimes: WorkspaceRuntimeFactory,
   ) {}
 
   async execute(
@@ -33,6 +36,12 @@ export class SessionWorker {
     const root = await mkdtemp(join(tmpdir(), "agent-eval-session-"));
     let agent: HarnessResult | undefined;
     let judge: HarnessResult | undefined;
+    let agentRuntime:
+      | Awaited<ReturnType<WorkspaceRuntimeFactory["create"]>>
+      | undefined;
+    let judgeRuntime:
+      | Awaited<ReturnType<WorkspaceRuntimeFactory["create"]>>
+      | undefined;
 
     try {
       signal.throwIfAborted();
@@ -43,6 +52,12 @@ export class SessionWorker {
       const workspace = join(root, "workspace");
 
       await mkdir(workspace, { recursive: true });
+      agentRuntime = await this.runtimes.create(
+        snapshot.environment,
+        root,
+        workspace,
+        signal,
+      );
 
       const skills = snapshot.skills.map((_, index) =>
         join(root, "skills", String(index)),
@@ -75,6 +90,7 @@ export class SessionWorker {
           snapshot,
           signal,
           "agent",
+          agentRuntime,
         ),
       );
       await this.artifacts.capture(session.id, workspace, "output");
@@ -83,6 +99,8 @@ export class SessionWorker {
         join(root, "agent"),
         "agent-runtime",
       );
+      await agentRuntime.close();
+      agentRuntime = undefined;
       await this.sessions.save(session, agent);
       signal.throwIfAborted();
       session.beginJudging(
@@ -98,16 +116,25 @@ export class SessionWorker {
               () => "[]",
             )
           : JSON.stringify(await this.sessions.events(session.id, "agent"));
+      const judgeWorkspace = join(root, "judge-workspace");
+
+      judgeRuntime = await this.runtimes.create(
+        null,
+        root,
+        judgeWorkspace,
+        signal,
+      );
       const judgeInput = await this.input(
         session,
         snapshot.evaluation.judge,
         root,
-        join(root, "judge-workspace"),
+        judgeWorkspace,
         [],
         judgingPrompt(snapshot, agent, evidence),
         snapshot,
         signal,
         "judge",
+        judgeRuntime,
       );
 
       judge = await judgeSession(
@@ -125,6 +152,9 @@ export class SessionWorker {
       if (judge.status !== "completed")
         throw new Error(judge.error ?? "The judge failed.");
 
+      await judgeRuntime.close();
+      judgeRuntime = undefined;
+
       signal.throwIfAborted();
       session.complete(JSON.parse(judge.text));
       await this.sessions.save(session, agent, judge);
@@ -137,6 +167,11 @@ export class SessionWorker {
 
       await this.sessions.save(session, agent, judge);
     } finally {
+      await Promise.allSettled([
+        ...(agentRuntime ? [agentRuntime.close()] : []),
+        ...(judgeRuntime ? [judgeRuntime.close()] : []),
+      ]);
+
       for (const phase of session.status === "completed"
         ? []
         : ["agent", "judge"]) {
@@ -163,6 +198,7 @@ export class SessionWorker {
     snapshot: ExecutionSnapshot,
     signal: AbortSignal,
     phase: "agent" | "judge",
+    runtime: Awaited<ReturnType<WorkspaceRuntimeFactory["create"]>>,
   ): Promise<HarnessInput> {
     const adapter = this.harnesses.get(settings.harness);
     const apiKey = await this.keys.read(adapter.provider);
@@ -182,6 +218,7 @@ export class SessionWorker {
       maxTurns: settings.maxTurns,
       timeout: settings.timeoutSeconds,
       signal,
+      runtime,
       label: phase === "judge" ? "judge" : session.id,
       tools:
         phase === "judge"

@@ -69,3 +69,41 @@ test("skills use exactly one inline or file source", () => {
     }),
   );
 });
+
+test("environments choose one workspace source and one execution mode", () => {
+  const docker = Resource.create({
+    kind: "environment",
+    title: "Hog CLI",
+    workspacePath: null,
+    repositoryUrl: "https://github.com/PostHog/posthog.git",
+    executionMode: "docker",
+    dockerfilePath: "/tmp/Dockerfile.hog",
+    dockerfileContent: null,
+  });
+
+  assert.equal(docker.value.kind, "environment");
+  assert.equal(docker.value.executionMode, "docker");
+
+  assert.throws(() =>
+    Resource.create({
+      kind: "environment",
+      title: "Two sources",
+      workspacePath: "/tmp/project",
+      repositoryUrl: "https://github.com/PostHog/posthog.git",
+      executionMode: "local",
+      dockerfilePath: null,
+      dockerfileContent: null,
+    }),
+  );
+  assert.throws(() =>
+    Resource.create({
+      kind: "environment",
+      title: "Two Dockerfiles",
+      workspacePath: null,
+      repositoryUrl: null,
+      executionMode: "docker",
+      dockerfilePath: "/tmp/Dockerfile",
+      dockerfileContent: "FROM node:22",
+    }),
+  );
+});

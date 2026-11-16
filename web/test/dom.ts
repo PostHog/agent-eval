@@ -7,6 +7,7 @@ const dom = new JSDOM("<!doctype html><html><body></body></html>", {
 Object.assign(globalThis, {
   window: dom.window,
   document: dom.window.document,
+  Window: dom.window.Window,
   HTMLElement: dom.window.HTMLElement,
   Element: dom.window.Element,
   Node: dom.window.Node,
@@ -37,6 +38,9 @@ class ResizeObserverStub {
 Object.assign(globalThis, { ResizeObserver: ResizeObserverStub });
 Object.assign(dom.window, {
   ResizeObserver: ResizeObserverStub,
+  requestAnimationFrame: (callback: FrameRequestCallback) =>
+    setTimeout(() => callback(performance.now()), 0),
+  cancelAnimationFrame: clearTimeout,
   matchMedia: (query: string) => ({
     matches: false,
     media: query,
@@ -46,3 +50,7 @@ Object.assign(dom.window, {
 });
 
 dom.window.Element.prototype.getAnimations = () => [];
+Object.assign(dom.window.Range.prototype, {
+  getClientRects: () => [],
+  getBoundingClientRect: () => new dom.window.DOMRect(),
+});

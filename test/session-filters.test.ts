@@ -33,7 +33,14 @@ function session(status: string): Session {
     status,
     snapshot: {
       evaluation,
-      environment: { title: "Storefront", workspacePath: null },
+      environment: {
+        title: "Storefront",
+        workspacePath: null,
+        repositoryUrl: null,
+        executionMode: "local",
+        dockerfilePath: null,
+        dockerfileContent: null,
+      },
       persona: null,
       skills: [],
       mcps: [],

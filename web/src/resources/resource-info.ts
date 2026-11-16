@@ -4,8 +4,8 @@ export const resourceInfo = {
     title: "Environments",
     singular: "environment",
     description:
-      "Choose the codebase each agent will work on. Every session gets its own copy; the source folder stays unchanged.",
-    hint: "Use an absolute folder path, or leave it empty to start with no files.",
+      "Choose the codebase and execution boundary for each agent. Every session gets an independent workspace.",
+    hint: "Start empty, copy a local folder, or clone a Git repository. Run the agent on this computer or in Docker.",
   },
   personas: {
     kind: "persona",

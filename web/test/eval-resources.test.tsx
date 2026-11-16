@@ -70,7 +70,7 @@ for (const [kind, field] of [
       fireEvent.change(screen.getByLabelText("Skill instructions"), {
         target: { value: "Test instructions" },
       });
-    else
+    else if (kind !== "environment")
       fireEvent.change(
         screen.getByLabelText(
           kind === "persona" ? "Persona instructions" : "Description",

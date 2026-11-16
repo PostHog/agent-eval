@@ -1,12 +1,7 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
+import type { ProcessCommand } from "../domain/execution.js";
 import type { HarnessInput } from "../domain/harness.js";
-
-export interface ProcessCommand {
-  binary: string;
-  args: string[];
-  env: NodeJS.ProcessEnv;
-}
 
 // Native harnesses run as process groups so cancellation also stops their tool subprocesses.
 export async function runProcess(command: ProcessCommand, input: HarnessInput) {

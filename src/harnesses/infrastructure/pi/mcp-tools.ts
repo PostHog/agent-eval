@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { TSchema } from "typebox";
 import { z } from "zod";
-import type { HarnessRequest } from "../../domain/execution.js";
+import type { HarnessRequest, ProcessCommand } from "../../domain/execution.js";
 
 export async function connectMcpTools(request: HarnessRequest) {
   const clients: Client[] = [];
@@ -18,10 +18,23 @@ export async function connectMcpTools(request: HarnessRequest) {
 
       clients.push(client);
 
-      const transport = new StdioClientTransport({
-        command: server.command,
+      const localCommand: ProcessCommand = {
+        binary: server.command,
         args: server.arguments,
-        cwd: request.workspace,
+        env: process.env,
+      };
+      const command = request.runtime
+        ? await request.runtime.process(localCommand, request.workspace)
+        : localCommand;
+      const transport = new StdioClientTransport({
+        command: command.binary,
+        args: command.args,
+        env: Object.fromEntries(
+          Object.entries(command.env).filter(
+            (entry): entry is [string, string] => entry[1] !== undefined,
+          ),
+        ),
+        ...(request.runtime ? {} : { cwd: request.workspace }),
         stderr: "pipe",
       });
 
