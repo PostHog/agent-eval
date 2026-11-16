@@ -58,6 +58,8 @@ function Editor({
       personaId: null,
       skillIds: [],
       mcpIds: [],
+      judgeSkillIds: [],
+      judgeMcpIds: [],
       models: defaults?.models ?? [],
       judge: defaults?.judge ?? null,
     },
@@ -73,6 +75,9 @@ function Editor({
     error: harnessError,
     refresh: refreshHarnesses,
   } = useApi<Harness[]>("/harnesses");
+  const judgeHarness = harnesses?.find(
+    (harness) => harness.id === value.judge?.harness,
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -93,6 +98,18 @@ function Editor({
 
     if (!value.judge) {
       setError("Add a judge before saving the evaluation.");
+
+      return;
+    }
+
+    if (
+      value.judgeMcpIds.length &&
+      judgeHarness &&
+      !judgeHarness.judgeSupportsMcp
+    ) {
+      setError(
+        `The ${judgeHarness.title} judge cannot use MCP servers. Remove the judge MCP servers or choose another judge harness.`,
+      );
 
       return;
     }
@@ -174,6 +191,7 @@ function Editor({
           resources={resources}
           refreshResources={refreshResources}
           resourcesLoading={resourcesLoading}
+          judgeHarness={judgeHarness}
         />
         <EvalModels value={value} onChange={setValue} harnesses={harnesses} />
         <div className="form-actions">

@@ -40,6 +40,7 @@ export interface Harness {
   installed: boolean;
   models: { id: string; name: string }[];
   supportsMcp: boolean;
+  judgeSupportsMcp: boolean;
 }
 export interface Decision {
   criterionSnapshotId: string;

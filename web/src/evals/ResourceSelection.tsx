@@ -4,6 +4,19 @@ import { Choice } from "../Choice.js";
 import { type ResourceKind, resourceInfo } from "../resources/resource-info.js";
 import type { EvalDraft, Resource } from "../types.js";
 
+export type ResourceTarget = "agent" | "judge";
+
+// Agent and judge selections reuse the same library but save to separate fields.
+export function selectionField(
+  kind: "skills" | "mcps",
+  target: ResourceTarget,
+) {
+  if (target === "judge")
+    return kind === "skills" ? "judgeSkillIds" : "judgeMcpIds";
+
+  return kind === "skills" ? "skillIds" : "mcpIds";
+}
+
 export function ResourceSelection({
   kind,
   resources,
@@ -11,6 +24,8 @@ export function ResourceSelection({
   onChange,
   onCreate,
   loading,
+  target = "agent",
+  unavailable,
 }: {
   kind: ResourceKind;
   resources: Resource[];
@@ -18,6 +33,8 @@ export function ResourceSelection({
   onChange: (value: EvalDraft) => void;
   onCreate: () => void;
   loading: boolean;
+  target?: ResourceTarget;
+  unavailable?: string;
 }) {
   const id = useId();
   const multiple = kind === "skills" || kind === "mcps";
@@ -33,11 +50,13 @@ export function ResourceSelection({
               ? "Environment"
               : "Persona"}
         </h3>
-        <Button type="button" onClick={onCreate}>
+        <Button type="button" disabled={!!unavailable} onClick={onCreate}>
           Create {info.singular}
         </Button>
       </div>
-      {multiple ? (
+      {unavailable ? (
+        <p className="muted">{unavailable}</p>
+      ) : multiple ? (
         <div className="resource-options">
           {resources.length === 0 && (
             <p className="muted">
@@ -47,7 +66,7 @@ export function ResourceSelection({
             </p>
           )}
           {resources.map((resource) => {
-            const key = kind === "skills" ? "skillIds" : "mcpIds";
+            const key = selectionField(kind, target);
 
             return (
               <label

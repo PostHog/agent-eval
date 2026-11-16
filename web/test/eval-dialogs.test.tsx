@@ -20,6 +20,7 @@ const harnesses: Harness[] = [
     installed: true,
     provider: "openrouter",
     supportsMcp: true,
+    judgeSupportsMcp: true,
     models: [
       { id: "model-a", name: "Model A" },
       { id: "model-b", name: "Model B" },
@@ -31,6 +32,7 @@ const harnesses: Harness[] = [
     installed: true,
     provider: "openai",
     supportsMcp: true,
+    judgeSupportsMcp: true,
     models: [{ id: "model-c", name: "Model C" }],
   },
 ];
@@ -50,6 +52,8 @@ function Editor({
     personaId: null,
     skillIds: [],
     mcpIds: [],
+    judgeSkillIds: [],
+    judgeMcpIds: [],
     models: empty ? [] : [{ ...defaultModel, model: "model-a" }],
     judge: empty ? null : { ...defaultModel, model: "model-a" },
   });

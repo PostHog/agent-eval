@@ -1,11 +1,16 @@
 import { Button } from "@posthog/quill";
 import { useState } from "react";
 import type { ResourceKind } from "../resources/resource-info.js";
-import type { EvalDraft, Resource, Resources } from "../types.js";
+import type { EvalDraft, Harness, Resource, Resources } from "../types.js";
 import { ResourceDialog } from "./ResourceDialog.js";
-import { ResourceSelection } from "./ResourceSelection.js";
+import {
+  ResourceSelection,
+  type ResourceTarget,
+  selectionField,
+} from "./ResourceSelection.js";
 
 const kinds = ["environments", "personas", "skills", "mcps"] as const;
+const judgeKinds = ["skills", "mcps"] as const;
 
 export function EvalResources({
   value,
@@ -13,14 +18,19 @@ export function EvalResources({
   resources,
   refreshResources,
   resourcesLoading,
+  judgeHarness,
 }: {
   value: EvalDraft;
   onChange: (value: EvalDraft) => void;
   resources?: Resources;
   refreshResources: () => void;
   resourcesLoading: boolean;
+  judgeHarness?: Harness;
 }) {
-  const [creating, setCreating] = useState<ResourceKind | null>(null);
+  const [creating, setCreating] = useState<{
+    kind: ResourceKind;
+    target: ResourceTarget;
+  } | null>(null);
   const [created, setCreated] = useState<Resources>({
     environments: [],
     personas: [],
@@ -28,31 +38,46 @@ export function EvalResources({
     mcps: [],
   });
 
-  function saved(kind: ResourceKind, resource: Resource) {
+  function saved(
+    kind: ResourceKind,
+    target: ResourceTarget,
+    resource: Resource,
+  ) {
     // Keep the new option visible while the catalog refresh is in flight.
     setCreated((current) => ({
       ...current,
       [kind]: [...current[kind], resource],
     }));
 
-    const key = {
-      environments: "environmentId",
-      personas: "personaId",
-      skills: "skillIds",
-      mcps: "mcpIds",
-    } as const;
-    const field = key[kind];
+    if (kind === "skills" || kind === "mcps") {
+      const field = selectionField(kind, target);
 
-    onChange({
-      ...value,
-      [field]:
-        field === "skillIds" || field === "mcpIds"
-          ? [...value[field], resource.id]
-          : resource.id,
-    });
+      onChange({ ...value, [field]: [...value[field], resource.id] });
+    } else
+      onChange({
+        ...value,
+        [kind === "environments" ? "environmentId" : "personaId"]: resource.id,
+      });
+
     setCreating(null);
     refreshResources();
   }
+
+  function options(kind: ResourceKind) {
+    const listed = resources?.[kind] ?? [];
+
+    return [
+      ...listed,
+      ...created[kind].filter(
+        (resource) => !listed.some((option) => option.id === resource.id),
+      ),
+    ];
+  }
+
+  const judgeMcpUnavailable =
+    judgeHarness && !judgeHarness.judgeSupportsMcp
+      ? `The ${judgeHarness.title} judge cannot use MCP servers. Choose another judge harness to add them.`
+      : undefined;
 
   return (
     <section>
@@ -71,34 +96,47 @@ export function EvalResources({
         resources are optional.
       </p>
       <div className="form-grid eval-resource-grid">
-        {kinds.map((kind) => {
-          const options = resources?.[kind] ?? [];
-          const merged = [
-            ...options,
-            ...created[kind].filter(
-              (resource) =>
-                !options.some((option) => option.id === resource.id),
-            ),
-          ];
-
-          return (
-            <ResourceSelection
-              key={kind}
-              kind={kind}
-              resources={merged}
-              value={value}
-              onChange={onChange}
-              onCreate={() => setCreating(kind)}
-              loading={resourcesLoading}
-            />
-          );
-        })}
+        {kinds.map((kind) => (
+          <ResourceSelection
+            key={kind}
+            kind={kind}
+            resources={options(kind)}
+            value={value}
+            onChange={onChange}
+            onCreate={() => setCreating({ kind, target: "agent" })}
+            loading={resourcesLoading}
+          />
+        ))}
+      </div>
+      <h3 className="judge-resources-heading">Judge resources</h3>
+      <p className="muted">
+        Optional. Judge skills are added to the judge instructions. Judge MCP
+        servers give the judge tools to check evidence. The judge never gets
+        file, shell, or web tools, and it does not receive the agent resources
+        above.
+      </p>
+      <div className="form-grid eval-resource-grid">
+        {judgeKinds.map((kind) => (
+          <ResourceSelection
+            key={`judge-${kind}`}
+            kind={kind}
+            target="judge"
+            resources={options(kind)}
+            value={value}
+            onChange={onChange}
+            onCreate={() => setCreating({ kind, target: "judge" })}
+            loading={resourcesLoading}
+            unavailable={kind === "mcps" ? judgeMcpUnavailable : undefined}
+          />
+        ))}
       </div>
       {creating && (
         <ResourceDialog
-          kind={creating}
+          kind={creating.kind}
           onClose={() => setCreating(null)}
-          onSaved={(resource) => saved(creating, resource)}
+          onSaved={(resource) =>
+            saved(creating.kind, creating.target, resource)
+          }
         />
       )}
     </section>

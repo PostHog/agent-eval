@@ -66,6 +66,8 @@ test("saved model and judge defaults prefill new evaluations without changing ex
     personaId: null,
     skillIds: [],
     mcpIds: [],
+    judgeSkillIds: [],
+    judgeMcpIds: [],
     models: [customModel],
     judge: customModel,
   };
@@ -84,6 +86,7 @@ test("saved model and judge defaults prefill new evaluations without changing ex
             installed: true,
             provider: "openrouter",
             supportsMcp: true,
+            judgeSupportsMcp: true,
             models: [{ id: "custom-model", name: "Custom model" }],
           },
         ]);

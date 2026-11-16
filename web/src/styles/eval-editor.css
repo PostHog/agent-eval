@@ -97,6 +97,9 @@
 .eval-resource-grid {
   gap: 20px 24px;
 }
+.judge-resources-heading {
+  margin-top: 24px;
+}
 .resource-selection .section-heading {
   margin-bottom: 10px;
 }
