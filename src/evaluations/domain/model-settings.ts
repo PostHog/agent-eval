@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const schema = z
+export const modelSettingsSchema = z
   .object({
     harness: z.enum(["pi", "opencode", "codex", "claude"]).default("pi"),
     model: z.string().trim().min(1),
@@ -13,12 +13,12 @@ const schema = z
   })
   .strict();
 
-export type ModelSettingsData = z.infer<typeof schema>;
+export type ModelSettingsData = z.infer<typeof modelSettingsSchema>;
 
 export class ModelSettings {
   private constructor(readonly value: Readonly<ModelSettingsData>) {}
 
   static create(input: unknown): ModelSettings {
-    return new ModelSettings(Object.freeze(schema.parse(input)));
+    return new ModelSettings(Object.freeze(modelSettingsSchema.parse(input)));
   }
 }

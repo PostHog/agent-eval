@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import {
   ApplicationSettings,
   type ApplicationSettingsData,
+  applicationSettingsSchema,
 } from "../domain/application-settings.js";
 import { SettingsRepository } from "../domain/settings-repository.js";
 
@@ -17,7 +18,11 @@ export class SettingsService {
   }
 
   async update(input: unknown): Promise<ApplicationSettingsData> {
-    const settings = ApplicationSettings.create(input);
+    const changes = applicationSettingsSchema.partial().parse(input);
+    const settings = ApplicationSettings.create({
+      ...(await this.settings.get()).value,
+      ...changes,
+    });
 
     await this.settings.save(settings);
 

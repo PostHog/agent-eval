@@ -13,6 +13,7 @@ export function ModelSettingsDialog({
   judge,
   onApply,
   onClose,
+  saveTarget = "evaluation",
 }: {
   title: string;
   initial: ModelSettingsData;
@@ -20,6 +21,7 @@ export function ModelSettingsDialog({
   judge?: boolean;
   onApply: (value: ModelSettingsData) => void;
   onClose: () => void;
+  saveTarget?: "evaluation" | "settings";
 }) {
   const [value, setValue] = useState({ ...initial });
   const [error, setError] = useState("");
@@ -53,7 +55,8 @@ export function ModelSettingsDialog({
         <Notice error={error} />
         <footer className="dialog-actions">
           <span className="muted">
-            Changes apply when you save the evaluation.
+            Changes apply when you save{" "}
+            {saveTarget === "settings" ? "settings" : "the evaluation"}.
           </span>
           <Button type="button" onClick={onClose}>
             Cancel

@@ -1,5 +1,9 @@
 import { Button, Input, Textarea } from "@posthog/quill";
 import { type FormEvent, useState } from "react";
+import type {
+  ApplicationSettingsData,
+  EvaluationDefaultsData,
+} from "../../../src/settings/domain/application-settings.js";
 import { api, useApi } from "../api.js";
 import { Field, Notice, PageTitle } from "../components.js";
 import { RequestState } from "../PageState.js";
@@ -13,10 +17,19 @@ import type {
 import { EvalCriteria } from "./EvalCriteria.js";
 import { EvalModels } from "./EvalModels.js";
 import { EvalResources } from "./EvalResources.js";
-import { defaultModel } from "./ModelPicker.js";
 
 export function EvalEditor({ id }: { id?: string }) {
-  return id ? <ExistingEditor id={id} /> : <Editor />;
+  return id ? <ExistingEditor key={id} id={id} /> : <NewEditor />;
+}
+
+function NewEditor() {
+  const { data, error, refresh } = useApi<ApplicationSettingsData>("/settings");
+
+  return data ? (
+    <Editor defaults={data.evaluationDefaults} />
+  ) : (
+    <RequestState error={error} retry={refresh} />
+  );
 }
 
 function ExistingEditor({ id }: { id: string }) {
@@ -29,7 +42,13 @@ function ExistingEditor({ id }: { id: string }) {
   );
 }
 
-function Editor({ initial }: { initial?: EvaluationData }) {
+function Editor({
+  initial,
+  defaults,
+}: {
+  initial?: EvaluationData;
+  defaults?: EvaluationDefaultsData;
+}) {
   const [value, setValue] = useState<EvalDraft>(
     initial ?? {
       title: "",
@@ -39,39 +58,8 @@ function Editor({ initial }: { initial?: EvaluationData }) {
       personaId: null,
       skillIds: [],
       mcpIds: [],
-      models: [
-        {
-          ...defaultModel,
-          harness: "claude",
-          model: "claude-opus-5-5",
-          effort: "high",
-        },
-        {
-          ...defaultModel,
-          harness: "codex",
-          model: "gpt-6.1-sol",
-          effort: "high",
-        },
-        {
-          ...defaultModel,
-          model: "~deepseek/deepseek-v4-flash-latest",
-          effort: "high",
-        },
-        {
-          ...defaultModel,
-          harness: "opencode",
-          model: "openrouter/moonshotai/kimi-k3",
-          effort: "high",
-        },
-        { ...defaultModel, model: "qwen/qwen3.8-flash", effort: "high" },
-        {
-          ...defaultModel,
-          harness: "claude",
-          model: "claude-sonnet-5-5",
-          effort: "high",
-        },
-      ],
-      judge: { ...defaultModel, model: "anthropic/claude-sonnet-5.5" },
+      models: defaults?.models ?? [],
+      judge: defaults?.judge ?? null,
     },
   );
   const {
@@ -142,6 +130,13 @@ function Editor({ initial }: { initial?: EvaluationData }) {
         Define the task and what success means. Save the evaluation, then run it
         from the report page.
       </p>
+      {!initial && (
+        <p className="section-note">
+          Models and judge start from your{" "}
+          <a href="#settings">evaluation defaults</a>. Changes here apply only
+          to this evaluation.
+        </p>
+      )}
       <Notice error={resourceError || harnessError} />
       {harnessError && (
         <Button type="button" onClick={refreshHarnesses}>

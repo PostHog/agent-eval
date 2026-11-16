@@ -60,6 +60,8 @@ Evals, resources, sessions, traces, files, judgments, and usage are saved in SQL
 
 The app uses the session concurrency limit in **Settings → General**. Each session gets a separate temporary workspace. A folder environment is copied. A repository environment is cloned. Agents do not edit the source folder or a previous session's workspace.
 
+Under **Settings → General → Evaluation defaults**, configure the models and judge that prefill new evaluations, including their harness, effort, session count, timeout, and turn limit. Defaults are saved locally in SQLite. Existing evaluations keep their own configuration. Remove all default models or the judge if you prefer to choose them for each new evaluation.
+
 An environment can run on this computer or in Docker. Docker environments can use the inspectable built-in image, a local Dockerfile, or inline Dockerfile content. The app adds the selected native harness to the image, starts one container for each session, and mounts only that session's temporary files at `/agent-eval`. Pi shell commands, native harness processes, and MCP processes then run in that container. A custom image must include Node.js 22, npm, and a POSIX `sh` shell.
 
 Local folder and file fields accept a path or open the built-in filesystem picker. The picker reads paths from the machine that runs agent-eval.

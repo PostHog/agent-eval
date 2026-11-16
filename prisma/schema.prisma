@@ -188,5 +188,6 @@ model Credential {
 model AppSettings {
   id                 String   @id
   sessionConcurrency Int      @default(2)
+  evaluationDefaults Json?
   updatedAt          DateTime @updatedAt
 }

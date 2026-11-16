@@ -1,5 +1,5 @@
 .settings-form {
-  max-width: 720px;
+  max-width: 1000px;
 }
 
 .settings-section {
@@ -7,6 +7,10 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 22px;
+}
+
+.settings-section + .settings-section {
+  margin-top: 24px;
 }
 
 .settings-section-heading {

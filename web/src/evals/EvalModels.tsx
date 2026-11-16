@@ -5,14 +5,16 @@ import { defaultModel } from "./ModelPicker.js";
 import { ModelSettingsDialog } from "./ModelSettingsDialog.js";
 import { ModelSummary } from "./ModelSummary.js";
 
-export function EvalModels({
+export function EvalModels<T extends Pick<EvalDraft, "models" | "judge">>({
   value,
   onChange,
   harnesses = [],
+  saveTarget = "evaluation",
 }: {
-  value: EvalDraft;
-  onChange: (value: EvalDraft) => void;
+  value: T;
+  onChange: (value: T) => void;
   harnesses?: Harness[];
+  saveTarget?: "evaluation" | "settings";
 }) {
   const [editing, setEditing] = useState<number | "new" | "judge" | null>(null);
 
@@ -97,6 +99,7 @@ export function EvalModels({
       </section>
       {editing !== null && (
         <ModelSettingsDialog
+          saveTarget={saveTarget}
           title={
             editing === "judge"
               ? value.judge

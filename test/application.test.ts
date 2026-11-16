@@ -165,9 +165,40 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     const artifacts = new ArtifactStore(db);
     const settings = new SettingsService(new PrismaSettingsRepository(db));
 
-    assert.equal((await settings.get()).sessionConcurrency, 2);
+    await db.appSettings.create({
+      data: { id: "local", sessionConcurrency: 4 },
+    });
+    const initialSettings = await settings.get();
+    assert.equal(initialSettings.sessionConcurrency, 4);
+    assert.equal(initialSettings.evaluationDefaults.models.length, 6);
+    const evaluationDefaults = {
+      models: [model],
+      judge: { ...model, count: 1 },
+    };
+    await settings.update({ evaluationDefaults });
     await settings.update({ sessionConcurrency: 3 });
     assert.equal((await settings.get()).sessionConcurrency, 3);
+    assert.deepEqual(
+      (await new SettingsService(new PrismaSettingsRepository(db)).get())
+        .evaluationDefaults,
+      evaluationDefaults,
+    );
+    assert.deepEqual(
+      (await evals.get(evaluation.id)).snapshot().models,
+      evaluation.models,
+    );
+    await assert.rejects(
+      settings.update({
+        evaluationDefaults: {
+          models: [{ ...model, maxTurns: 0 }],
+          judge: null,
+        },
+      }),
+    );
+    assert.deepEqual(
+      (await settings.get()).evaluationDefaults,
+      evaluationDefaults,
+    );
 
     const worker = new SessionWorker(
       sessions,

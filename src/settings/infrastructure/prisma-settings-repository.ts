@@ -19,6 +19,7 @@ export class PrismaSettingsRepository extends SettingsRepository {
     return saved
       ? ApplicationSettings.create({
           sessionConcurrency: saved.sessionConcurrency,
+          evaluationDefaults: saved.evaluationDefaults ?? undefined,
         })
       : ApplicationSettings.defaults();
   }
