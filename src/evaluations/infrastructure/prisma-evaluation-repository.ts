@@ -18,6 +18,8 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
         models: { orderBy: { position: "asc" } },
         skills: true,
         mcps: true,
+        judgeSkills: true,
+        judgeMcps: true,
       },
     });
 
@@ -47,6 +49,8 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
       ),
       skillIds: record.skills.map((skill) => skill.skillId),
       mcpIds: record.mcps.map((mcp) => mcp.mcpId),
+      judgeSkillIds: record.judgeSkills.map((skill) => skill.skillId),
+      judgeMcpIds: record.judgeMcps.map((mcp) => mcp.mcpId),
     });
   }
 
@@ -70,6 +74,10 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
       },
       skills: { create: data.skillIds.map((skillId) => ({ skillId })) },
       mcps: { create: data.mcpIds.map((mcpId) => ({ mcpId })) },
+      judgeSkills: {
+        create: data.judgeSkillIds.map((skillId) => ({ skillId })),
+      },
+      judgeMcps: { create: data.judgeMcpIds.map((mcpId) => ({ mcpId })) },
     };
 
     await this.db.$transaction(async (tx) => {
@@ -87,6 +95,8 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
       await tx.modelProfile.deleteMany({ where: { evalId: data.id } });
       await tx.evalSkill.deleteMany({ where: { evalId: data.id } });
       await tx.evalMcp.deleteMany({ where: { evalId: data.id } });
+      await tx.evalJudgeSkill.deleteMany({ where: { evalId: data.id } });
+      await tx.evalJudgeMcp.deleteMany({ where: { evalId: data.id } });
       await tx.eval.update({ where: { id: data.id }, data: values });
     });
   }

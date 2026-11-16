@@ -13,6 +13,8 @@ function evaluation() {
     personaId: null,
     skillIds: [],
     mcpIds: [],
+    judgeSkillIds: [],
+    judgeMcpIds: [],
     criteria: [Criterion.create("The build passes.")],
     models: [{ ...ModelSettings.create({ model: "openai/test" }).value }],
     judge: { ...ModelSettings.create({ model: "anthropic/test" }).value },

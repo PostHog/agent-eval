@@ -216,3 +216,48 @@ test("native usage distinguishes unavailable cost and avoids double-counting Cod
 
   assert.equal(claude.usage?.costUsd, 0.03);
 });
+
+test("a judge with MCP servers keeps built-in tools off and can call MCP tools", async () => {
+  const f = await fixture();
+
+  try {
+    const input: HarnessInput = {
+      label: "judge",
+      directory: f.root,
+      workspace: f.workspace,
+      skills: [],
+      prompt: "Test",
+      model: "test",
+      effort: "low",
+      tools: [],
+      timeout: 10,
+      maxTurns: 2,
+      apiKey: "secret-key",
+      signal: new AbortController().signal,
+      settings: { ...ModelSettings.create({ model: "test" }).value },
+      onRawEvent: async () => {},
+      mcps: [{ title: "Docs", command: "docs-mcp", arguments: ["--stdio"] }],
+    };
+
+    const claude = await externalCommand("claude", input);
+
+    assert.equal(claude.args[claude.args.indexOf("--tools") + 1], "");
+    assert.match(
+      claude.args[claude.args.indexOf("--allowedTools") + 1] ?? "",
+      /mcp__eval_0__\*/,
+    );
+
+    // Codex rejects MCP calls under approval_policy="never" unless the server pre-approves them.
+    const codex = await externalCommand("codex", input);
+
+    assert.equal(codex.args[codex.args.indexOf("--sandbox") + 1], "read-only");
+    assert.ok(codex.args.includes('mcp_servers.eval_0.command="docs-mcp"'));
+    assert.ok(
+      codex.args.includes(
+        'mcp_servers.eval_0.default_tools_approval_mode="approve"',
+      ),
+    );
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
+});

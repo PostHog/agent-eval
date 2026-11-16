@@ -16,6 +16,8 @@ export interface Harness {
   readonly provider: Provider;
   readonly binary: string | null;
   readonly supportsMcp: boolean;
+  // True when MCP tools stay callable while every built-in tool is off, as the judge requires.
+  readonly judgeSupportsMcp: boolean;
   models(): Promise<{ id: string; name: string }[]>;
   run(input: HarnessInput): Promise<HarnessResult>;
 }

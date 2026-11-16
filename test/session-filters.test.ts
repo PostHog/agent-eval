@@ -19,6 +19,8 @@ function session(status: string): Session {
     personaId: null,
     skillIds: [],
     mcpIds: [],
+    judgeSkillIds: [],
+    judgeMcpIds: [],
     criteria: [Criterion.create("The build passes.")],
     models: [model],
     judge: model,

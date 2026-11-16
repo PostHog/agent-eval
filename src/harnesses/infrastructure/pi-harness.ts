@@ -10,6 +10,7 @@ export class PiHarness implements Harness {
   readonly provider = "openrouter";
   readonly binary = null;
   readonly supportsMcp = true;
+  readonly judgeSupportsMcp = true;
 
   models() {
     return providerModels(this.provider);

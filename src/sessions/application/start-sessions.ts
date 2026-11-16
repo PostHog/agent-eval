@@ -9,7 +9,10 @@ import {
 } from "@nestjs/common";
 import { z } from "zod";
 import { AnalyticsService } from "../../analytics/analytics-service.js";
-import { ResourceRepository } from "../../catalog/domain/resource-repository.js";
+import {
+  type ResourceLists,
+  ResourceRepository,
+} from "../../catalog/domain/resource-repository.js";
 import { CredentialStore } from "../../credentials/provider.js";
 import { EvaluationRepository } from "../../evaluations/domain/evaluation-repository.js";
 import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
@@ -77,6 +80,15 @@ export class StartSessions implements OnModuleDestroy {
           `Add the ${harness.provider} API key before running this evaluation.`,
         );
     }
+
+    const judgeHarness = catalog.find(
+      (entry) => entry.id === data.judge.harness,
+    );
+
+    if (data.judgeMcpIds.length && !judgeHarness?.judgeSupportsMcp)
+      throw new Error(
+        `The ${judgeHarness?.title ?? data.judge.harness} judge cannot use MCP servers. Choose another judge harness or remove the judge MCP servers.`,
+      );
     const resources = await this.catalog.list();
     const environment =
       resources.environments.find((entry) => entry.id === data.environmentId) ??
@@ -92,26 +104,10 @@ export class StartSessions implements OnModuleDestroy {
           ? { ...environment, dockerfileContent: DEFAULT_DOCKERFILE }
           : environment,
       persona,
-      skills: await Promise.all(
-        data.skillIds.map(async (id) => {
-          const skill = resources.skills.find((entry) => entry.id === id);
-
-          if (!skill) throw new Error(`Skill not found: ${id}`);
-
-          const content =
-            skill.content ??
-            (skill.filePath ? await readFile(skill.filePath, "utf8") : "");
-
-          return { title: skill.title, content };
-        }),
-      ),
-      mcps: data.mcpIds.map((id) => {
-        const mcp = resources.mcps.find((entry) => entry.id === id);
-
-        if (!mcp) throw new Error(`MCP not found: ${id}`);
-
-        return { ...mcp, arguments: z.array(z.string()).parse(mcp.arguments) };
-      }),
+      skills: await resolveSkills(resources.skills, data.skillIds),
+      mcps: resolveMcps(resources.mcps, data.mcpIds),
+      judgeSkills: await resolveSkills(resources.skills, data.judgeSkillIds),
+      judgeMcps: resolveMcps(resources.mcps, data.judgeMcpIds),
     };
     const batchId = randomUUID();
     const created: Session[] = [];
@@ -165,6 +161,8 @@ export class StartSessions implements OnModuleDestroy {
       batch_id: batchId,
       session_count: created.length,
       environment_mode: snapshot.environment?.executionMode ?? "local",
+      judge_skill_count: data.judgeSkillIds.length,
+      judge_mcp_count: data.judgeMcpIds.length,
     });
     this.analytics?.info("Evaluation run started", {
       session_count: created.length,
@@ -188,4 +186,31 @@ export class StartSessions implements OnModuleDestroy {
 
     await Promise.allSettled([...this.active.values()].map((job) => job.task));
   }
+}
+
+// Freeze skill text at run start so later library edits cannot change a queued session.
+function resolveSkills(skills: ResourceLists["skills"], ids: string[]) {
+  return Promise.all(
+    ids.map(async (id) => {
+      const skill = skills.find((entry) => entry.id === id);
+
+      if (!skill) throw new Error(`Skill not found: ${id}`);
+
+      const content =
+        skill.content ??
+        (skill.filePath ? await readFile(skill.filePath, "utf8") : "");
+
+      return { title: skill.title, content };
+    }),
+  );
+}
+
+function resolveMcps(mcps: ResourceLists["mcps"], ids: string[]) {
+  return ids.map((id) => {
+    const mcp = mcps.find((entry) => entry.id === id);
+
+    if (!mcp) throw new Error(`MCP not found: ${id}`);
+
+    return { ...mcp, arguments: z.array(z.string()).parse(mcp.arguments) };
+  });
 }

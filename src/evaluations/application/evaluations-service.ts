@@ -24,6 +24,8 @@ const inputSchema = z
     personaId: z.string().uuid().nullable().default(null),
     skillIds: z.array(z.string().uuid()).default([]),
     mcpIds: z.array(z.string().uuid()).default([]),
+    judgeSkillIds: z.array(z.string().uuid()).default([]),
+    judgeMcpIds: z.array(z.string().uuid()).default([]),
     models: z.array(z.unknown()),
     judge: z.unknown(),
   })
@@ -56,6 +58,8 @@ export class EvaluationsService {
       personaId: value.personaId,
       skillIds: [...new Set(value.skillIds)],
       mcpIds: [...new Set(value.mcpIds)],
+      judgeSkillIds: [...new Set(value.judgeSkillIds)],
+      judgeMcpIds: [...new Set(value.judgeMcpIds)],
       criteria: value.criteria.map((criterion) =>
         criterion.id
           ? Criterion.restore(criterion)
@@ -82,6 +86,8 @@ export class EvaluationsService {
       evaluation_id: entity.snapshot().id,
       criteria_count: data.criteria.length,
       model_count: data.models.length,
+      judge_skill_count: data.judgeSkillIds.length,
+      judge_mcp_count: data.judgeMcpIds.length,
     });
 
     return entity.snapshot();

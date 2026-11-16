@@ -7,6 +7,7 @@ export interface HarnessCatalogEntry {
   installed: boolean;
   models: { id: string; name: string }[];
   supportsMcp: boolean;
+  judgeSupportsMcp: boolean;
 }
 
 export abstract class HarnessRegistry {
