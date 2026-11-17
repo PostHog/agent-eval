@@ -51,7 +51,7 @@ Evals, resources, sessions, traces, files, judgments, and usage are saved in SQL
 
 1. Open **API keys**. Save the provider keys, or set them in `.env`.
 2. Open **Environments**. Start empty, select a local project folder, or enter a Git repository. Use `examples/sample-app` for the included Next.js storefront.
-3. Add personas, skills, and stdio MCP servers as needed. A skill has one title and either inline instructions or one local file path. It has no separate description.
+3. Add personas, skills, and stdio MCP servers as needed. A skill has one title and either inline instructions or one local file path. It has no separate description. The same skills and MCP servers can be selected for agents, judges, or both.
 4. Open **Evals**, then **New eval**. Add the prompt, criteria, environment, and optional resources.
 5. Select a harness, model, effort, count, timeout, and turn limit for each model profile. Select the judge harness and model.
 6. Save the eval, then select **Run eval**.
@@ -101,7 +101,9 @@ Stopping the app cancels queued and active jobs. On restart, unfinished sessions
 
 ## Judging and metrics
 
-Each session has its own judge call. The judge receives its final response, transcript, tool evidence, criteria, and resource context. Judges receive no skills or MCP servers. Pi and Claude tools are disabled. OpenCode tool permissions are denied. Codex uses a read-only sandbox; its built-in read tools remain available. Session content is evidence, not instructions.
+Each session has its own judge call. The judge receives its final response, transcript, tool evidence, criteria, and resource context. Judges never receive the agent's skills or MCP servers. Pi and Claude built-in tools are disabled. OpenCode tool permissions are denied. Codex uses a read-only sandbox; its built-in read tools remain available. Session content is evidence, not instructions.
+
+An eval can also select **judge resources** from the same skill and MCP library. Judge skills are added to the judge instructions, because the judge has no file tools to load a skill file. Judge MCP servers give the judge tools to check evidence. For each judge MCP server, name the tools the judge may call. The judge can call only those tools, and it calls them without asking for approval, so name read-only tools. A transcript can contain text written to steer the judge, and the tool list limits what that text can reach. The judge is told to use tools only to read or check information, and their results count as evidence. Built-in file, shell, and web tools stay disabled. Judge MCP servers work with the Pi and Claude Code judges. Codex judges cannot use them, because Codex can still read files on this computer from its read-only sandbox. OpenCode judges cannot use them, because its judge configuration denies every tool. The judge always runs on this computer, so judge MCP processes run locally even when the environment uses Docker.
 
 The judge must return one pass/fail decision and a reason for each criterion. Missing evidence counts as failure. The app validates criterion IDs and rejects missing, duplicate, or extra decisions. A malformed response gets one correction attempt within the original judge timeout. Both attempts count toward usage and remain in the saved traces. A second malformed response marks the session as failed. Provider and execution errors are not retried. A valid assessment can complete with failed criteria.
 

@@ -5,6 +5,7 @@ import { ModelSettings } from "../src/evaluations/domain/model-settings.js";
 import type { HarnessInput } from "../src/harnesses/domain/harness.js";
 import { externalCommand } from "../src/harnesses/infrastructure/external-command.js";
 import { summarizeEvents } from "../src/harnesses/infrastructure/external-events.js";
+import { ExternalHarness } from "../src/harnesses/infrastructure/external-harness.js";
 import { runProcess } from "../src/harnesses/infrastructure/process-runner.js";
 import { fixture } from "./fixture.js";
 
@@ -215,4 +216,87 @@ test("native usage distinguishes unavailable cost and avoids double-counting Cod
   assert.equal(claude.usage?.total, 65);
 
   assert.equal(claude.usage?.costUsd, 0.03);
+});
+
+test("a judge with MCP servers keeps built-in tools off and can call only allowed MCP tools", async () => {
+  const f = await fixture();
+
+  try {
+    const input: HarnessInput = {
+      label: "judge",
+      directory: f.root,
+      workspace: f.workspace,
+      skills: [],
+      prompt: "Test",
+      model: "test",
+      effort: "low",
+      tools: [],
+      timeout: 10,
+      maxTurns: 2,
+      apiKey: "secret-key",
+      signal: new AbortController().signal,
+      settings: { ...ModelSettings.create({ model: "test" }).value },
+      onRawEvent: async () => {},
+      mcps: [
+        {
+          title: "Docs",
+          command: "docs-mcp",
+          arguments: ["--stdio"],
+          allowedTools: ["search", "docs.get"],
+        },
+      ],
+    };
+
+    const claude = await externalCommand("claude", input);
+    const allowed = (
+      claude.args[claude.args.indexOf("--allowedTools") + 1] ?? ""
+    ).split(",");
+
+    assert.equal(claude.args[claude.args.indexOf("--tools") + 1], "");
+    // Claude Code replaces dots in MCP tool names with underscores.
+    assert.ok(allowed.includes("mcp__eval_0__search"));
+    assert.ok(allowed.includes("mcp__eval_0__docs_get"));
+    assert.ok(!allowed.includes("mcp__eval_0__*"));
+
+    // Only the Claude Code judge accepts MCP servers. Codex can still read host files from its sandbox.
+    assert.deepEqual(
+      (["claude", "codex", "opencode"] as const).map(
+        (id) => new ExternalHarness(id, id, "openai").judgeSupportsMcp,
+      ),
+      [true, false, false],
+    );
+
+    // Codex and OpenCode cannot limit MCP tools, so a tool list is rejected rather than ignored.
+    for (const id of ["codex", "opencode"] as const)
+      await assert.rejects(
+        externalCommand(id, input),
+        /cannot limit MCP tools/,
+      );
+
+    // Agents keep every tool. Claude allows the whole server.
+    const agentInput: HarnessInput = {
+      ...input,
+      label: "agent",
+      mcps: [{ title: "Docs", command: "docs-mcp", arguments: ["--stdio"] }],
+    };
+    const agentClaude = await externalCommand("claude", agentInput);
+
+    assert.match(
+      agentClaude.args[agentClaude.args.indexOf("--allowedTools") + 1] ?? "",
+      /mcp__eval_0__\*/,
+    );
+
+    // Codex rejects MCP calls under approval_policy="never" unless the server pre-approves them.
+    const codex = await externalCommand("codex", agentInput);
+
+    assert.equal(codex.args[codex.args.indexOf("--sandbox") + 1], "read-only");
+    assert.ok(codex.args.includes('mcp_servers.eval_0.command="docs-mcp"'));
+    assert.ok(
+      codex.args.includes(
+        'mcp_servers.eval_0.default_tools_approval_mode="approve"',
+      ),
+    );
+  } finally {
+    await rm(f.root, { recursive: true, force: true });
+  }
 });

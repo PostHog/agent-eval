@@ -23,6 +23,8 @@ model Eval {
   models        ModelProfile[]
   skills        EvalSkill[]
   mcps          EvalMcp[]
+  judgeSkills   EvalJudgeSkill[]
+  judgeMcps     EvalJudgeMcp[]
   sessions      Session[]
 }
 
@@ -81,6 +83,7 @@ model Skill {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   evals     EvalSkill[]
+  judges    EvalJudgeSkill[]
 }
 
 model Mcp {
@@ -92,6 +95,7 @@ model Mcp {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   evals       EvalMcp[]
+  judges      EvalJudgeMcp[]
 }
 
 model EvalSkill {
@@ -108,6 +112,27 @@ model EvalMcp {
   mcpId  String
   eval   Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
   mcp    Mcp    @relation(fields: [mcpId], references: [id], onDelete: Restrict)
+
+  @@id([evalId, mcpId])
+}
+
+// Judge resources reuse the shared library but are selected separately from agent resources.
+model EvalJudgeSkill {
+  evalId  String
+  skillId String
+  eval    Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@id([evalId, skillId])
+}
+
+model EvalJudgeMcp {
+  evalId       String
+  mcpId        String
+  // Only these tools from the server are registered for the judge.
+  allowedTools Json   @default("[]")
+  eval         Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  mcp          Mcp    @relation(fields: [mcpId], references: [id], onDelete: Restrict)
 
   @@id([evalId, mcpId])
 }

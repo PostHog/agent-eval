@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -8,7 +9,7 @@ import {
 import { z } from "zod";
 import { AnalyticsService } from "../../analytics/analytics-service.js";
 import { Criterion } from "../domain/criterion.js";
-import { Evaluation } from "../domain/evaluation.js";
+import { Evaluation, mcpToolName } from "../domain/evaluation.js";
 import { EvaluationRepository } from "../domain/evaluation-repository.js";
 import { ModelSettings } from "../domain/model-settings.js";
 
@@ -24,6 +25,11 @@ const inputSchema = z
     personaId: z.string().uuid().nullable().default(null),
     skillIds: z.array(z.string().uuid()).default([]),
     mcpIds: z.array(z.string().uuid()).default([]),
+    judgeSkillIds: z.array(z.string().uuid()).default([]),
+    judgeMcpIds: z.array(z.string().uuid()).default([]),
+    judgeMcpTools: z
+      .record(z.string().uuid(), z.array(z.string().trim().pipe(mcpToolName)))
+      .default({}),
     models: z.array(z.unknown()),
     judge: z.unknown(),
   })
@@ -49,6 +55,20 @@ export class EvaluationsService {
 
   async save(input: unknown, id?: string) {
     const value = inputSchema.parse(input);
+    const judgeMcpIds = [...new Set(value.judgeMcpIds)];
+    // Judge MCP tools are auto-approved, so the author must name each one the judge may call.
+    const judgeMcpTools = Object.fromEntries(
+      judgeMcpIds.map((mcpId) => [
+        mcpId,
+        [...new Set(value.judgeMcpTools[mcpId] ?? [])],
+      ]),
+    );
+
+    if (Object.values(judgeMcpTools).some((tools) => !tools.length))
+      throw new BadRequestException(
+        "Name at least one tool the judge may call from each judge MCP server.",
+      );
+
     const data = {
       title: value.title,
       prompt: value.prompt,
@@ -56,6 +76,9 @@ export class EvaluationsService {
       personaId: value.personaId,
       skillIds: [...new Set(value.skillIds)],
       mcpIds: [...new Set(value.mcpIds)],
+      judgeSkillIds: [...new Set(value.judgeSkillIds)],
+      judgeMcpIds,
+      judgeMcpTools,
       criteria: value.criteria.map((criterion) =>
         criterion.id
           ? Criterion.restore(criterion)
@@ -82,6 +105,8 @@ export class EvaluationsService {
       evaluation_id: entity.snapshot().id,
       criteria_count: data.criteria.length,
       model_count: data.models.length,
+      judge_skill_count: data.judgeSkillIds.length,
+      judge_mcp_count: data.judgeMcpIds.length,
     });
 
     return entity.snapshot();

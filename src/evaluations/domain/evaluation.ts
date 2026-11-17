@@ -3,6 +3,9 @@ import { z } from "zod";
 import { Criterion } from "./criterion.js";
 import { ModelSettings, type ModelSettingsData } from "./model-settings.js";
 
+// MCP tool names: 1-128 letters, digits, underscores, hyphens, or dots.
+export const mcpToolName = z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/);
+
 const schema = z
   .object({
     id: z.string().uuid(),
@@ -15,6 +18,13 @@ const schema = z
     personaId: z.string().uuid().nullable(),
     skillIds: z.array(z.string().uuid()),
     mcpIds: z.array(z.string().uuid()),
+    // Judge resources are separate from agent resources. Older records have none.
+    judgeSkillIds: z.array(z.string().uuid()).default([]),
+    judgeMcpIds: z.array(z.string().uuid()).default([]),
+    // Tools the judge may call, keyed by judge MCP server ID. A server with no entry exposes no tools.
+    judgeMcpTools: z
+      .record(z.string().uuid(), z.array(mcpToolName))
+      .default({}),
     models: z.array(z.unknown()).min(1),
     judge: z.unknown(),
     revision: z.number().int().positive(),

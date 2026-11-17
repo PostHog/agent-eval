@@ -100,6 +100,7 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
       binary: null,
       provider: "openrouter",
       supportsMcp: true,
+      judgeSupportsMcp: true,
       models: async () => [{ id: "test-model", name: "Test" }],
       run: async (input) => {
         await input.onRawEvent({ type: "test", label: input.label });
@@ -158,6 +159,7 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
           provider: "openrouter",
           models: [{ id: "test-model", name: "Test" }],
           supportsMcp: true,
+          judgeSupportsMcp: true,
         },
       ],
     };

@@ -17,6 +17,10 @@ import type {
 import { EvalCriteria } from "./EvalCriteria.js";
 import { EvalModels } from "./EvalModels.js";
 import { EvalResources } from "./EvalResources.js";
+import {
+  missingJudgeMcpTools,
+  withJudgeMcpSupport,
+} from "./ResourceSelection.js";
 
 export function EvalEditor({ id }: { id?: string }) {
   return id ? <ExistingEditor key={id} id={id} /> : <NewEditor />;
@@ -58,6 +62,9 @@ function Editor({
       personaId: null,
       skillIds: [],
       mcpIds: [],
+      judgeSkillIds: [],
+      judgeMcpIds: [],
+      judgeMcpTools: {},
       models: defaults?.models ?? [],
       judge: defaults?.judge ?? null,
     },
@@ -73,6 +80,9 @@ function Editor({
     error: harnessError,
     refresh: refreshHarnesses,
   } = useApi<Harness[]>("/harnesses");
+  const judgeHarness = harnesses?.find(
+    (harness) => harness.id === value.judge?.harness,
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -93,6 +103,26 @@ function Editor({
 
     if (!value.judge) {
       setError("Add a judge before saving the evaluation.");
+
+      return;
+    }
+
+    if (
+      value.judgeMcpIds.length &&
+      judgeHarness &&
+      !judgeHarness.judgeSupportsMcp
+    ) {
+      setError(
+        `The ${judgeHarness.title} judge cannot use MCP servers. Remove the judge MCP servers or choose another judge harness.`,
+      );
+
+      return;
+    }
+
+    if (missingJudgeMcpTools(value)) {
+      setError(
+        "Name at least one tool the judge may call from each judge MCP server.",
+      );
 
       return;
     }
@@ -174,8 +204,13 @@ function Editor({
           resources={resources}
           refreshResources={refreshResources}
           resourcesLoading={resourcesLoading}
+          judgeHarness={judgeHarness}
         />
-        <EvalModels value={value} onChange={setValue} harnesses={harnesses} />
+        <EvalModels
+          value={value}
+          onChange={(next) => setValue(withJudgeMcpSupport(next, harnesses))}
+          harnesses={harnesses}
+        />
         <div className="form-actions">
           <Notice error={error} />
           <p className="section-note">

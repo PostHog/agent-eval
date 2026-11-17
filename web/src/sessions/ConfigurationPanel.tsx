@@ -81,6 +81,33 @@ export function ConfigurationPanel({ session }: { session: Session }) {
             "None"
           )}
         </dd>
+        <dt>Judge skills</dt>
+        <dd>
+          {snapshot.judgeSkills?.length ? (
+            <ul>
+              {snapshot.judgeSkills.map((skill) => (
+                <li key={skill.title}>{skill.title}</li>
+              ))}
+            </ul>
+          ) : (
+            "None"
+          )}
+        </dd>
+        <dt>Judge MCP servers</dt>
+        <dd>
+          {snapshot.judgeMcps?.length ? (
+            <ul>
+              {snapshot.judgeMcps.map((mcp, index) => (
+                <li key={`${index}-${mcp.title}`}>
+                  {mcp.title}
+                  <small>{mcp.command}</small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            "None"
+          )}
+        </dd>
       </dl>
       <Collapsible>
         <CollapsibleTrigger>Full configuration (JSON)</CollapsibleTrigger>

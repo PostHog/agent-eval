@@ -24,6 +24,7 @@ export function observedHarness(
     provider: harness.provider,
     binary: harness.binary,
     supportsMcp: harness.supportsMcp,
+    judgeSupportsMcp: harness.judgeSupportsMcp,
     models: () => harness.models(),
     async run(input) {
       const started = new Date();

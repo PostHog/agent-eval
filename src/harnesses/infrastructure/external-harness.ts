@@ -14,6 +14,10 @@ import { runProcess } from "./process-runner.js";
 export class ExternalHarness implements Harness {
   readonly supportsMcp = true;
   readonly binary: string;
+  // OpenCode's judge config denies every permission, which also blocks MCP tools.
+  // Codex keeps shell reads of host files even in its read-only sandbox, so a judge
+  // steered by planted transcript text could send those files out through MCP tool arguments.
+  readonly judgeSupportsMcp: boolean;
 
   constructor(
     readonly id: "codex" | "claude" | "opencode",
@@ -21,6 +25,7 @@ export class ExternalHarness implements Harness {
     readonly provider: "openai" | "anthropic" | "openrouter",
   ) {
     this.binary = id;
+    this.judgeSupportsMcp = id === "claude";
   }
 
   async run(input: HarnessInput): Promise<HarnessResult> {

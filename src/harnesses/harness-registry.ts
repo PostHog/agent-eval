@@ -49,6 +49,7 @@ export class DefaultHarnessRegistry extends HarnessRegistry {
           installed,
           models,
           supportsMcp: adapter.supportsMcp,
+          judgeSupportsMcp: adapter.judgeSupportsMcp,
         };
       }),
     );

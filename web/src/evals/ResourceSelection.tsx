@@ -1,8 +1,76 @@
-import { Button, Checkbox } from "@posthog/quill";
-import { useId } from "react";
+import { Button, Checkbox, Input } from "@posthog/quill";
+import { useId, useState } from "react";
 import { Choice } from "../Choice.js";
 import { type ResourceKind, resourceInfo } from "../resources/resource-info.js";
-import type { EvalDraft, Resource } from "../types.js";
+import type { EvalDraft, Harness, Resource } from "../types.js";
+
+export type ResourceTarget = "agent" | "judge";
+
+// The judge MCP picker is hidden for judges without MCP support, so clear the selection
+// on a harness change. Otherwise nothing on screen could remove the IDs that block saving.
+export function withJudgeMcpSupport(
+  value: EvalDraft,
+  harnesses: Harness[] | undefined,
+): EvalDraft {
+  const judgeHarness = harnesses?.find(
+    (harness) => harness.id === value.judge?.harness,
+  );
+
+  return judgeHarness &&
+    !judgeHarness.judgeSupportsMcp &&
+    value.judgeMcpIds.length
+    ? { ...value, judgeMcpIds: [], judgeMcpTools: {} }
+    : value;
+}
+
+// Judge MCP tools are auto-approved, so the judge may call only the tools named here.
+export function missingJudgeMcpTools(value: EvalDraft): boolean {
+  return value.judgeMcpIds.some((id) => !value.judgeMcpTools[id]?.length);
+}
+
+function JudgeMcpTools({
+  title,
+  tools,
+  onChange,
+}: {
+  title: string;
+  tools: string[];
+  onChange: (tools: string[]) => void;
+}) {
+  // Keep the typed text so separators are not dropped while the user types.
+  const [text, setText] = useState(tools.join(", "));
+
+  return (
+    <Input
+      className="judge-mcp-tools"
+      aria-label={`Tools the judge may call from ${title}`}
+      placeholder="Allowed tools, comma separated (required)"
+      value={text}
+      onChange={(event) => {
+        setText(event.target.value);
+        onChange([
+          ...new Set(
+            event.target.value
+              .split(",")
+              .map((tool) => tool.trim())
+              .filter(Boolean),
+          ),
+        ]);
+      }}
+    />
+  );
+}
+
+// Agent and judge selections reuse the same library but save to separate fields.
+export function selectionField(
+  kind: "skills" | "mcps",
+  target: ResourceTarget,
+) {
+  if (target === "judge")
+    return kind === "skills" ? "judgeSkillIds" : "judgeMcpIds";
+
+  return kind === "skills" ? "skillIds" : "mcpIds";
+}
 
 export function ResourceSelection({
   kind,
@@ -11,6 +79,8 @@ export function ResourceSelection({
   onChange,
   onCreate,
   loading,
+  target = "agent",
+  unavailable,
 }: {
   kind: ResourceKind;
   resources: Resource[];
@@ -18,6 +88,8 @@ export function ResourceSelection({
   onChange: (value: EvalDraft) => void;
   onCreate: () => void;
   loading: boolean;
+  target?: ResourceTarget;
+  unavailable?: string;
 }) {
   const id = useId();
   const multiple = kind === "skills" || kind === "mcps";
@@ -33,11 +105,13 @@ export function ResourceSelection({
               ? "Environment"
               : "Persona"}
         </h3>
-        <Button type="button" onClick={onCreate}>
+        <Button type="button" disabled={!!unavailable} onClick={onCreate}>
           Create {info.singular}
         </Button>
       </div>
-      {multiple ? (
+      {unavailable ? (
+        <p className="muted">{unavailable}</p>
+      ) : multiple ? (
         <div className="resource-options">
           {resources.length === 0 && (
             <p className="muted">
@@ -47,28 +121,47 @@ export function ResourceSelection({
             </p>
           )}
           {resources.map((resource) => {
-            const key = kind === "skills" ? "skillIds" : "mcpIds";
+            const key = selectionField(kind, target);
+            const checked = value[key].includes(resource.id);
+            const judgeMcp = kind === "mcps" && target === "judge";
 
             return (
-              <label
-                className="checkbox"
-                key={resource.id}
-                htmlFor={`${id}-${resource.id}`}
-              >
-                <Checkbox
-                  id={`${id}-${resource.id}`}
-                  checked={value[key].includes(resource.id)}
-                  onCheckedChange={(checked) =>
-                    onChange({
-                      ...value,
-                      [key]: checked
-                        ? [...value[key], resource.id]
-                        : value[key].filter((id) => id !== resource.id),
-                    })
-                  }
-                />
-                {resource.title}
-              </label>
+              <div key={resource.id}>
+                <label className="checkbox" htmlFor={`${id}-${resource.id}`}>
+                  <Checkbox
+                    id={`${id}-${resource.id}`}
+                    checked={checked}
+                    onCheckedChange={(next) => {
+                      const { [resource.id]: _removed, ...judgeMcpTools } =
+                        value.judgeMcpTools;
+
+                      onChange({
+                        ...value,
+                        [key]: next
+                          ? [...value[key], resource.id]
+                          : value[key].filter((id) => id !== resource.id),
+                        ...(judgeMcp && !next ? { judgeMcpTools } : {}),
+                      });
+                    }}
+                  />
+                  {resource.title}
+                </label>
+                {judgeMcp && checked && (
+                  <JudgeMcpTools
+                    title={resource.title}
+                    tools={value.judgeMcpTools[resource.id] ?? []}
+                    onChange={(tools) =>
+                      onChange({
+                        ...value,
+                        judgeMcpTools: {
+                          ...value.judgeMcpTools,
+                          [resource.id]: tools,
+                        },
+                      })
+                    }
+                  />
+                )}
+              </div>
             );
           })}
         </div>

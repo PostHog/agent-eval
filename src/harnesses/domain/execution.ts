@@ -24,6 +24,14 @@ export interface HarnessRuntime {
   close(): Promise<void>;
 }
 
+export interface McpServer {
+  title: string;
+  command: string;
+  arguments: string[];
+  // Undefined exposes every tool, as agents get. A list exposes only those tools, as judges get.
+  allowedTools?: string[];
+}
+
 export interface HarnessRequest {
   label: string;
   directory: string;
@@ -47,7 +55,7 @@ export interface HarnessRequest {
   signal: AbortSignal;
   persona?: string;
   apiKey?: string;
-  mcps?: { title: string; command: string; arguments: string[] }[];
+  mcps?: McpServer[];
   onRawEvent?: (event: unknown) => Promise<void>;
   runtime?: HarnessRuntime;
 }

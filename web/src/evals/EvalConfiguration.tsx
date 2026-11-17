@@ -23,6 +23,18 @@ export function EvalConfiguration({
   const mcps =
     snapshot?.mcps ??
     data?.mcps.filter((item) => definition.mcpIds.includes(item.id));
+  // Older evals and session snapshots have no judge resources.
+  const judgeSkillIds = definition.judgeSkillIds ?? [];
+  const judgeMcpIds = definition.judgeMcpIds ?? [];
+  const judgeResources = [
+    ...(snapshot
+      ? (snapshot.judgeSkills ?? [])
+      : (data?.skills.filter((item) => judgeSkillIds.includes(item.id)) ?? [])),
+    ...(snapshot
+      ? (snapshot.judgeMcps ?? [])
+      : (data?.mcps.filter((item) => judgeMcpIds.includes(item.id)) ?? [])),
+  ];
+  const judgeResourceCount = judgeSkillIds.length + judgeMcpIds.length;
 
   return (
     <aside className="context-panel">
@@ -67,6 +79,12 @@ export function EvalConfiguration({
             harness={definition.judge.harness}
             model={definition.judge.model}
           />
+          {(judgeResources.length > 0 || judgeResourceCount > 0) && (
+            <small>
+              {judgeResources.map((item) => item.title).join(", ") ||
+                `${judgeResourceCount} judge resources selected`}
+            </small>
+          )}
         </dd>
       </dl>
     </aside>

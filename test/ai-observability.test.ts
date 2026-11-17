@@ -92,6 +92,7 @@ test("AI events preserve harness usage without uploading content or double-count
       provider: "openrouter",
       binary: id,
       supportsMcp: true,
+      judgeSupportsMcp: true,
       models: async () => [],
       run: async (request) => {
         await request.onRawEvent({ type: "turn.started" });
@@ -137,6 +138,7 @@ test("AI spans separate repeated judge attempts and retain failure without leaki
     provider: "openrouter",
     binary: null,
     supportsMcp: true,
+    judgeSupportsMcp: true,
     models: async () => [],
     run: async () => {
       throw new Error("private provider error");
