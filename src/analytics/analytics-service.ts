@@ -13,7 +13,7 @@ type AnalyticsProperties = Record<string, boolean | number | string | null>;
 export class AnalyticsService implements OnApplicationShutdown {
   private readonly client: PostHog | null;
 
-  constructor() {
+  constructor(readonly distinctId: string) {
     const token = process.env.POSTHOG_PROJECT_TOKEN;
     const host = process.env.POSTHOG_HOST;
 
@@ -22,14 +22,36 @@ export class AnalyticsService implements OnApplicationShutdown {
         ? new PostHog(token, {
             host,
             enableExceptionAutocapture: true,
-            logs: { serviceName: "agent-eval-backend" },
+            before_send: (event) => ({
+              ...event,
+              distinctId,
+              properties: {
+                ...event.properties,
+                $device_id: distinctId,
+                $is_identified: false,
+                $process_person_profile: true,
+              },
+            }),
+            logs: {
+              serviceName: "agent-eval-backend",
+              beforeSend: (record) => ({
+                ...record,
+                attributes: {
+                  ...record.attributes,
+                  posthogDistinctId: distinctId,
+                },
+              }),
+            },
           })
         : null;
   }
 
   interceptor(): NestInterceptor {
     return this.client
-      ? new PostHogInterceptor(this.client, { captureExceptions: true })
+      ? new PostHogInterceptor(this.client, {
+          captureExceptions: true,
+          getDistinctId: () => this.distinctId,
+        })
       : { intercept: (_context, next) => next.handle() };
   }
 
@@ -37,7 +59,7 @@ export class AnalyticsService implements OnApplicationShutdown {
     if (!this.client) return;
 
     this.client.capture({
-      distinctId: this.client.getContext()?.distinctId ?? "agent-eval-local",
+      distinctId: this.distinctId,
       event,
       properties,
     });
@@ -50,11 +72,9 @@ export class AnalyticsService implements OnApplicationShutdown {
   captureAi: CaptureAi = (event, properties, timestamp) => {
     try {
       this.client?.capture({
-        distinctId:
-          this.client.getContext()?.distinctId ??
-          String(properties.$ai_trace_id),
+        distinctId: this.distinctId,
         event,
-        properties: { ...properties, $process_person_profile: false },
+        properties,
         timestamp,
       });
     } catch {
@@ -63,11 +83,7 @@ export class AnalyticsService implements OnApplicationShutdown {
   };
 
   exception(error: unknown, operation: string): void {
-    this.client?.captureException(
-      error,
-      this.client.getContext()?.distinctId ?? "agent-eval-local",
-      { operation },
-    );
+    this.client?.captureException(error, this.distinctId, { operation });
     this.client?.logger.error("Operation failed", { operation });
   }
 

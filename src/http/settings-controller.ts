@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Inject,
   Param,
   Put,
@@ -28,6 +29,12 @@ export class SettingsController {
     private readonly providerCredits: ProviderCreditsService,
     @Inject(AnalyticsService) private readonly analytics: AnalyticsService,
   ) {}
+
+  @Get("analytics/identity")
+  @Header("Cache-Control", "no-store")
+  analyticsIdentity() {
+    return { distinctId: this.analytics.distinctId };
+  }
 
   @Get("settings")
   settingsValue() {

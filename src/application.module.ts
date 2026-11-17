@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { AnalyticsService } from "./analytics/analytics-service.js";
+import { loadInstallationId } from "./analytics/installation-identity.js";
 import { ResourceRepository } from "./catalog/domain/resource-repository.js";
 import { PrismaCatalog } from "./catalog/infrastructure/prisma-catalog.js";
 import { KeyVault } from "./credentials/key-vault.js";
@@ -35,7 +36,12 @@ import { PrismaSettingsRepository } from "./settings/infrastructure/prisma-setti
 @Module({
   providers: [
     Database,
-    AnalyticsService,
+    {
+      provide: AnalyticsService,
+      inject: [Database],
+      useFactory: async (database: Database) =>
+        new AnalyticsService(await loadInstallationId(database)),
+    },
     EvaluationsService,
     KeyVault,
     PiHarness,

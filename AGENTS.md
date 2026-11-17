@@ -54,6 +54,7 @@ These directives preserve the project's requirements and decisions. Apply them w
 - Keep previous evaluations and sessions navigable. Use spinners, progress bars, icons, and explicit running feedback for active sessions and evaluations.
 - Show provider credit balances where a supported endpoint exists. Label unsupported or unavailable balances accurately.
 - Maintain PostHog analytics, key-action events, log capture, and exception capture in frontend and backend, plus AI Observability for agents and judges. Reuse the existing integration and keep credentials and private session content out of telemetry.
+- Users do not log in. Persist a random anonymous installation ID in SQLite and use it for browser/backend analytics, logs, exceptions, and all agent/judge traces. Never use localhost, a shared fallback, or a trace/session ID as the person's identity. Initialize browser analytics with that ID before capturing events.
 
 ## UI and interaction
 
@@ -74,4 +75,4 @@ These directives preserve the project's requirements and decisions. Apply them w
 - Test migration compatibility and persistence across restart for storage changes. Test that edits to defaults do not change existing evaluations.
 - Distribute standalone executables containing the runtime, UI, and migrations. Maintain release workflows for macOS ARM64/x64, Linux ARM64/x64, and Windows x64, with startup smoke tests, archives, and checksums on GitHub Releases.
 - When asked to release, verify checks and publishing outcomes, keep package versions and tags aligned, and report the release link and any unverified behavior.
-- Publishing `@posthog/agent-eval` on npm was discussed as a possible distribution method, not requested for implementation. Do not assume npm publishing already exists or publish a package as part of unrelated work.
+- Distribute one public npm package, `@posthog/agent-eval`, containing all five compiled executables and a Node launcher. Do not split it into platform packages or require install-time downloads. Keep the development package private; generate the distribution manifest separately. Publish through GitHub Actions OIDC from `release.yml` using the `npm` environment. Publishing requires the package's trusted publisher to be configured on npm.

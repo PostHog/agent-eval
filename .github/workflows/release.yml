@@ -1,4 +1,4 @@
-name: Release executables
+name: Release executables and npm package
 
 on:
   push:
@@ -96,6 +96,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
+          pattern: agent-eval-*
           merge-multiple: true
       - name: Create release and upload executables
         env:
@@ -103,3 +104,90 @@ jobs:
         run: |
           gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
           gh release upload "$GITHUB_REF_NAME" artifacts/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  package-npm:
+    name: Assemble one npm package
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: agent-eval-*
+          path: release
+          merge-multiple: true
+      - name: Assemble and pack all platforms
+        run: |
+          mkdir -p release/binaries
+          for archive in release/*.tar.gz; do tar -xzf "$archive" -C release/binaries; done
+          unzip -q release/agent-eval-windows-x64.zip -d release/binaries
+          bun run package:npm release/binaries
+          npm pack ./release/npm --pack-destination release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-package
+          path: release/*.tgz
+          compression-level: 0
+          if-no-files-found: error
+
+  test-npm:
+    name: Test npm install on ${{ matrix.os }}
+    needs: package-npm
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15-intel, macos-15, ubuntu-24.04, ubuntu-24.04-arm, windows-2025]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-package
+          path: npm-package
+      - name: Install globally without lifecycle scripts
+        shell: bash
+        run: |
+          npm install --global --prefix "$RUNNER_TEMP/npm-prefix" --ignore-scripts --no-audit --no-fund npm-package/*.tgz
+          if [ "$RUNNER_OS" = Windows ]; then
+            echo "$RUNNER_TEMP/npm-prefix" >> "$GITHUB_PATH"
+          else
+            echo "$RUNNER_TEMP/npm-prefix/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Run installed command from PATH
+        run: agent-eval --help
+
+  publish-npm:
+    name: Publish to npm with OIDC
+    needs: [package-npm, test-npm]
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@latest
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-package
+          path: npm-package
+      - name: Publish the tested tarball
+        run: |
+          tag=latest
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then tag=next; fi
+          npm publish npm-package/*.tgz --access public --tag "$tag"

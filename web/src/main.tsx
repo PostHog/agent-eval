@@ -2,12 +2,14 @@ import { Button, TooltipProvider } from "@posthog/quill";
 import { PostHogErrorBoundary, PostHogProvider } from "@posthog/react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
-import { analyticsEnabled, posthog } from "./analytics.js";
+import { analyticsEnabled, initializeAnalytics, posthog } from "./analytics.js";
 import "./styles.css";
 
 const root = document.getElementById("root");
 
-if (root) {
+async function main() {
+  await initializeAnalytics();
+  if (!root) return;
   const app = (
     <TooltipProvider>
       <PostHogErrorBoundary
@@ -32,3 +34,5 @@ if (root) {
     ),
   );
 }
+
+void main();

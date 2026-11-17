@@ -216,3 +216,8 @@ model AppSettings {
   evaluationDefaults Json?
   updatedAt          DateTime @updatedAt
 }
+
+model Installation {
+  id         Int    @id
+  distinctId String
+}

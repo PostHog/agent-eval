@@ -10,6 +10,21 @@ agent-eval allows you to see how coding agents behave in specific environments a
 
 ## Install
 
+### npm
+
+Once the first npm release is published, install with Node.js 22 or later:
+
+```sh
+npm install -g @posthog/agent-eval
+agent-eval
+```
+
+The single package includes all five platform executables. A small Node launcher selects the executable for your computer; Bun is included. Installation does not run lifecycle scripts or download binaries from another service. npm's global executable directory must be on your `PATH`.
+
+Update with `npm install -g @posthog/agent-eval@latest`. Your data stays in `~/.agent-eval/`, and pending database migrations run when the updated app starts. Linux builds target glibc; Alpine/musl and Windows ARM64 are not supported.
+
+### Standalone executable
+
 Download the archive for your computer from the [latest release](https://github.com/PostHog/agent-eval/releases/latest):
 
 | Platform | Download |
@@ -45,9 +60,21 @@ To create a standalone executable for your current platform:
 bun run compile
 ```
 
+### Publishing releases
+
+The `v*` tag workflow builds and tests the five standalone executables, then collects them into one `@posthog/agent-eval` npm tarball. The tag must match the version in `package.json`. Each platform installs that exact tarball globally with `--ignore-scripts` and checks the command before npm publishing. Stable versions use the `latest` npm tag; prereleases use `next`.
+
+The development package stays private. `bun run package:npm <binary-directory>` generates the publishable package in `release/npm`, including only the launcher, binaries, README, and distribution manifest. The input directory must contain all five executables with the filenames used in GitHub Releases (including `.exe` on Windows). To inspect a package locally, run `npm pack ./release/npm --pack-destination release`.
+
+An npm package administrator must bootstrap `@posthog/agent-eval` if necessary, then configure its GitHub Actions trusted publisher for organization **PostHog**, repository **agent-eval**, workflow **release.yml**, environment **npm**, with direct publishing allowed. Create the matching **npm** environment in GitHub and allow release tags. The publishing job uses OIDC with `id-token: write`; no npm token secret is needed. See [npm's trusted publisher setup](https://docs.npmjs.com/trusted-publishers/).
+
+### Application data
+
 Evals, resources, sessions, traces, files, judgments, and usage are saved in `~/.agent-eval/agent-eval.db`. Launching from different project folders uses the same database and settings. The CLI applies committed Prisma migrations on startup and prints the data directory it uses. Set `--data /path/to/directory` or `AGENT_EVAL_DATA_DIR` to use another directory; `--data` takes precedence.
 
 Older versions stored data in each project's `.agent-eval/` directory. To keep that data, stop agent-eval and move the entire directory to `~/.agent-eval/`, including `credential.key`. If the home directory already has data, do not overwrite it: use `--data /path/to/project/.agent-eval` to open the older database separately. Existing databases are not automatically moved or merged. Old `runs/` folders are not imported.
+
+No login is required. When analytics is configured, browser and backend events, logs, exceptions, and agent/judge traces use the same random anonymous installation ID stored in SQLite. The ID survives upgrades, restarts, browser changes, and localhost port changes. It contains no username or hardware fingerprint. Separate data directories have separate identities; copying a database also copies its identity.
 
 ## Workflow
 
