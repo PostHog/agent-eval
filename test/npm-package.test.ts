@@ -10,16 +10,27 @@ import {
 } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import { packageNpm } from "../scripts/package-npm.js";
 
 const require = createRequire(import.meta.url);
-const { binaries, binaryName } = require("../npm/agent-eval.cjs") as {
-  binaries: Record<string, string>;
-  binaryName: (platform: string, architecture: string) => string;
-};
+const { binaries, binaryName, isNewerVersion } =
+  require("../npm/agent-eval.cjs") as {
+    binaries: Record<string, string>;
+    binaryName: (platform: string, architecture: string) => string;
+    isNewerVersion: (latest: string, installed: string) => boolean;
+  };
+
+test("update checks only offer newer stable npm versions", () => {
+  assert.equal(isNewerVersion("0.1.10", "0.1.9"), true);
+  assert.equal(isNewerVersion("0.1.4", "0.1.4-rc.1"), true);
+  assert.equal(isNewerVersion("0.1.4", "0.1.4+test"), false);
+  assert.equal(isNewerVersion("0.1.4", "0.1.5-rc.1"), false);
+  assert.equal(isNewerVersion("0.1.5-rc.1", "0.1.4"), false);
+  assert.equal(isNewerVersion("0.1.5 && other-command", "0.1.4"), false);
+});
 
 test("npm package includes all targets, no runtime dependencies, and rejects incomplete releases", async () => {
   const root = await mkdtemp(join(tmpdir(), "agent-eval-npm-"));
@@ -80,35 +91,57 @@ test("npm launcher forwards arguments, terminal IO, signals, exit codes, and spa
   const forwarded: string[] = [];
   Object.assign(child, { kill: (signal: string) => forwarded.push(signal) });
   const signals: string[] = [];
-  const errors: string[] = [];
+  const installs: string[][] = [];
+  const notice: string[] = [];
+  const prefix = resolve("test prefix");
+  const packageRoot = join(
+    prefix,
+    "lib",
+    "node_modules",
+    "@posthog",
+    "agent-eval",
+  );
+  let latest: string | undefined;
+  const args = ["--data", "folder with spaces", "--port", "3210"];
   const fakeProcess = Object.assign(new EventEmitter(), {
     platform: "linux",
     arch: "x64",
     pid: 123,
-    argv: [
-      "node",
-      "launcher.cjs",
-      "--data",
-      "folder with spaces",
-      "--port",
-      "3210",
-    ],
+    argv: ["node", "launcher.cjs", ...args],
+    env: {},
     exitCode: undefined as number | undefined,
     kill: (_pid: number, signal: string) => signals.push(signal),
   });
   const module = { exports: {} };
   const mockRequire = Object.assign(
     (id: string) => {
+      if (id === "../package.json") return { version: "0.1.4" };
       if (id !== "node:child_process") return require(id);
       return {
         spawn: (file: string, args: string[], options: { stdio: string }) => {
           assert.equal(
             file,
-            join("package", "binaries", "agent-eval-linux-x64"),
+            join(packageRoot, "binaries", "agent-eval-linux-x64"),
           );
-          assert.deepEqual(Array.from(args), fakeProcess.argv.slice(2));
+          assert.deepEqual(Array.from(args), [
+            "--data",
+            "folder with spaces",
+            "--port",
+            "3210",
+          ]);
           assert.equal(options.stdio, "inherit");
           return child;
+        },
+        spawnSync: (
+          file: string,
+          args: string[],
+          options: { env: Record<string, string>; shell: boolean },
+        ) => {
+          assert.equal(file, "npm");
+          assert.equal(options.env.npm_config_prefix, prefix);
+          assert.equal(options.shell, false);
+          installs.push(Array.from(args));
+          return { status: 0 };
         },
       };
     },
@@ -118,25 +151,39 @@ test("npm launcher forwards arguments, terminal IO, signals, exit codes, and spa
     runInNewContext(source, {
       require: mockRequire,
       module,
-      __dirname: join("package", "bin"),
+      __dirname: join(packageRoot, "bin"),
       process: fakeProcess,
-      console: { error: (message: string) => errors.push(message) },
+      AbortSignal,
+      fetch: async (url: string) => {
+        assert.equal(
+          url,
+          "https://registry.npmjs.org/@posthog%2fagent-eval/latest",
+        );
+        if (!latest) throw new Error("offline");
+        return Response.json({ version: latest });
+      },
+      console: { error: (message: string) => notice.push(message) },
     });
 
-  launch();
+  await launch();
   fakeProcess.emit("SIGTERM");
   assert.deepEqual(forwarded, ["SIGTERM"]);
   child.emit("close", 17, null);
   assert.equal(fakeProcess.exitCode, 17);
   assert.equal(fakeProcess.listenerCount("SIGTERM"), 0);
   child.removeAllListeners();
-  launch();
+  latest = "0.1.5";
+  await launch();
+  assert.match(notice[0] ?? "", /0\.1\.5 is available/);
+  assert.equal(installs.length, 0);
   child.emit("close", null, "SIGINT");
   assert.deepEqual(signals, ["SIGINT"]);
   child.removeAllListeners();
-  launch();
+  fakeProcess.argv.splice(2, 0, "--auto-update");
+  await launch();
+  assert.equal(installs[0]?.at(-1), "@posthog/agent-eval@0.1.5");
   child.emit("error", new Error("ENOENT"));
   child.emit("close", -2, null);
-  assert.match(errors[0] ?? "", /Could not start agent-eval: ENOENT/);
+  assert.match(notice.at(-1) ?? "", /Could not start agent-eval: ENOENT/);
   assert.notEqual(fakeProcess.exitCode, 0);
 });

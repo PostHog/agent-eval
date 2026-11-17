@@ -15,41 +15,46 @@ import { SettingsController } from "../src/http/settings-controller.js";
 import { Database } from "../src/infrastructure/database.js";
 import { migrateDatabase } from "../src/infrastructure/migrations.js";
 
-test("installation identity survives restart and concurrent access, and differs between databases", async () => {
-  const root = await mkdtemp(join(tmpdir(), "agent-eval-identity-"));
-  const previousDirectory = process.env.AGENT_EVAL_DATA_DIR;
-  const previousUrl = process.env.DATABASE_URL;
-  const databases: Database[] = [];
-  try {
-    await migrateDatabase(join(root, "first"));
-    const first = new Database();
-    databases.push(first);
-    const ids = await Promise.all(
-      Array.from({ length: 4 }, () => loadInstallationId(first)),
-    );
-    assert.equal(new Set(ids).size, 1);
-    const distinctId = ids[0];
-    assert.match(distinctId ?? "", /^[0-9a-f-]{36}$/);
-    await first.$disconnect();
+test(
+  "installation identity survives restart and concurrent access, and differs between databases",
+  { timeout: 30000 },
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-eval-identity-"));
+    const previousDirectory = process.env.AGENT_EVAL_DATA_DIR;
+    const previousUrl = process.env.DATABASE_URL;
+    const databases: Database[] = [];
+    try {
+      await migrateDatabase(join(root, "first"));
+      const first = new Database();
+      databases.push(first);
+      const ids = await Promise.all(
+        Array.from({ length: 4 }, () => loadInstallationId(first)),
+      );
+      assert.equal(new Set(ids).size, 1);
+      const distinctId = ids[0];
+      assert.match(distinctId ?? "", /^[0-9a-f-]{36}$/);
+      await first.$disconnect();
 
-    await migrateDatabase(join(root, "first"));
-    const restarted = new Database();
-    databases.push(restarted);
-    assert.equal(await loadInstallationId(restarted), distinctId);
+      await migrateDatabase(join(root, "first"));
+      const restarted = new Database();
+      databases.push(restarted);
+      assert.equal(await loadInstallationId(restarted), distinctId);
 
-    await migrateDatabase(join(root, "second"));
-    const second = new Database();
-    databases.push(second);
-    assert.notEqual(await loadInstallationId(second), distinctId);
-  } finally {
-    for (const database of databases) await database.$disconnect();
-    if (previousDirectory === undefined) delete process.env.AGENT_EVAL_DATA_DIR;
-    else process.env.AGENT_EVAL_DATA_DIR = previousDirectory;
-    if (previousUrl === undefined) delete process.env.DATABASE_URL;
-    else process.env.DATABASE_URL = previousUrl;
-    await rm(root, { recursive: true, force: true });
-  }
-});
+      await migrateDatabase(join(root, "second"));
+      const second = new Database();
+      databases.push(second);
+      assert.notEqual(await loadInstallationId(second), distinctId);
+    } finally {
+      for (const database of databases) await database.$disconnect();
+      if (previousDirectory === undefined)
+        delete process.env.AGENT_EVAL_DATA_DIR;
+      else process.env.AGENT_EVAL_DATA_DIR = previousDirectory;
+      if (previousUrl === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = previousUrl;
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
 
 test("backend events, exceptions, logs, and agent/judge traces share the anonymous installation identity", async () => {
   const bodies: Record<string, unknown>[] = [];

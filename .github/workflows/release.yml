@@ -167,6 +167,12 @@ jobs:
           fi
       - name: Run installed command from PATH
         run: agent-eval --help
+      - name: Verify uninstall removes the PATH command
+        shell: bash
+        run: |
+          npm uninstall --global --prefix "$RUNNER_TEMP/npm-prefix" @posthog/agent-eval
+          hash -r
+          if command -v agent-eval; then exit 1; fi
 
   publish-npm:
     name: Publish to npm with OIDC

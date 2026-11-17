@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-const { spawn } = require("node:child_process");
-const { join } = require("node:path");
+const { spawn, spawnSync } = require("node:child_process");
+const { join, resolve } = require("node:path");
+
+const registry = "https://registry.npmjs.org";
+const packageName = "@posthog/agent-eval";
 
 const binaries = {
   "darwin-arm64": "agent-eval-darwin-arm64",
@@ -18,14 +21,99 @@ function binaryName(platform, architecture) {
   return name;
 }
 
-function main() {
+function isNewerVersion(latest, installed) {
+  const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+  const candidate = typeof latest === "string" && stable.exec(latest);
+  const current = stable.exec(installed.split(/[-+]/, 1)[0]);
+  if (!candidate || !current) return false;
+
+  for (let part = 1; part <= 3; part++) {
+    const next = BigInt(candidate[part]);
+    const previous = BigInt(current[part]);
+    if (next !== previous) return next > previous;
+  }
+  return installed.split("+", 1)[0].includes("-");
+}
+
+async function checkForUpdate(autoUpdate) {
+  let latest;
+  try {
+    const response = await fetch(`${registry}/@posthog%2fagent-eval/latest`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!response.ok) return;
+    latest = (await response.json()).version;
+  } catch {
+    return;
+  }
+
+  const { version } = require("../package.json");
+  if (!isNewerVersion(latest, version)) return;
+
+  const command = `npm install -g ${packageName}@${latest}`;
+  if (!autoUpdate) {
+    console.error(
+      `agent-eval ${latest} is available (installed ${version}). Update with ${command} or run agent-eval --auto-update.`,
+    );
+    return;
+  }
+
+  const windows = process.platform === "win32";
+  const prefix = resolve(__dirname, windows ? "../../../.." : "../../../../..");
+  const modules = windows
+    ? join(prefix, "node_modules")
+    : join(prefix, "lib", "node_modules");
+  if (__dirname !== join(modules, packageName, "bin")) {
+    console.error(
+      `Automatic updates require a global npm installation. Update with ${command}.`,
+    );
+    return;
+  }
+
+  console.error(`Updating agent-eval from ${version} to ${latest}…`);
+  // Keep the prefix out of the Windows command shell and update before the executable is in use.
+  const result = spawnSync(
+    "npm",
+    [
+      "install",
+      "--global",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      `--registry=${registry}`,
+      `${packageName}@${latest}`,
+    ],
+    {
+      shell: windows,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        npm_config_prefix: prefix,
+        NPM_CONFIG_PREFIX: prefix,
+      },
+    },
+  );
+  if (result.status !== 0) {
+    console.error(`Could not update agent-eval. Try ${command}.`);
+  }
+}
+
+async function main() {
   const executable = join(
     __dirname,
     "..",
     "binaries",
     binaryName(process.platform, process.arch),
   );
-  const child = spawn(executable, process.argv.slice(2), { stdio: "inherit" });
+  const args = process.argv.slice(2);
+  const autoUpdate = args[0] === "--auto-update";
+  if (autoUpdate) args.shift();
+  if (!args.some((arg) => ["--help", "-h", "--version", "-V"].includes(arg))) {
+    await checkForUpdate(
+      autoUpdate || process.env.AGENT_EVAL_AUTO_UPDATE === "1",
+    );
+  }
+  const child = spawn(executable, args, { stdio: "inherit" });
 
   // Forward signals sent to the npm launcher so the server can shut down cleanly.
   const handlers = ["SIGINT", "SIGTERM", "SIGHUP"].map((signal) => {
@@ -45,13 +133,11 @@ function main() {
   });
 }
 
-module.exports = { binaries, binaryName };
+module.exports = { binaries, binaryName, isNewerVersion };
 
 if (require.main === module) {
-  try {
-    main();
-  } catch (error) {
+  main().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;
-  }
+  });
 }

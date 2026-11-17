@@ -21,7 +21,9 @@ agent-eval
 
 The single package includes all five platform executables. A small Node launcher selects the executable for your computer; Bun is included. Installation does not run lifecycle scripts or download binaries from another service. npm's global executable directory must be on your `PATH`.
 
-Update with `npm install -g @posthog/agent-eval@latest`. Your data stays in `~/.agent-eval/`, and pending database migrations run when the updated app starts. Linux builds target glibc; Alpine/musl and Windows ARM64 are not supported.
+The npm launcher checks for a newer stable version on startup. Run `agent-eval --auto-update` to install an available update before starting, or set `AGENT_EVAL_AUTO_UPDATE=1` to opt in on every launch. You can also update manually with `npm install -g @posthog/agent-eval@latest`.
+
+Run `npm uninstall -g @posthog/agent-eval` to remove the package and its `agent-eval` command from PATH. Updates and uninstall preserve `~/.agent-eval/`. Pending database migrations run when the updated app starts. Linux builds target glibc, and Windows builds target x64.
 
 ### Standalone executable
 
