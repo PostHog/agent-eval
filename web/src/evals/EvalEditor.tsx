@@ -17,6 +17,10 @@ import type {
 import { EvalCriteria } from "./EvalCriteria.js";
 import { EvalModels } from "./EvalModels.js";
 import { EvalResources } from "./EvalResources.js";
+import {
+  missingJudgeMcpTools,
+  withJudgeMcpSupport,
+} from "./ResourceSelection.js";
 
 export function EvalEditor({ id }: { id?: string }) {
   return id ? <ExistingEditor key={id} id={id} /> : <NewEditor />;
@@ -60,6 +64,7 @@ function Editor({
       mcpIds: [],
       judgeSkillIds: [],
       judgeMcpIds: [],
+      judgeMcpTools: {},
       models: defaults?.models ?? [],
       judge: defaults?.judge ?? null,
     },
@@ -109,6 +114,14 @@ function Editor({
     ) {
       setError(
         `The ${judgeHarness.title} judge cannot use MCP servers. Remove the judge MCP servers or choose another judge harness.`,
+      );
+
+      return;
+    }
+
+    if (missingJudgeMcpTools(value)) {
+      setError(
+        "Name at least one tool the judge may call from each judge MCP server.",
       );
 
       return;
@@ -193,7 +206,11 @@ function Editor({
           resourcesLoading={resourcesLoading}
           judgeHarness={judgeHarness}
         />
-        <EvalModels value={value} onChange={setValue} harnesses={harnesses} />
+        <EvalModels
+          value={value}
+          onChange={(next) => setValue(withJudgeMcpSupport(next, harnesses))}
+          harnesses={harnesses}
+        />
         <div className="form-actions">
           <Notice error={error} />
           <p className="section-note">

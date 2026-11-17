@@ -4,6 +4,10 @@ import { afterEach, test } from "node:test";
 import { useState } from "react";
 import { EvalResources } from "../src/evals/EvalResources.js";
 import { defaultModel } from "../src/evals/ModelPicker.js";
+import {
+  missingJudgeMcpTools,
+  withJudgeMcpSupport,
+} from "../src/evals/ResourceSelection.js";
 import type { EvalDraft, Harness } from "../src/types.js";
 
 const { cleanup, fireEvent, render, screen, waitFor } = await import(
@@ -33,6 +37,7 @@ function Editor({
     mcpIds: [],
     judgeSkillIds: [],
     judgeMcpIds: [],
+    judgeMcpTools: {},
     models: [defaultModel],
     judge: defaultModel,
   });
@@ -155,6 +160,112 @@ test("judge MCP servers are unavailable for a judge harness that cannot use them
   // Quill buttons expose the disabled state through aria-disabled.
   assert.notEqual(agentMcp?.getAttribute("aria-disabled"), "true");
   assert.equal(judgeMcp?.getAttribute("aria-disabled"), "true");
+});
+
+test("switching to a judge harness without MCP support clears judge MCP servers", () => {
+  const harness = (id: Harness["id"], judgeSupportsMcp: boolean): Harness => ({
+    id,
+    title: id,
+    provider: "openrouter",
+    installed: true,
+    models: [],
+    supportsMcp: true,
+    judgeSupportsMcp,
+  });
+  const harnesses = [harness("claude", true), harness("opencode", false)];
+  const draft: EvalDraft = {
+    title: "Draft",
+    prompt: "Task",
+    criteria: [],
+    environmentId: null,
+    personaId: null,
+    skillIds: [],
+    mcpIds: ["agent-mcp"],
+    judgeSkillIds: ["judge-skill"],
+    judgeMcpIds: ["judge-mcp"],
+    judgeMcpTools: { "judge-mcp": ["search"] },
+    models: [defaultModel],
+    judge: { ...defaultModel, harness: "claude" },
+  };
+
+  assert.deepEqual(withJudgeMcpSupport(draft, harnesses), draft);
+
+  const switched = withJudgeMcpSupport(
+    { ...draft, judge: { ...defaultModel, harness: "opencode" } },
+    harnesses,
+  );
+
+  // Only judge MCP servers block the save, so the other selections stay.
+  assert.deepEqual(switched.judgeMcpIds, []);
+  assert.deepEqual(switched.judgeMcpTools, {});
+  assert.deepEqual(switched.mcpIds, ["agent-mcp"]);
+  assert.deepEqual(switched.judgeSkillIds, ["judge-skill"]);
+});
+
+test("each ticked judge MCP server asks for the tools the judge may call", () => {
+  function Picker() {
+    const [value, setValue] = useState<EvalDraft>({
+      title: "Draft",
+      prompt: "Task",
+      criteria: [],
+      environmentId: null,
+      personaId: null,
+      skillIds: [],
+      mcpIds: [],
+      judgeSkillIds: [],
+      judgeMcpIds: [],
+      judgeMcpTools: {},
+      models: [defaultModel],
+      judge: defaultModel,
+    });
+
+    return (
+      <>
+        <EvalResources
+          value={value}
+          onChange={setValue}
+          resources={{
+            environments: [],
+            personas: [],
+            skills: [],
+            mcps: [{ id: "mcp-1", title: "Docs server" }],
+          }}
+          resourcesLoading={false}
+          refreshResources={() => {}}
+        />
+        <output data-testid="draft">{JSON.stringify(value)}</output>
+      </>
+    );
+  }
+  const draft = () =>
+    JSON.parse(screen.getByTestId("draft").textContent ?? "{}") as EvalDraft;
+  const toolsField = "Tools the judge may call from Docs server";
+
+  render(<Picker />);
+  assert.equal(screen.queryByRole("textbox", { name: toolsField }), null);
+
+  // The agent picker comes first and the judge picker second.
+  const judgeCheckbox = screen.getAllByRole("checkbox", {
+    name: "Docs server",
+  })[1];
+
+  assert.ok(judgeCheckbox);
+  fireEvent.click(judgeCheckbox);
+  assert.equal(missingJudgeMcpTools(draft()), true);
+
+  fireEvent.change(screen.getByRole("textbox", { name: toolsField }), {
+    target: { value: "search_docs, get_page, search_docs," },
+  });
+  assert.deepEqual(draft().judgeMcpTools, {
+    "mcp-1": ["search_docs", "get_page"],
+  });
+  assert.equal(missingJudgeMcpTools(draft()), false);
+  // The agent selection stays separate.
+  assert.deepEqual(draft().mcpIds, []);
+
+  fireEvent.click(judgeCheckbox);
+  assert.deepEqual(draft().judgeMcpIds, []);
+  assert.deepEqual(draft().judgeMcpTools, {});
 });
 
 test("resource errors keep the entered data and allow retry", async () => {

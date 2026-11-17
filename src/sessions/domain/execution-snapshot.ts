@@ -15,5 +15,11 @@ export interface ExecutionSnapshot {
   mcps: { title: string; command: string; arguments: string[] }[];
   // Judge resources. Sessions saved before judge resources existed omit these fields.
   judgeSkills?: { title: string; content: string }[];
-  judgeMcps?: { title: string; command: string; arguments: string[] }[];
+  // Judge MCP entries saved without allowedTools expose no tools.
+  judgeMcps?: {
+    title: string;
+    command: string;
+    arguments: string[];
+    allowedTools?: string[];
+  }[];
 }

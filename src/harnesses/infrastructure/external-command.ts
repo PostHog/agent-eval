@@ -19,6 +19,10 @@ export async function externalCommand(
   ])
     delete env[key];
 
+  // Only Claude Code can limit which MCP tools are callable. Never ignore a tool limit silently.
+  if (id !== "claude" && input.mcps?.some((server) => server.allowedTools))
+    throw new Error(`The ${id} harness cannot limit MCP tools.`);
+
   if (id === "codex") {
     // Codex accepts a per-run key without redefining its reserved OpenAI provider.
     env.CODEX_API_KEY = input.apiKey;
@@ -105,7 +109,13 @@ export async function externalCommand(
           "Grep",
           "WebFetch",
           "WebSearch",
-          ...(input.mcps ?? []).map((_, index) => `mcp__eval_${index}__*`),
+          ...(input.mcps ?? []).flatMap((server, index) =>
+            server.allowedTools
+              ? server.allowedTools.map(
+                  (tool) => `mcp__eval_${index}__${claudeToolName(tool)}`,
+                )
+              : [`mcp__eval_${index}__*`],
+          ),
         ].join(","),
         ...(input.tools.length ? [] : ["--tools", ""]),
         "--strict-mcp-config",
@@ -144,4 +154,9 @@ export async function externalCommand(
     ],
     env,
   };
+}
+
+// Claude Code replaces characters outside letters, digits, underscores, and hyphens in MCP tool names.
+function claudeToolName(tool: string): string {
+  return tool.replaceAll(/[^a-zA-Z0-9_-]/g, "_");
 }

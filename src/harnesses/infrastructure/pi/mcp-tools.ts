@@ -51,7 +51,14 @@ export async function connectMcpTools(request: HarnessRequest) {
           timeout: 30_000,
         });
 
-        for (const tool of page.tools) {
+        // Judges get only the tools the evaluation author allowed. Agents get every tool.
+        const allowed = server.allowedTools
+          ? page.tools.filter((tool) =>
+              server.allowedTools?.includes(tool.name),
+            )
+          : page.tools;
+
+        for (const tool of allowed) {
           tools.push({
             name: `mcp_${index}_${tools.length}_${tool.name.replaceAll(/[^a-zA-Z0-9_]/g, "_")}`.slice(
               0,

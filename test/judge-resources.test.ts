@@ -83,7 +83,31 @@ test("judge skills and MCP servers are saved, snapshotted, and sent only to the 
       mcpIds: [agentMcp.value.id],
       judgeSkillIds: [judgeSkill.value.id, judgeSkill.value.id],
       judgeMcpIds: [judgeMcp.value.id],
+      judgeMcpTools: {
+        [judgeMcp.value.id]: [" search_docs ", "search_docs", "get_page"],
+      },
     });
+    const allowedTools = { [judgeMcp.value.id]: ["search_docs", "get_page"] };
+
+    assert.deepEqual(evaluation.judgeMcpTools, allowedTools);
+
+    // Judge MCP tools are auto-approved, so each judge MCP server needs a named tool list.
+    const unlimited = {
+      title: "Docs",
+      prompt: "Update the docs",
+      criteria: [{ description: "Links work" }],
+      models: [model],
+      judge: model,
+      judgeMcpIds: [judgeMcp.value.id],
+    };
+
+    await assert.rejects(evals.save(unlimited), /Name at least one tool/);
+    await assert.rejects(
+      evals.save({
+        ...unlimited,
+        judgeMcpTools: { [judgeMcp.value.id]: ["bad name"] },
+      }),
+    );
 
     // Duplicates collapse, and the selections survive a reload, a revision, and a duplicate.
     assert.deepEqual(evaluation.judgeSkillIds, [judgeSkill.value.id]);
@@ -100,10 +124,16 @@ test("judge skills and MCP servers are saved, snapshotted, and sent only to the 
       evaluation.id,
     );
 
+    assert.deepEqual(reloaded.judgeMcpTools, allowedTools);
     assert.deepEqual(revised.judgeMcpIds, [judgeMcp.value.id]);
-    assert.deepEqual((await evals.duplicate(evaluation.id)).judgeSkillIds, [
-      judgeSkill.value.id,
-    ]);
+    assert.deepEqual(revised.judgeMcpTools, allowedTools);
+
+    const duplicate = await evals.duplicate(evaluation.id);
+
+    assert.deepEqual(duplicate.judgeSkillIds, [judgeSkill.value.id]);
+    assert.deepEqual(duplicate.judgeMcpTools, {
+      [judgeMcp.value.id]: ["search_docs", "get_page"],
+    });
 
     // Library resources in use by a judge cannot be deleted.
     await assert.rejects(catalog.delete("skill", judgeSkill.value.id));
@@ -205,8 +235,8 @@ test("judge skills and MCP servers are saved, snapshotted, and sent only to the 
       { title: "Docs rubric", content: "JUDGE-RUBRIC-TEXT" },
     ]);
     assert.deepEqual(
-      snapshot.judgeMcps?.map((mcp) => mcp.command),
-      ["docs-mcp"],
+      snapshot.judgeMcps?.map((mcp) => [mcp.command, mcp.allowedTools]),
+      [["docs-mcp", ["search_docs", "get_page"]]],
     );
 
     const agent = calls.find((call) => call.label !== "judge");
@@ -218,9 +248,11 @@ test("judge skills and MCP servers are saved, snapshotted, and sent only to the 
       ["writer-mcp"],
     );
     assert.deepEqual(
-      judge.mcps?.map((mcp) => mcp.command),
-      ["docs-mcp"],
+      judge.mcps?.map((mcp) => [mcp.command, mcp.allowedTools]),
+      [["docs-mcp", ["search_docs", "get_page"]]],
     );
+    // Agents keep every tool from their own MCP servers.
+    assert.equal(agent.mcps?.[0]?.allowedTools, undefined);
     assert.deepEqual(judge.tools, []);
     assert.deepEqual(judge.skills, []);
     assert.match(judge.prompt, /JUDGE-RUBRIC-TEXT/);

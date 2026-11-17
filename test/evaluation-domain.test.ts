@@ -15,6 +15,7 @@ function evaluation() {
     mcpIds: [],
     judgeSkillIds: [],
     judgeMcpIds: [],
+    judgeMcpTools: {},
     criteria: [Criterion.create("The build passes.")],
     models: [{ ...ModelSettings.create({ model: "openai/test" }).value }],
     judge: { ...ModelSettings.create({ model: "anthropic/test" }).value },

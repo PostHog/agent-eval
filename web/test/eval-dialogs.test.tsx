@@ -54,6 +54,7 @@ function Editor({
     mcpIds: [],
     judgeSkillIds: [],
     judgeMcpIds: [],
+    judgeMcpTools: {},
     models: empty ? [] : [{ ...defaultModel, model: "model-a" }],
     judge: empty ? null : { ...defaultModel, model: "model-a" },
   });

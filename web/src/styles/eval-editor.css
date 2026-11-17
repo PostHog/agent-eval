@@ -114,6 +114,10 @@
   display: flex;
   overflow-wrap: anywhere;
 }
+.resource-options .judge-mcp-tools {
+  width: 100%;
+  margin: 4px 0 8px;
+}
 .dialog-actions {
   display: flex;
   align-items: center;

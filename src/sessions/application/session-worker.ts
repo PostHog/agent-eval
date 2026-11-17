@@ -12,12 +12,12 @@ import type {
 } from "../../harnesses/domain/harness.js";
 import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
+import { judgingPrompt } from "../domain/judging-prompt.js";
 import type { Session } from "../domain/session.js";
 import { SessionRepository } from "../domain/session-repository.js";
 import { WorkspaceRuntimeFactory } from "../domain/workspace-runtime.js";
 import { WorkspaceStore } from "../domain/workspace-store.js";
 import { judgeSession } from "./judge-session.js";
-import { judgingPrompt } from "./judging-prompt.js";
 
 @Injectable()
 export class SessionWorker {
@@ -299,7 +299,14 @@ export class SessionWorker {
           }
         : {}),
       // The judge never gets built-in tools. It gets only the MCP servers selected for the judge.
-      mcps: phase === "judge" ? (snapshot.judgeMcps ?? []) : snapshot.mcps,
+      // Judge MCP tools are auto-approved, so the judge sees only the tools the author allowed.
+      mcps:
+        phase === "judge"
+          ? (snapshot.judgeMcps ?? []).map((mcp) => ({
+              ...mcp,
+              allowedTools: mcp.allowedTools ?? [],
+            }))
+          : snapshot.mcps,
       onRawEvent: (event) =>
         this.sessions.event(
           session.id,

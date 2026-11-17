@@ -51,6 +51,9 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
       mcpIds: record.mcps.map((mcp) => mcp.mcpId),
       judgeSkillIds: record.judgeSkills.map((skill) => skill.skillId),
       judgeMcpIds: record.judgeMcps.map((mcp) => mcp.mcpId),
+      judgeMcpTools: Object.fromEntries(
+        record.judgeMcps.map((mcp) => [mcp.mcpId, mcp.allowedTools]),
+      ),
     });
   }
 
@@ -77,7 +80,12 @@ export class PrismaEvaluationRepository extends EvaluationRepository {
       judgeSkills: {
         create: data.judgeSkillIds.map((skillId) => ({ skillId })),
       },
-      judgeMcps: { create: data.judgeMcpIds.map((mcpId) => ({ mcpId })) },
+      judgeMcps: {
+        create: data.judgeMcpIds.map((mcpId) => ({
+          mcpId,
+          allowedTools: data.judgeMcpTools[mcpId] ?? [],
+        })),
+      },
     };
 
     await this.db.$transaction(async (tx) => {

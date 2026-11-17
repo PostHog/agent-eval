@@ -111,9 +111,10 @@ export function EvalResources({
       <h3 className="judge-resources-heading">Judge resources</h3>
       <p className="muted">
         Optional. Judge skills are added to the judge instructions. Judge MCP
-        servers give the judge tools to check evidence. The judge never gets
-        file, shell, or web tools, and it does not receive the agent resources
-        above.
+        servers give the judge tools to check evidence. The judge can call only
+        the tools you name for each server, and it runs them without asking, so
+        name read-only tools. The judge never gets file, shell, or web tools,
+        and it does not receive the agent resources above.
       </p>
       <div className="form-grid eval-resource-grid">
         {judgeKinds.map((kind) => (

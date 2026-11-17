@@ -127,10 +127,12 @@ model EvalJudgeSkill {
 }
 
 model EvalJudgeMcp {
-  evalId String
-  mcpId  String
-  eval   Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
-  mcp    Mcp    @relation(fields: [mcpId], references: [id], onDelete: Restrict)
+  evalId       String
+  mcpId        String
+  // Only these tools from the server are registered for the judge.
+  allowedTools Json   @default("[]")
+  eval         Eval   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  mcp          Mcp    @relation(fields: [mcpId], references: [id], onDelete: Restrict)
 
   @@id([evalId, mcpId])
 }

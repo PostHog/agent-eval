@@ -89,6 +89,12 @@ export class StartSessions implements OnModuleDestroy {
       throw new Error(
         `The ${judgeHarness?.title ?? data.judge.harness} judge cannot use MCP servers. Choose another judge harness or remove the judge MCP servers.`,
       );
+
+    if (data.judgeMcpIds.some((id) => !data.judgeMcpTools[id]?.length))
+      throw new Error(
+        "Name at least one tool the judge may call from each judge MCP server.",
+      );
+
     const resources = await this.catalog.list();
     const environment =
       resources.environments.find((entry) => entry.id === data.environmentId) ??
@@ -107,7 +113,10 @@ export class StartSessions implements OnModuleDestroy {
       skills: await resolveSkills(resources.skills, data.skillIds),
       mcps: resolveMcps(resources.mcps, data.mcpIds),
       judgeSkills: await resolveSkills(resources.skills, data.judgeSkillIds),
-      judgeMcps: resolveMcps(resources.mcps, data.judgeMcpIds),
+      judgeMcps: resolveMcps(resources.mcps, data.judgeMcpIds).map((mcp) => ({
+        ...mcp,
+        allowedTools: data.judgeMcpTools[mcp.id] ?? [],
+      })),
     };
     const batchId = randomUUID();
     const created: Session[] = [];

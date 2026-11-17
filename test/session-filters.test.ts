@@ -21,6 +21,7 @@ function session(status: string): Session {
     mcpIds: [],
     judgeSkillIds: [],
     judgeMcpIds: [],
+    judgeMcpTools: {},
     criteria: [Criterion.create("The build passes.")],
     models: [model],
     judge: model,
