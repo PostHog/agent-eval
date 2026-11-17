@@ -2,8 +2,6 @@
 
 # agent-eval
 
-Run coding agents against copies of a project. Compare their results against saved criteria in a local web application.
-
 agent-eval allows you to see how coding agents behave in specific environments and with specific prompts. At the core, you have evals, which allow you to specify a set of criteria of what agents are supposed to. Then you select which models and harnesses you'd like to test on, and which environment (project, repository, folder, etc...). Then, upon running, it spawns isolated agents on a copy of the provided workspace, and a judge evaluates whether the agent fulfilled the acceptance criteria.
 
 ## Demo
