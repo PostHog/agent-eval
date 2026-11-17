@@ -25,7 +25,7 @@ Extract the archive and run the `agent-eval-*` executable. It includes Bun, the 
 The CLI starts the application at http://127.0.0.1:3100 and opens it. Use the same executable to view previous sessions. Press Ctrl+C to stop.
 
 ```sh
-./agent-eval-darwin-arm64 --port 3200 --data ./.agent-eval --no-open
+./agent-eval-darwin-arm64 --port 3200 --no-open
 ./agent-eval-darwin-arm64 --help
 ```
 
@@ -45,7 +45,9 @@ To create a standalone executable for your current platform:
 bun run compile
 ```
 
-Evals, resources, sessions, traces, files, judgments, and usage are saved in SQLite under `.agent-eval/`. The CLI applies committed Prisma migrations on startup. The old YAML runner and file report viewer have been removed. Existing `runs/` folders remain unchanged and are not imported.
+Evals, resources, sessions, traces, files, judgments, and usage are saved in `~/.agent-eval/agent-eval.db`. Launching from different project folders uses the same database and settings. The CLI applies committed Prisma migrations on startup and prints the data directory it uses. Set `--data /path/to/directory` or `AGENT_EVAL_DATA_DIR` to use another directory; `--data` takes precedence.
+
+Older versions stored data in each project's `.agent-eval/` directory. To keep that data, stop agent-eval and move the entire directory to `~/.agent-eval/`, including `credential.key`. If the home directory already has data, do not overwrite it: use `--data /path/to/project/.agent-eval` to open the older database separately. Existing databases are not automatically moved or merged. Old `runs/` folders are not imported.
 
 ## Workflow
 
@@ -89,7 +91,7 @@ Timeouts use **seconds**. Effort support depends on the model and harness. Nativ
 
 ## Data and credentials
 
-UI keys are encrypted with AES-256-GCM. The encryption key is stored in `.agent-eval/credential.key`. Back up this file with the database. The UI never returns saved key values. A saved key overrides its environment variable. Removing it restores the environment fallback.
+UI keys are encrypted with AES-256-GCM. The encryption key is stored in `~/.agent-eval/credential.key` (or the selected data directory). Back up this file with the database. The UI never returns saved key values. A saved key overrides its environment variable. Removing it restores the environment fallback.
 
 Optional PostHog telemetry uses `POSTHOG_PROJECT_TOKEN` and `POSTHOG_HOST` on the server, and `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` in the web build. It records product actions, structured operational logs, and exceptions. Custom events do not include prompts, source files, transcripts, or provider credentials.
 

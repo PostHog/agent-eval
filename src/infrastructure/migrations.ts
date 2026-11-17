@@ -1,11 +1,12 @@
 import { Database as SQLite } from "bun:sqlite";
 import { mkdir, readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { resolveDataDirectory } from "./data-directory.js";
 import { runtimePath } from "./runtime-path.js";
 
 // Apply committed migrations before repositories or workers start.
-export async function migrateDatabase(dataDirectory: string): Promise<void> {
-  const directory = resolve(dataDirectory);
+export async function migrateDatabase(dataDirectory?: string): Promise<void> {
+  const directory = resolveDataDirectory(dataDirectory);
 
   await mkdir(directory, { recursive: true });
 

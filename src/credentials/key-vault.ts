@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { Inject, Injectable } from "@nestjs/common";
+import { resolveDataDirectory } from "../infrastructure/data-directory.js";
 import { Database } from "../infrastructure/database.js";
 import { CredentialStore, type Provider, providers } from "./provider.js";
 
@@ -12,10 +13,7 @@ export class KeyVault extends CredentialStore {
   }
 
   private async encryptionKey(): Promise<Buffer> {
-    const path = join(
-      process.env.AGENT_EVAL_DATA_DIR ?? ".agent-eval",
-      "credential.key",
-    );
+    const path = join(resolveDataDirectory(), "credential.key");
 
     await mkdir(dirname(path), { recursive: true });
 

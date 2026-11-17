@@ -6,6 +6,7 @@ import open from "open";
 import { z } from "zod";
 import { ApplicationModule } from "./application.module.js";
 import { ApiErrorFilter } from "./http/api-error-filter.js";
+import { resolveDataDirectory } from "./infrastructure/data-directory.js";
 import { Database } from "./infrastructure/database.js";
 import { migrateDatabase } from "./infrastructure/migrations.js";
 import { serveWebAssets } from "./infrastructure/static-assets.js";
@@ -25,7 +26,7 @@ interface ServeOptions {
 export class ServeCommand extends CommandRunner {
   // The CLI owns the process. Nest owns HTTP, persistence, and worker shutdown.
   async run(_arguments: string[], options: ServeOptions): Promise<void> {
-    await migrateDatabase(options.data ?? ".agent-eval");
+    await migrateDatabase(options.data);
 
     const app = await NestFactory.create<NestExpressApplication>(
       ApplicationModule,
@@ -73,7 +74,9 @@ export class ServeCommand extends CommandRunner {
 
     const url = await app.getUrl();
 
-    console.log(`Agent eval: ${url}\nPress Ctrl+C to stop.`);
+    console.log(
+      `Agent eval: ${url}\nData directory: ${resolveDataDirectory()}\nPress Ctrl+C to stop.`,
+    );
 
     if (options.open !== false)
       await open(url).catch(() =>
@@ -88,7 +91,8 @@ export class ServeCommand extends CommandRunner {
 
   @Option({
     flags: "--data <directory>",
-    description: "Directory for SQLite and the encryption key",
+    description:
+      "Directory for SQLite and the encryption key (default: ~/.agent-eval)",
   })
   data(value: string): string {
     return value;

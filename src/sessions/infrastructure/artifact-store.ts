@@ -9,6 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { Inject, Injectable } from "@nestjs/common";
+import { resolveDataDirectory } from "../../infrastructure/data-directory.js";
 import { Database } from "../../infrastructure/database.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { WorkspaceStore } from "../domain/workspace-store.js";
@@ -41,7 +42,7 @@ export class ArtifactStore extends WorkspaceStore {
       await prepareWorkspaceSource(
         snapshot.environment,
         join(root, "workspace"),
-        [resolve(process.env.AGENT_EVAL_DATA_DIR ?? ".agent-eval")],
+        [resolveDataDirectory()],
       );
 
       for (const [index, skill] of snapshot.skills.entries()) {
