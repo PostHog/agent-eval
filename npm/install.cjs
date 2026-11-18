@@ -42,8 +42,13 @@ async function install() {
     if (hash.digest("hex") !== checksum)
       throw new Error(`Checksum mismatch for ${archive}`);
 
-    // Extract only the executable from the verified release archive.
-    execFileSync("tar", ["-xf", archivePath, "-C", temporary, name], {
+    // Git for Windows can put GNU tar ahead of the system tar that supports ZIP.
+    const tar =
+      process.platform === "win32"
+        ? join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe")
+        : "tar";
+    execFileSync(tar, ["-xf", archive, name], {
+      cwd: temporary,
       stdio: "inherit",
     });
     const executable = join(temporary, name);
