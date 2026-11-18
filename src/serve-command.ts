@@ -20,7 +20,7 @@ interface ServeOptions {
 @Injectable()
 @Command({
   name: "serve",
-  description: "Start the local eval application",
+  description: "Start the local evaluation app",
   options: { isDefault: true },
 })
 export class ServeCommand extends CommandRunner {

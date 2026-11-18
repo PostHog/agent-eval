@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { HarnessRequest, HarnessResult } from "../../domain/execution.js";
+import { redactEvent, redactText } from "../../domain/redact-secrets.js";
 import { executeSession } from "./execute.js";
 import { writeJson } from "./json-file.js";
 import { createSession } from "./runtime.js";
@@ -9,6 +10,9 @@ export async function runSession(
   request: HarnessRequest,
 ): Promise<HarnessResult> {
   const started = Date.now();
+  const secrets = (request.mcps ?? [])
+    .map((server) => server.accessToken)
+    .filter((secret): secret is string => Boolean(secret));
 
   let session: Awaited<ReturnType<typeof createSession>> | undefined;
 
@@ -55,7 +59,7 @@ export async function runSession(
 
         await writeJson(
           join(request.directory, "messages.json"),
-          session.messages,
+          redactEvent(session.messages, secrets),
         );
       } finally {
         session.dispose();
@@ -65,6 +69,8 @@ export async function runSession(
     }
   }
 
+  result.text = redactText(result.text, secrets);
+  if (result.error) result.error = redactText(result.error, secrets);
   result.model = request.model;
 
   result.usage = usage;

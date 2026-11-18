@@ -12,12 +12,18 @@ export interface ExecutionSnapshot {
   } | null;
   persona: { title: string; description: string } | null;
   skills: { title: string; content: string }[];
-  mcps: { title: string; command: string; arguments: string[] }[];
+  mcps: {
+    title: string;
+    url?: string | null;
+    command: string;
+    arguments: string[];
+  }[];
   // Judge resources. Sessions saved before judge resources existed omit these fields.
   judgeSkills?: { title: string; content: string }[];
   // Judge MCP entries saved without allowedTools expose no tools.
   judgeMcps?: {
     title: string;
+    url?: string | null;
     command: string;
     arguments: string[];
     allowedTools?: string[];

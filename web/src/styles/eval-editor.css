@@ -167,3 +167,40 @@
 .dialog-body {
   padding: 4px;
 }
+
+.eval-editor > section {
+  margin-top: 16px;
+  padding: clamp(14px, 2vw, 22px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.eval-editor > section > .muted {
+  margin: 6px 0 16px;
+}
+.eval-editor > section > h2 {
+  margin: 0;
+}
+.eval-editor > section > .field:last-child {
+  margin-bottom: 0;
+}
+.eval-editor .criteria-editor-list li {
+  padding-inline: 8px;
+}
+.eval-editor .criteria-editor-list li:last-child {
+  border-bottom: 0;
+}
+.eval-resource-subheading,
+.eval-editor .judge-resources-heading {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.eval-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.eval-save-row > .section-note {
+  margin: 0;
+}

@@ -58,7 +58,13 @@ export function App() {
     <ModelCatalog>
       <div className="app">
         <Sidebar page={page} />
-        <div className="main-shell">
+        <div
+          className={
+            page === "sessions" && id
+              ? "main-shell session-shell"
+              : "main-shell"
+          }
+        >
           <header className="topbar">
             <a className="breadcrumb-link" href="#evals">
               agent-eval

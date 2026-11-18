@@ -154,8 +154,7 @@ export function EvalList() {
         <div className="empty">
           <h2>Create your first evaluation</h2>
           <p>
-            Add a prompt and criteria, then choose the harnesses and models to
-            test.
+            Add a prompt and criteria. Choose the harnesses and models to test.
           </p>
           <p>
             First time here? <a href="#credentials">Add an API key</a> and{" "}

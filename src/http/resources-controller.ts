@@ -8,26 +8,78 @@ import {
   Param,
   Post,
   Put,
+  Query,
+  Req,
+  Res,
 } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import { Resource } from "../catalog/domain/resource.js";
 import { ResourceRepository } from "../catalog/domain/resource-repository.js";
+import { McpOAuth } from "../catalog/infrastructure/mcp-oauth.js";
 import { DEFAULT_DOCKERFILE } from "../sessions/domain/default-dockerfile.js";
 
 @Controller("api/resources")
 export class ResourcesController {
   constructor(
     @Inject(ResourceRepository) private readonly catalog: ResourceRepository,
+    @Inject(McpOAuth) private readonly oauth: McpOAuth,
   ) {}
 
   @Get()
-  list() {
-    return this.catalog.list();
+  async list() {
+    const resources = await this.catalog.list();
+    const mcps = await Promise.all(
+      resources.mcps.map(async (mcp) => ({
+        ...mcp,
+        oauthConnected: Boolean(
+          mcp.url && (await this.oauth.connected(mcp.url)),
+        ),
+      })),
+    );
+    return { ...resources, mcps };
   }
 
   @Get("default-dockerfile")
   defaultDockerfile() {
     return { content: DEFAULT_DOCKERFILE };
+  }
+
+  @Post(":id/connect")
+  async connect(@Param("id") id: string, @Req() request: Request) {
+    const server = (await this.catalog.list()).mcps.find(
+      (mcp) => mcp.id === id,
+    );
+    if (!server?.url) throw new Error("Save an MCP URL before connecting.");
+    if (
+      !server.url.startsWith("https:") &&
+      !/^(localhost|127\.0\.0\.1)$/.test(new URL(server.url).hostname)
+    )
+      throw new Error("Use HTTPS to connect this MCP server.");
+
+    const callback = `http://${request.headers.host}/api/resources/oauth/callback`;
+    return { authorizationUrl: await this.oauth.connect(server.url, callback) };
+  }
+
+  @Get("oauth/callback")
+  async callback(@Query() query: unknown, @Res() response: Response) {
+    const { state, code } = z
+      .object({ state: z.string().uuid(), code: z.string().optional() })
+      .parse(query);
+
+    response.setHeader("Cache-Control", "no-store");
+    response.setHeader("Referrer-Policy", "no-referrer");
+    try {
+      await this.oauth.complete(state, code);
+      response
+        .type("text")
+        .send("MCP server connected. Close this tab to return to agent-eval.");
+    } catch {
+      response
+        .status(400)
+        .type("text")
+        .send("MCP connection failed. Close this tab and try again.");
+    }
   }
 
   @Post()

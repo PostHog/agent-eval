@@ -58,6 +58,8 @@ These directives preserve the project's requirements and decisions. Apply them w
 
 ## UI and interaction
 
+- Apply the `asd-ste100` skill to all app copy, including labels, help text, errors, status messages, and CLI output. Use active voice, consistent terms, and one instruction per sentence. Limit instructions to 20 words and descriptions to 25 words per sentence. Preserve conditions, uncertainty, and technical terms. Apply these rules to new and existing copy.
+
 - Follow the PostHog brand system and Quill. Reuse the supplied assets, fonts, and `images/agent-eval-logo-brand.png`; retain PostHog attribution. Keep the sidebar compact without the strong yellow selection notch.
 - Use clear hierarchy, technical labels, useful icons, and compact layouts. User-facing navigation says **Evaluations**.
 - Keep criteria open by default on evaluation detail pages. In create/edit forms, show a readable criterion list and open a richer editor dialog when a criterion is selected.

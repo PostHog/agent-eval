@@ -10,11 +10,13 @@ export function EvalModels<T extends Pick<EvalDraft, "models" | "judge">>({
   onChange,
   harnesses = [],
   saveTarget = "evaluation",
+  showDefaultsLink = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   harnesses?: Harness[];
   saveTarget?: "evaluation" | "settings";
+  showDefaultsLink?: boolean;
 }) {
   const [editing, setEditing] = useState<number | "new" | "judge" | null>(null);
 
@@ -36,8 +38,14 @@ export function EvalModels<T extends Pick<EvalDraft, "models" | "judge">>({
           </Button>
         </div>
         <p className="muted">
-          These models perform the task. Add a model to choose its harness,
-          effort, and session limits.
+          {showDefaultsLink ? (
+            <>
+              Models and judge start from your{" "}
+              <a href="#settings">evaluation defaults</a>.
+            </>
+          ) : (
+            "Choose the models that will perform the task."
+          )}
         </p>
         {!value.models.length && (
           <div className="model-selection-empty">

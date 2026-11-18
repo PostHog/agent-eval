@@ -13,6 +13,7 @@ export function ArgumentFields({
         <div className="criterion-input" key={argument.id}>
           <Input
             aria-label={`Argument ${index + 1}`}
+            placeholder="--help"
             value={argument.value}
             onChange={(event) =>
               onChange(

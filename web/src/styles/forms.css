@@ -76,16 +76,30 @@ legend {
 }
 .environment-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 22px;
 }
 .environment-form > section {
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 6px;
   min-width: 0;
-  padding: 18px;
+}
+.environment-form > section + section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.environment-form + .actions {
+  padding-top: 18px;
+}
+.environment-form [role="tablist"] {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.environment-form .environment-options {
+  border-inline-start: 2px solid var(--border);
+  margin: 12px 0 0 8px;
+  padding: 2px 0 2px 14px;
+}
+.environment-options > .field {
+  margin-bottom: 0;
 }
 .environment-section-heading {
   align-items: flex-start;
@@ -115,14 +129,16 @@ legend {
   justify-content: center;
   width: 32px;
 }
-.environment-subsection {
-  border-top: 1px solid var(--border);
-  margin-top: 22px;
-  padding-top: 18px;
+.environment-subsection h4 {
+  font-size: 13px;
+  margin: 0 0 10px;
 }
 .environment-subsection > .muted {
   font-size: 12px;
   margin: -2px 0 0;
+}
+.environment-form [role="tabpanel"] > .muted {
+  margin: 12px 0 0;
 }
 .resource-icon {
   flex: 0 0 auto;
@@ -256,11 +272,6 @@ legend {
   text-align: left;
   width: 100%;
 }
-@media (max-width: 760px) {
-  .environment-form {
-    grid-template-columns: 1fr;
-  }
-}
 .path-picker-list > button:hover,
 .path-picker-list > button:focus-visible {
   background: var(--secondary);
@@ -278,4 +289,8 @@ legend {
   max-height: 350px;
   overflow-y: auto;
   padding-left: 18px;
+}
+
+.resource-source [role="tabpanel"] {
+  margin-top: 12px;
 }

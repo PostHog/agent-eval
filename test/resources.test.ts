@@ -60,6 +60,9 @@ test("skills use exactly one inline or file source", () => {
     skillDocument("Review TypeScript", "Check the code."),
     /name: review-typescript/,
   );
+  const formatted =
+    "---\nname: custom-review\ndescription: Check changes.\n---\nCheck the code.\n";
+  assert.equal(skillDocument("Review TypeScript", formatted), formatted);
   assert.throws(() =>
     Resource.create({
       kind: "skill",

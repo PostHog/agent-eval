@@ -47,7 +47,9 @@ function Editor({
   const [value, setValue] = useState<EvalDraft>({
     title: "Test",
     prompt: "Task",
-    criteria: [{ id: "criterion-1", description: "Original criterion" }],
+    criteria: empty
+      ? []
+      : [{ id: "criterion-1", description: "Original criterion" }],
     environmentId: null,
     personaId: null,
     skillIds: [],
@@ -71,6 +73,21 @@ function Editor({
 function draft(): EvalDraft {
   return JSON.parse(screen.getByTestId("draft").textContent ?? "{}");
 }
+
+test("criteria start empty and return to the empty state when the last criterion is removed", () => {
+  render(<Editor empty onSubmit={() => assert.fail("Eval must not submit")} />);
+  screen.getByText("No criteria yet");
+  fireEvent.click(screen.getByRole("button", { name: "Add criterion" }));
+  fireEvent.change(screen.getByLabelText("Acceptance criterion"), {
+    target: { value: "The test suite passes" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Apply criterion" }));
+  assert.equal(draft().criteria.length, 1);
+  assert.equal(screen.queryByText("No criteria yet"), null);
+  fireEvent.click(screen.getByRole("button", { name: "Remove criterion 1" }));
+  screen.getByText("No criteria yet");
+  assert.deepEqual(draft().criteria, []);
+});
 
 test("criterion dialogs discard cancelled edits and apply text without submitting the eval", () => {
   let submissions = 0;

@@ -9,7 +9,7 @@ export async function externalCommand(
 ): Promise<ProcessCommand> {
   const model = input.settings.model;
   const effort = input.settings.effort;
-  const env = { ...process.env };
+  const env = input.runtime?.kind === "docker" ? {} : { ...process.env };
 
   for (const key of [
     "OPENAI_API_KEY",
@@ -23,16 +23,31 @@ export async function externalCommand(
   if (id !== "claude" && input.mcps?.some((server) => server.allowedTools))
     throw new Error(`The ${id} harness cannot limit MCP tools.`);
 
+  const tokenVariable = (index: number) => `AGENT_EVAL_MCP_TOKEN_${index}`;
+  for (const [index, server] of (input.mcps ?? []).entries()) {
+    if (server.accessToken) env[tokenVariable(index)] = server.accessToken;
+  }
+
   if (id === "codex") {
     // Codex accepts a per-run key without redefining its reserved OpenAI provider.
     env.CODEX_API_KEY = input.apiKey;
 
     // With approval_policy="never", Codex rejects MCP calls unless each configured server pre-approves its tools.
     const mcpArgs = (input.mcps ?? []).flatMap((server, index) => [
-      "-c",
-      `mcp_servers.eval_${index}.command=${JSON.stringify(server.command)}`,
-      "-c",
-      `mcp_servers.eval_${index}.args=${JSON.stringify(server.arguments)}`,
+      ...(server.url
+        ? ["-c", `mcp_servers.eval_${index}.url=${JSON.stringify(server.url)}`]
+        : [
+            "-c",
+            `mcp_servers.eval_${index}.command=${JSON.stringify(server.command)}`,
+            "-c",
+            `mcp_servers.eval_${index}.args=${JSON.stringify(server.arguments)}`,
+          ]),
+      ...(server.accessToken
+        ? [
+            "-c",
+            `mcp_servers.eval_${index}.bearer_token_env_var=${JSON.stringify(tokenVariable(index))}`,
+          ]
+        : []),
       "-c",
       `mcp_servers.eval_${index}.default_tools_approval_mode="approve"`,
     ]);
@@ -79,7 +94,17 @@ export async function externalCommand(
         mcpServers: Object.fromEntries(
           (input.mcps ?? []).map((server, index) => [
             `eval_${index}`,
-            { command: server.command, args: server.arguments },
+            server.url
+              ? {
+                  type: "http",
+                  url: server.url,
+                  ...(server.accessToken && {
+                    headers: {
+                      Authorization: `Bearer \${${tokenVariable(index)}}`,
+                    },
+                  }),
+                }
+              : { command: server.command, args: server.arguments },
           ]),
         ),
       }),
@@ -132,7 +157,18 @@ export async function externalCommand(
     mcp: Object.fromEntries(
       (input.mcps ?? []).map((server, index) => [
         `eval_${index}`,
-        { type: "local", command: [server.command, ...server.arguments] },
+        server.url
+          ? {
+              type: "remote",
+              url: server.url,
+              oauth: false,
+              ...(server.accessToken && {
+                headers: {
+                  Authorization: `Bearer {env:${tokenVariable(index)}}`,
+                },
+              }),
+            }
+          : { type: "local", command: [server.command, ...server.arguments] },
       ]),
     ),
     permission: input.tools.length ? "allow" : "deny",

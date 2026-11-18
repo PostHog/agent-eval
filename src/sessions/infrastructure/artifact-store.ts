@@ -109,11 +109,14 @@ export class ArtifactStore extends WorkspaceStore {
 }
 
 export function skillDocument(title: string, content: string): string {
+  const body = content.trim();
+  if (/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(body)) return `${body}\n`;
+
   const name =
     title
       .toLowerCase()
       .replaceAll(/[^a-z0-9]+/g, "-")
       .replaceAll(/^-|-$/g, "") || "skill";
 
-  return `---\nname: ${name}\ndescription: ${JSON.stringify(title)}\n---\n${content.trim()}\n`;
+  return `---\nname: ${name}\ndescription: ${JSON.stringify(title)}\n---\n${body}\n`;
 }

@@ -5,9 +5,32 @@ import {
 } from "@posthog/quill";
 import { StatusIcon } from "../../status/StatusIcon.js";
 import { Markdown } from "../Markdown.js";
+import {
+  highlightParts,
+  type MatchRanges,
+  type TranscriptMatches,
+} from "./search.js";
 import type { TranscriptEntry } from "./types.js";
 
-export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
+function Highlighted({
+  text,
+  ranges,
+}: {
+  text: string;
+  ranges?: MatchRanges | undefined;
+}) {
+  return highlightParts(text, ranges).map((part) =>
+    part.match ? <mark key={part.start}>{part.text}</mark> : part.text,
+  );
+}
+
+export function TranscriptRow({
+  entry,
+  matches,
+}: {
+  entry: TranscriptEntry;
+  matches?: TranscriptMatches | undefined;
+}) {
   const tool = entry.kind === "tool" || entry.kind === "web";
 
   return (
@@ -37,11 +60,19 @@ export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
                 }
               />
             </span>
-            <strong>{entry.title}</strong>
-            <code>{entry.text}</code>
+            <strong>
+              <Highlighted text={entry.title} ranges={matches?.title} />
+            </strong>
+            <code>
+              <Highlighted text={entry.text} ranges={matches?.text} />
+            </code>
           </div>
           {entry.output ? (
-            <Collapsible className="tool-output">
+            <Collapsible
+              className="tool-output"
+              key={matches?.output ? "match" : "idle"}
+              defaultOpen={Boolean(matches?.output)}
+            >
               <CollapsibleTrigger>
                 <span className={`tool-result-status ${entry.status}`}>
                   {entry.status === "failed" ? "Failed" : "Result"}
@@ -49,7 +80,9 @@ export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
                 {entry.output.replaceAll(/\s+/g, " ").slice(0, 180)}
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <pre>{entry.output}</pre>
+                <pre>
+                  <Highlighted text={entry.output} ranges={matches?.output} />
+                </pre>
               </CollapsibleContent>
             </Collapsible>
           ) : (
@@ -63,18 +96,23 @@ export function TranscriptRow({ entry }: { entry: TranscriptEntry }) {
           )}
         </div>
       ) : entry.kind === "thinking" ? (
-        <Collapsible className="thinking-block">
+        <Collapsible
+          className="thinking-block"
+          key={matches?.text ? "match" : "idle"}
+          defaultOpen={Boolean(matches?.text)}
+        >
           <CollapsibleTrigger>Thinking…</CollapsibleTrigger>
           <CollapsibleContent>
-            <Markdown text={entry.text} />
+            <Markdown text={entry.text} matches={matches?.text} />
           </CollapsibleContent>
         </Collapsible>
       ) : entry.kind === "system" ? (
         <p className="transcript-error">
-          {entry.title} {entry.text}
+          <Highlighted text={entry.title} ranges={matches?.title} />{" "}
+          <Highlighted text={entry.text} ranges={matches?.text} />
         </p>
       ) : (
-        <Markdown text={entry.text} />
+        <Markdown text={entry.text} matches={matches?.text} />
       )}
     </article>
   );

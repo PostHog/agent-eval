@@ -1,6 +1,6 @@
 {
   "name": "agent-eval",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.4.4",
@@ -11,7 +11,7 @@
     "bun": ">=1.4.4"
   },
   "scripts": {
-    "dev": "bun run build && bun dist/cli.js serve",
+    "dev": "bun scripts/dev.ts",
     "dev:server": "bun --watch src/cli.ts serve --no-open",
     "dev:web": "bunx vite --config web/vite.config.ts",
     "start": "bun dist/cli.js serve",
@@ -42,6 +42,7 @@
     "chalk": "6.0.0",
     "dompurify": "3.4.17",
     "dotenv": "17.4.2",
+    "fuse.js": "^7.5.0",
     "marked": "18.0.11",
     "nest-commander": "3.21.0",
     "open": "10.2.0",

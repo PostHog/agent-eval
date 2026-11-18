@@ -95,6 +95,7 @@ export function EvalResources({
         Each session gets an independent environment workspace and runtime. All
         resources are optional.
       </p>
+      <h3 className="eval-resource-subheading">Agent resources</h3>
       <div className="form-grid eval-resource-grid">
         {kinds.map((kind) => (
           <ResourceSelection
@@ -110,11 +111,10 @@ export function EvalResources({
       </div>
       <h3 className="judge-resources-heading">Judge resources</h3>
       <p className="muted">
-        Optional. Judge skills are added to the judge instructions. Judge MCP
-        servers give the judge tools to check evidence. The judge can call only
-        the tools you name for each server, and it runs them without asking, so
-        name read-only tools. The judge never gets file, shell, or web tools,
-        and it does not receive the agent resources above.
+        Judge resources are optional. Judge skills add instructions. MCP tools
+        let the judge check evidence. The judge calls only the tools you name,
+        without asking. Name read-only tools. The judge has no file, shell, or
+        web tools and cannot access the agent resources above.
       </p>
       <div className="form-grid eval-resource-grid">
         {judgeKinds.map((kind) => (

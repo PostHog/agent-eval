@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import { AnalyticsService } from "../../analytics/analytics-service.js";
 import { observedHarness } from "../../analytics/observed-harness.js";
+import { McpAuthorization } from "../../catalog/application/mcp-authorization.js";
 import { CredentialStore } from "../../credentials/provider.js";
 import type { ModelSettingsData } from "../../evaluations/domain/model-settings.js";
 import type {
@@ -11,6 +12,7 @@ import type {
   HarnessResult,
 } from "../../harnesses/domain/harness.js";
 import { HarnessRegistry } from "../../harnesses/domain/harness-registry.js";
+import { redactEvent } from "../../harnesses/domain/redact-secrets.js";
 import type { ExecutionSnapshot } from "../domain/execution-snapshot.js";
 import { judgingPrompt } from "../domain/judging-prompt.js";
 import type { Session } from "../domain/session.js";
@@ -31,6 +33,9 @@ export class SessionWorker {
     @Optional()
     @Inject(AnalyticsService)
     private readonly analytics?: AnalyticsService,
+    @Optional()
+    @Inject(McpAuthorization)
+    private readonly mcpAuthorization?: McpAuthorization,
   ) {}
 
   async execute(
@@ -266,6 +271,26 @@ export class SessionWorker {
     await mkdir(directory, { recursive: true });
     await mkdir(workspace, { recursive: true });
 
+    const servers =
+      phase === "judge"
+        ? (snapshot.judgeMcps ?? []).map((mcp) => ({
+            ...mcp,
+            allowedTools: mcp.allowedTools ?? [],
+          }))
+        : snapshot.mcps;
+    const mcps = await Promise.all(
+      servers.map(async (server) => ({
+        ...server,
+        accessToken: server.url
+          ? await this.mcpAuthorization?.accessToken(server.url)
+          : undefined,
+      })),
+    );
+    const secrets = [
+      apiKey,
+      ...mcps.map((server) => server.accessToken),
+    ].filter((secret): secret is string => Boolean(secret));
+
     return {
       directory,
       workspace,
@@ -300,21 +325,9 @@ export class SessionWorker {
         : {}),
       // The judge never gets built-in tools. It gets only the MCP servers selected for the judge.
       // Judge MCP tools are auto-approved, so the judge sees only the tools the author allowed.
-      mcps:
-        phase === "judge"
-          ? (snapshot.judgeMcps ?? []).map((mcp) => ({
-              ...mcp,
-              allowedTools: mcp.allowedTools ?? [],
-            }))
-          : snapshot.mcps,
+      mcps,
       onRawEvent: (event) =>
-        this.sessions.event(
-          session.id,
-          phase,
-          apiKey
-            ? JSON.parse(JSON.stringify(event).replaceAll(apiKey, "[redacted]"))
-            : event,
-        ),
+        this.sessions.event(session.id, phase, redactEvent(event, secrets)),
     };
   }
 }

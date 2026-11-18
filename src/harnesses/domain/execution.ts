@@ -3,6 +3,7 @@ import type { ModelSettingsData } from "../../evaluations/domain/model-settings.
 export interface ProcessCommand {
   binary: string;
   args: string[];
+  // Docker callers supply only the variables that belong in the container.
   env: NodeJS.ProcessEnv;
 }
 
@@ -25,6 +26,8 @@ export interface HarnessRuntime {
 }
 
 export interface McpServer {
+  url?: string | null;
+  accessToken?: string | undefined;
   title: string;
   command: string;
   arguments: string[];

@@ -66,12 +66,14 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 22px;
+  margin-bottom: 8px;
 }
 .session-heading .page-title {
   display: contents;
 }
 .session-heading h1 {
+  font-size: 20px;
+  margin: 0;
   order: 1;
 }
 .session-heading > .model-reference {

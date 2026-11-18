@@ -5,6 +5,7 @@ import type {
   HarnessInput,
   HarnessResult,
 } from "../domain/harness.js";
+import { redactEvent, redactText } from "../domain/redact-secrets.js";
 import { externalCommand } from "./external-command.js";
 import { summarizeEvents } from "./external-events.js";
 import { providerModels } from "./model-catalog.js";
@@ -33,6 +34,10 @@ export class ExternalHarness implements Harness {
     const events: unknown[] = [];
     let failure: string | undefined;
     let turn = 0;
+    const secrets = [
+      input.apiKey,
+      ...(input.mcps ?? []).map((server) => server.accessToken),
+    ].filter((secret): secret is string => Boolean(secret));
 
     try {
       const localCommand = await externalCommand(this.id, input);
@@ -58,6 +63,7 @@ export class ExternalHarness implements Harness {
         ...input,
         prompt: `${input.persona ? `Persona:\n${input.persona}\n\n` : ""}${input.prompt}`,
         onRawEvent: async (event) => {
+          event = redactEvent(event, secrets);
           events.push(event);
           await input.onRawEvent(event);
 
@@ -78,7 +84,10 @@ export class ExternalHarness implements Harness {
         },
       });
     } catch (error) {
-      failure = error instanceof Error ? error.message : String(error);
+      failure = redactText(
+        error instanceof Error ? error.message : String(error),
+        secrets,
+      );
     }
 
     const result = summarizeEvents(events);

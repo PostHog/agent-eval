@@ -3,8 +3,9 @@ import { useRef, useState } from "react";
 import { useApi } from "../api.js";
 import { Choice } from "../Choice.js";
 import { Field, Notice } from "../components.js";
-import { EmptyState, RequestState } from "../PageState.js";
+import { EmptyState, LoadingState, RequestState } from "../PageState.js";
 import type { Artifact } from "../types.js";
+import { FilePreview } from "./FilePreview.js";
 
 export function FilesPanel({ id, active }: { id: string; active: boolean }) {
   const { data, error, refresh } = useApi<Artifact[]>(
@@ -13,7 +14,7 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
   );
   const [phase, setPhase] = useState("output");
   const [selected, setSelected] = useState<Artifact>();
-  const [text, setText] = useState("");
+  const [text, setText] = useState<string>();
   const [failure, setFailure] = useState("");
   const [search, setSearch] = useState("");
   const request = useRef(0);
@@ -26,7 +27,7 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
     const version = ++request.current;
 
     setSelected(file);
-    setText("Loading file...");
+    setText(undefined);
     setFailure("");
 
     try {
@@ -84,8 +85,8 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
         <EmptyState title="No saved files in this phase">
           <p>
             {active
-              ? "Files appear as workspace snapshots are saved. Check again after the session finishes."
-              : "This session has no files saved for the selected phase. Choose another phase."}
+              ? "Check this phase again after the session finishes."
+              : "This phase has no saved files. Choose another phase."}
           </p>
         </EmptyState>
       ) : (
@@ -123,7 +124,16 @@ export function FilesPanel({ id, active }: { id: string; active: boolean }) {
                     Download
                   </a>
                 </div>
-                <pre>{text}</pre>
+                {!failure &&
+                  (text === undefined ? (
+                    <LoadingState label="Loading file…" />
+                  ) : (
+                    <FilePreview
+                      key={selected.id}
+                      path={selected.path}
+                      text={text}
+                    />
+                  ))}
               </>
             ) : (
               <p className="empty">Choose a file to read its saved contents.</p>

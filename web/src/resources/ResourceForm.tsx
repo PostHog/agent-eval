@@ -1,4 +1,12 @@
-import { Button, Input, Textarea } from "@posthog/quill";
+import {
+  Button,
+  Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from "@posthog/quill";
 import { type FormEvent, useState } from "react";
 import { api } from "../api.js";
 import { Choice } from "../Choice.js";
@@ -33,6 +41,21 @@ function EnvironmentSectionHeading({
     </header>
   );
 }
+
+const inlineSkillTemplate = `---
+name: review-code
+description: Review changed files for defects.
+---
+
+Read the changed files and report any defects.
+`;
+
+const titlePlaceholders = {
+  skills: "Review code",
+  personas: "Backend engineer",
+  mcps: "GitHub",
+  environments: undefined,
+};
 
 export function ResourceForm({
   kind,
@@ -84,10 +107,16 @@ export function ResourceForm({
   const [executionMode, setExecutionMode] = useState<"local" | "docker">(
     initial?.executionMode ?? "local",
   );
-  const [content, setContent] = useState(initial?.content ?? "");
+  const [content, setContent] = useState(
+    initial?.content ?? inlineSkillTemplate,
+  );
   const [skillSource, setSkillSource] = useState<"inline" | "file">(
     initial?.filePath ? "file" : "inline",
   );
+  const [mcpSource, setMcpSource] = useState<"command" | "url">(
+    initial?.url ? "url" : "command",
+  );
+  const [mcpUrl, setMcpUrl] = useState(initial?.url ?? "");
   const [args, setArgs] = useState<{ id: string; value: string }[]>(() =>
     (initial?.arguments ?? []).map((value) => ({
       id: crypto.randomUUID(),
@@ -115,6 +144,8 @@ export function ResourceForm({
     setError("");
 
     try {
+      const [mcpCommand, ...mcpArguments] =
+        kind === "mcps" && mcpSource === "command" ? splitNpxCommand(path) : [];
       const value = {
         kind: resourceInfo[kind].kind,
         title,
@@ -142,7 +173,16 @@ export function ResourceForm({
             }
           : {}),
         ...(kind === "mcps"
-          ? { command: path, arguments: args.map((argument) => argument.value) }
+          ? mcpSource === "url"
+            ? { url: mcpUrl, command: "", arguments: [] }
+            : {
+                url: null,
+                command: mcpCommand,
+                arguments: [
+                  ...mcpArguments,
+                  ...args.map((argument) => argument.value),
+                ],
+              }
           : {}),
       };
 
@@ -176,6 +216,7 @@ export function ResourceForm({
       <Field label="Title">
         <Input
           required
+          placeholder={titlePlaceholders[kind]}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
@@ -187,169 +228,206 @@ export function ResourceForm({
           <Textarea
             required={kind === "personas"}
             rows={4}
+            placeholder={
+              kind === "personas"
+                ? "Review changes as a backend engineer."
+                : "Access GitHub issues and pull requests."
+            }
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
         </Field>
       )}
       {kind === "skills" && (
-        <>
-          <Field label="Source">
-            <Choice
-              value={skillSource}
-              onValueChange={(value) =>
-                setSkillSource(value as "inline" | "file")
-              }
-              options={[
-                { value: "inline", label: "Write instructions here" },
-                { value: "file", label: "Use a local file" },
-              ]}
-            />
-          </Field>
-          {skillSource === "inline" ? (
-            <Field label="Skill instructions">
-              <Textarea
-                required
-                rows={12}
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-              />
-            </Field>
-          ) : (
-            <Field label="Skill file">
-              <PathInput
-                kind="file"
-                required
-                value={path}
-                placeholder="/absolute/path/to/skill.md"
-                onChange={setPath}
-              />
-            </Field>
-          )}
-        </>
+        <Tabs
+          className="resource-source"
+          value={skillSource}
+          onValueChange={(value) => setSkillSource(value as typeof skillSource)}
+        >
+          <TabsList aria-label="Source">
+            <TabsTrigger value="file">File</TabsTrigger>
+            <TabsTrigger value="inline">Inline</TabsTrigger>
+          </TabsList>
+          <TabsContent value="inline">
+            {skillSource === "inline" && (
+              <Field label="Skill instructions">
+                <Textarea
+                  required
+                  rows={12}
+                  placeholder="Read the changed files and report any defects."
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                />
+              </Field>
+            )}
+          </TabsContent>
+          <TabsContent value="file">
+            {skillSource === "file" && (
+              <Field label="Skill file">
+                <PathInput
+                  kind="file"
+                  required
+                  value={path}
+                  placeholder="/absolute/path/to/skill.md"
+                  onChange={setPath}
+                />
+              </Field>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
       {kind === "environments" && (
         <div className="environment-form">
           <section>
             <EnvironmentSectionHeading
-              icon="workspace"
-              title="Workspace contents"
-              description="Files copied into the isolated workspace for each session."
+              icon="runtime"
+              title="Execution engine"
+              description="Choose where agent and tool commands run."
             />
-            <Field label="Workspace source">
-              <Choice
-                value={environmentSource}
-                onValueChange={(value) =>
-                  setEnvironmentSource(
-                    value as "empty" | "folder" | "repository",
-                  )
-                }
-                options={[
-                  { value: "empty", label: "Empty workspace" },
-                  { value: "folder", label: "Local folder" },
-                  { value: "repository", label: "Git repository" },
-                ]}
-              />
-            </Field>
-            {environmentSource === "folder" && (
-              <Field label="Source directory">
-                <PathInput
-                  kind="directory"
-                  required
-                  value={path}
-                  placeholder="/absolute/path/to/project"
-                  onChange={setPath}
-                />
-              </Field>
-            )}
-            {environmentSource === "repository" && (
-              <Field label="Repository URL">
-                <Input
-                  required
-                  value={repositoryUrl}
-                  placeholder="https://github.com/PostHog/posthog.git"
-                  onChange={(event) => setRepositoryUrl(event.target.value)}
-                />
-              </Field>
-            )}
+            <Tabs
+              value={executionMode}
+              onValueChange={(value) =>
+                setExecutionMode(value as typeof executionMode)
+              }
+            >
+              <TabsList aria-label="Execution engine">
+                <TabsTrigger value="local">Local</TabsTrigger>
+                <TabsTrigger value="docker">Docker</TabsTrigger>
+              </TabsList>
+              <TabsContent value="local">
+                <p className="muted">Run agent commands on this computer.</p>
+              </TabsContent>
+              <TabsContent value="docker" className="environment-options">
+                <div className="environment-subsection">
+                  <h4>Docker image</h4>
+                  <Field label="Image definition">
+                    <Choice
+                      value={dockerfileSource}
+                      onValueChange={(value) =>
+                        setDockerfileSource(value as typeof dockerfileSource)
+                      }
+                      options={[
+                        { value: "default", label: "Use the built-in image" },
+                        { value: "file", label: "Use a local Dockerfile" },
+                        { value: "inline", label: "Write a Dockerfile" },
+                      ]}
+                    />
+                  </Field>
+                  {dockerfileSource === "default" && <DefaultDockerfile />}
+                  {dockerfileSource === "file" && (
+                    <Field label="Dockerfile path">
+                      <PathInput
+                        kind="file"
+                        required
+                        value={dockerfilePath}
+                        placeholder="/absolute/path/to/Dockerfile"
+                        onChange={setDockerfilePath}
+                      />
+                    </Field>
+                  )}
+                  {dockerfileSource === "inline" && (
+                    <InlineDockerfile
+                      value={dockerfileContent}
+                      onChange={setDockerfileContent}
+                    />
+                  )}
+                  <p className="muted">
+                    agent-eval installs the selected native harness with npm.
+                    For a native harness, the final image must include Node.js
+                    22, npm, and sh. Pi requires only the commands the agent
+                    uses.
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </section>
           <section>
             <EnvironmentSectionHeading
-              icon="runtime"
-              title="Command runtime"
-              description="Process boundary used for every agent and tool command."
+              icon="workspace"
+              title="Workspace source"
+              description="Choose which files each session starts with."
             />
-            <Field label="Execution target">
-              <Choice
-                value={executionMode}
-                onValueChange={(value) =>
-                  setExecutionMode(value as "local" | "docker")
-                }
-                options={[
-                  { value: "local", label: "This computer" },
-                  { value: "docker", label: "Docker container" },
-                ]}
-              />
-            </Field>
-            {executionMode === "docker" && (
-              <div className="environment-subsection">
-                <EnvironmentSectionHeading
-                  icon="container"
-                  title="Container image"
-                  description="Dockerfile used to build this environment."
-                />
-                <Field label="Image definition">
-                  <Choice
-                    value={dockerfileSource}
-                    onValueChange={(value) =>
-                      setDockerfileSource(value as typeof dockerfileSource)
-                    }
-                    options={[
-                      { value: "default", label: "Use the built-in image" },
-                      { value: "file", label: "Use a local Dockerfile" },
-                      { value: "inline", label: "Write a Dockerfile" },
-                    ]}
+            <Tabs
+              value={environmentSource}
+              onValueChange={(value) =>
+                setEnvironmentSource(value as typeof environmentSource)
+              }
+            >
+              <TabsList aria-label="Workspace source">
+                <TabsTrigger value="empty">Empty workspace</TabsTrigger>
+                <TabsTrigger value="folder">Local folder</TabsTrigger>
+                <TabsTrigger value="repository">Git repository</TabsTrigger>
+              </TabsList>
+              <TabsContent value="empty">
+                <p className="muted">
+                  Start each session in an empty directory.
+                </p>
+              </TabsContent>
+              <TabsContent value="folder" className="environment-options">
+                <Field label="Source directory">
+                  <PathInput
+                    kind="directory"
+                    required
+                    value={path}
+                    placeholder="/absolute/path/to/project"
+                    onChange={setPath}
                   />
                 </Field>
-                {dockerfileSource === "default" && <DefaultDockerfile />}
-                {dockerfileSource === "file" && (
-                  <Field label="Dockerfile path">
-                    <PathInput
-                      kind="file"
-                      required
-                      value={dockerfilePath}
-                      placeholder="/absolute/path/to/Dockerfile"
-                      onChange={setDockerfilePath}
-                    />
-                  </Field>
-                )}
-                {dockerfileSource === "inline" && (
-                  <InlineDockerfile
-                    value={dockerfileContent}
-                    onChange={setDockerfileContent}
+              </TabsContent>
+              <TabsContent value="repository" className="environment-options">
+                <Field label="Repository URL">
+                  <Input
+                    required
+                    value={repositoryUrl}
+                    placeholder="https://github.com/PostHog/posthog.git"
+                    onChange={(event) => setRepositoryUrl(event.target.value)}
                   />
-                )}
-                <p className="muted">
-                  Agent-eval installs the selected native harness with npm. A
-                  custom final image must include Node.js 22, npm, and sh. Pi
-                  only requires the commands that the agent uses.
-                </p>
-              </div>
-            )}
+                </Field>
+              </TabsContent>
+            </Tabs>
           </section>
         </div>
       )}
       {kind === "mcps" && (
-        <Field label="MCP executable">
-          <Input
-            required
-            value={path}
-            placeholder="npx"
-            onChange={(event) => setPath(event.target.value)}
-          />
-        </Field>
+        <Tabs
+          className="resource-source"
+          value={mcpSource}
+          onValueChange={(value) => setMcpSource(value as typeof mcpSource)}
+        >
+          <TabsList aria-label="Source">
+            <TabsTrigger value="command">Command</TabsTrigger>
+            <TabsTrigger value="url">MCP URL</TabsTrigger>
+          </TabsList>
+          <TabsContent value="command">
+            {mcpSource === "command" && (
+              <>
+                <Field label="MCP command">
+                  <Input
+                    required
+                    value={path}
+                    placeholder="npx -y example-mcp-server"
+                    onChange={(event) => setPath(event.target.value)}
+                  />
+                </Field>
+                <ArgumentFields value={args} onChange={setArgs} />
+              </>
+            )}
+          </TabsContent>
+          <TabsContent value="url">
+            {mcpSource === "url" && (
+              <Field label="MCP URL">
+                <Input
+                  type="url"
+                  required
+                  value={mcpUrl}
+                  placeholder="https://example.com/mcp"
+                  onChange={(event) => setMcpUrl(event.target.value)}
+                />
+              </Field>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
-      {kind === "mcps" && <ArgumentFields value={args} onChange={setArgs} />}
       <div className="actions">
         <Button type="submit" variant="primary" disabled={saving}>
           {saving && <StatusIcon name="spinner" />}
@@ -360,5 +438,25 @@ export function ResourceForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function splitNpxCommand(input: string): string[] {
+  const command = input.trim();
+  if (!/^npx\s/.test(command)) return [command];
+
+  // Parse pasted arguments as text so the command never needs a shell.
+  const word = /(?:[^\s"'\\]+|'[^']*'|"(?:[^"\\]|\\.)*"|\\.)+/g;
+  if (command.replace(word, "").trim())
+    throw new Error(
+      "Close the quotes or complete the escape in the MCP command.",
+    );
+
+  return Array.from(command.matchAll(word), ([value]) =>
+    value.replace(
+      /'([^']*)'|"((?:[^"\\]|\\.)*)"|\\(.)/g,
+      (_match, single, double, escaped) =>
+        single ?? double?.replace(/\\(["\\])/g, "$1") ?? escaped,
+    ),
   );
 }

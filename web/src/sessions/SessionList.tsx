@@ -17,7 +17,6 @@ import {
   Field,
   money,
   Notice,
-  PageTitle,
   Status,
 } from "../components.js";
 import { ModelReference } from "../models/ModelReference.js";
@@ -30,18 +29,10 @@ export function SessionList() {
 
   return (
     <>
-      <PageTitle title="Coding sessions">
-        <Button
-          nativeButton={false}
-          variant="outline"
-          render={<a href="#evals">Go to evaluations</a>}
-        />
-      </PageTitle>
-      <p className="description">
-        Find a session, inspect its trace, and see why it passed or failed.
-        Needs review includes failed checks, execution errors, and cancelled
-        sessions.
-      </p>
+      <header className="session-list-header">
+        <h1>Coding sessions</h1>
+        <p className="muted">Review agent activity and judge results.</p>
+      </header>
       {data ? (
         <>
           <Notice error={error} />
@@ -80,20 +71,21 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
 
   return (
     <>
-      <div className="toolbar">
-        <Input
-          type="search"
-          aria-label="Search sessions"
-          placeholder="Search evaluation, model, or environment"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
+      <div className="session-list-filters">
+        <Field label="Search sessions">
+          <Input
+            type="search"
+            placeholder="Evaluation, model, or environment"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </Field>
         <Field label="Harness / model">
           <Choice
             value={model}
             onValueChange={setModel}
             options={[
-              { value: "", label: "All" },
+              { value: "", label: "All models" },
               ...models.map((model) => ({ value: model, label: model })),
             ]}
           />
@@ -112,14 +104,16 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
             ]}
           />
         </Field>
+      </div>
+      <div className="session-list-summary">
+        <output className="muted">
+          {filtered.length} of {sessions.length} sessions
+        </output>
         {(search || model || status) && (
-          <Button type="button" onClick={clear}>
+          <Button type="button" variant="outline" onClick={clear}>
             Clear filters
           </Button>
         )}
-        <span className="muted">
-          {filtered.length} of {sessions.length} sessions
-        </span>
       </div>
       {filtered.length > 0 && (
         <div className="table-scroll">
@@ -184,11 +178,7 @@ export function SessionsTable({ sessions }: { sessions: Session[] }) {
         </div>
       )}
       {filtered.length === 0 && (
-        <EmptyState title="No sessions match these filters">
-          <Button type="button" onClick={clear}>
-            Clear filters
-          </Button>
-        </EmptyState>
+        <EmptyState title="No sessions match these filters">{null}</EmptyState>
       )}
     </>
   );

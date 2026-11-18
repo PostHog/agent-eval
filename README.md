@@ -164,11 +164,11 @@ Pi SDK execution, tools, limits, and trace formatting are contained in `src/harn
 ## Development
 
 ```sh
-bun run dev
+npm run dev
 bun run check
 ```
 
-For separate processes, run `bun run dev:server` and `bun run dev:web` in separate terminals.
+`npm run dev` opens Vite with hot reload and restarts the Bun API server when backend code changes. For separate processes, run `bun run dev:server` and `bun run dev:web` in separate terminals.
 
 `check` runs strict TypeScript checks, Biome, tests, and the production build. Tests use temporary SQLite databases and controlled harnesses. They do not make paid model requests.
 

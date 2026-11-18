@@ -110,12 +110,12 @@ export function ModelPicker({
       </p>
       {harness && !harness.installed && (
         <p className="model-setup-note">
-          {harness.title} is not installed. You can save this configuration, but
-          must{" "}
+          {harness.title} is not installed. You can save this configuration now.
+          Before you run an evaluation,{" "}
           <a href="#harnesses" target="_blank" rel="noopener">
-            set up the harness
-          </a>{" "}
-          before running it.
+            install the harness
+          </a>
+          .
         </p>
       )}
     </>

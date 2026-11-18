@@ -39,12 +39,38 @@ export const resourceSchema = z
         ...common,
         kind: z.literal("mcp"),
         description: z.string().default(""),
-        command: z.string().trim().min(1),
+        url: z
+          .string()
+          .trim()
+          .url()
+          .refine((value) => {
+            const url = URL.parse(value);
+            return Boolean(
+              url &&
+                (url.protocol === "https:" || url.protocol === "http:") &&
+                !url.username &&
+                !url.password &&
+                !url.hash,
+            );
+          }, "Use an HTTP MCP URL without credentials or a fragment.")
+          .nullable()
+          .default(null),
+        command: z.string().trim().default(""),
         arguments: z.array(z.string()),
       })
       .strict(),
   ])
   .superRefine((resource, context) => {
+    if (
+      resource.kind === "mcp" &&
+      (Boolean(resource.url) === Boolean(resource.command) ||
+        (resource.url && resource.arguments.length))
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Choose an MCP command or an HTTP URL.",
+      });
+
     if (
       resource.kind === "skill" &&
       Number(Boolean(resource.filePath)) + Number(Boolean(resource.content)) !==

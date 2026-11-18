@@ -2,7 +2,9 @@ import { Module } from "@nestjs/common";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { AnalyticsService } from "./analytics/analytics-service.js";
 import { loadInstallationId } from "./analytics/installation-identity.js";
+import { McpAuthorization } from "./catalog/application/mcp-authorization.js";
 import { ResourceRepository } from "./catalog/domain/resource-repository.js";
+import { McpOAuth } from "./catalog/infrastructure/mcp-oauth.js";
 import { PrismaCatalog } from "./catalog/infrastructure/prisma-catalog.js";
 import { KeyVault } from "./credentials/key-vault.js";
 import { CredentialStore } from "./credentials/provider.js";
@@ -44,6 +46,8 @@ import { PrismaSettingsRepository } from "./settings/infrastructure/prisma-setti
     },
     EvaluationsService,
     KeyVault,
+    McpOAuth,
+    { provide: McpAuthorization, useExisting: McpOAuth },
     PiHarness,
     ProviderCreditsService,
     SessionWorker,

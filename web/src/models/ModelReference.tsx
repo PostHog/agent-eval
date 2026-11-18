@@ -1,4 +1,6 @@
 import { createContext, type ReactNode, useContext } from "react";
+import codexIcon from "../../../images/harnesses/chatgpt.jpg";
+import piIcon from "../../../images/harnesses/pi.png";
 import { useApi } from "../api.js";
 import { Tooltip } from "../Tooltip.js";
 import type { Harness } from "../types.js";
@@ -10,7 +12,7 @@ const brands: Record<
 > = {
   codex: {
     title: "Codex",
-    icon: "https://chatgpt.com/favicon.ico",
+    icon: codexIcon,
     fallback: "C",
   },
   claude: {
@@ -23,7 +25,7 @@ const brands: Record<
     icon: "https://opencode.ai/favicon.ico",
     fallback: "OC",
   },
-  pi: { title: "Pi", icon: "https://pi.dev/favicon.ico", fallback: "π" },
+  pi: { title: "Pi", icon: piIcon, fallback: "π" },
 };
 
 export function ModelCatalog({ children }: { children: ReactNode }) {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { realpath, rm } from "node:fs/promises";
+import { readFile, realpath, rm } from "node:fs/promises";
 import { test } from "node:test";
 import { ModelSettings } from "../src/evaluations/domain/model-settings.js";
 import type { HarnessInput } from "../src/harnesses/domain/harness.js";
@@ -25,6 +25,15 @@ test("native adapters keep credentials out of arguments and disable judge tools"
       timeout: 10,
       maxTurns: 2,
       apiKey: "secret-key",
+      mcps: [
+        {
+          title: "Remote",
+          url: "https://example.com/mcp",
+          command: "",
+          arguments: [],
+          accessToken: "secret-mcp-token",
+        },
+      ],
       signal: new AbortController().signal,
       settings: { ...ModelSettings.create({ model: "test" }).value },
       onRawEvent: async () => {},
@@ -33,9 +42,29 @@ test("native adapters keep credentials out of arguments and disable judge tools"
     for (const id of ["codex", "claude", "opencode"] as const) {
       const command = await externalCommand(id, input);
 
-      assert.doesNotMatch(JSON.stringify(command.args), /secret-key/);
+      assert.doesNotMatch(
+        JSON.stringify(command.args),
+        /secret-key|secret-mcp-token/,
+      );
+      assert.equal(command.env.AGENT_EVAL_MCP_TOKEN_0, "secret-mcp-token");
+
+      if (id === "claude") {
+        const configPath =
+          command.args[command.args.indexOf("--mcp-config") + 1];
+        assert.ok(configPath);
+        const config = JSON.parse(await readFile(configPath, "utf8"));
+        assert.deepEqual(config.mcpServers.eval_0, {
+          type: "http",
+          url: "https://example.com/mcp",
+          headers: { Authorization: `Bearer \${AGENT_EVAL_MCP_TOKEN_0}` },
+        });
+      }
 
       if (id === "codex") {
+        for (const [index, arg] of command.args.entries()) {
+          if (arg === "-c")
+            assert.match(command.args[index + 1] ?? "", /^[\w.]+=/);
+        }
         assert.ok(command.args.includes("read-only"));
         assert.equal(command.env.CODEX_API_KEY, "secret-key");
         assert.equal(command.env.OPENAI_API_KEY, undefined);

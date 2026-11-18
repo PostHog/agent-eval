@@ -1,0 +1,1 @@
+ALTER TABLE "Mcp" ADD COLUMN "url" TEXT;

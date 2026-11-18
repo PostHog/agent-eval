@@ -25,6 +25,8 @@ export interface Resource {
   filePath?: string | null;
   content?: string | null;
   command?: string;
+  url?: string | null;
+  oauthConnected?: boolean;
   arguments?: string[];
 }
 export interface Resources {

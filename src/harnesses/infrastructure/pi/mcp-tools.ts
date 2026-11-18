@@ -1,9 +1,14 @@
 import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { TSchema } from "typebox";
 import { z } from "zod";
-import type { HarnessRequest, ProcessCommand } from "../../domain/execution.js";
+import type {
+  HarnessRequest,
+  McpServer,
+  ProcessCommand,
+} from "../../domain/execution.js";
 
 export async function connectMcpTools(request: HarnessRequest) {
   const clients: Client[] = [];
@@ -18,25 +23,15 @@ export async function connectMcpTools(request: HarnessRequest) {
 
       clients.push(client);
 
-      const localCommand: ProcessCommand = {
-        binary: server.command,
-        args: server.arguments,
-        env: process.env,
-      };
-      const command = request.runtime
-        ? await request.runtime.process(localCommand, request.workspace)
-        : localCommand;
-      const transport = new StdioClientTransport({
-        command: command.binary,
-        args: command.args,
-        env: Object.fromEntries(
-          Object.entries(command.env).filter(
-            (entry): entry is [string, string] => entry[1] !== undefined,
-          ),
-        ),
-        ...(request.runtime ? {} : { cwd: request.workspace }),
-        stderr: "pipe",
-      });
+      const transport = server.url
+        ? new StreamableHTTPClientTransport(new URL(server.url), {
+            ...(server.accessToken && {
+              requestInit: {
+                headers: { Authorization: `Bearer ${server.accessToken}` },
+              },
+            }),
+          })
+        : await stdioTransport(server, request);
 
       await client.connect(transport, {
         signal: request.signal,
@@ -96,4 +91,26 @@ export async function connectMcpTools(request: HarnessRequest) {
 
     throw error;
   }
+}
+
+async function stdioTransport(server: McpServer, request: HarnessRequest) {
+  const localCommand: ProcessCommand = {
+    binary: server.command,
+    args: server.arguments,
+    env: request.runtime?.kind === "docker" ? {} : process.env,
+  };
+  const command = request.runtime
+    ? await request.runtime.process(localCommand, request.workspace)
+    : localCommand;
+  return new StdioClientTransport({
+    command: command.binary,
+    args: command.args,
+    env: Object.fromEntries(
+      Object.entries(command.env).filter(
+        (entry): entry is [string, string] => entry[1] !== undefined,
+      ),
+    ),
+    ...(request.runtime ? {} : { cwd: request.workspace }),
+    stderr: "pipe",
+  });
 }

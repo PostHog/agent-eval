@@ -101,7 +101,7 @@ for (const [kind, field, button] of [
       );
 
     if (kind === "MCP server")
-      fireEvent.change(screen.getByLabelText("MCP executable"), {
+      fireEvent.change(screen.getByLabelText("MCP command"), {
         target: { value: "npx" },
       });
 

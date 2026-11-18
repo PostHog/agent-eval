@@ -79,18 +79,17 @@ export function CredentialsPage() {
       )}
       <p className="section-note">
         A saved key takes priority over the provider’s environment variable.
-        Remove the saved key to use the environment again.
+        Remove the saved key to use the environment variable again.
       </p>
       <Collapsible className="credential-storage">
         <CollapsibleTrigger>How keys are stored</CollapsibleTrigger>
         <CollapsibleContent>
           <p className="section-note">
-            Keys are encrypted in SQLite. The encryption key stays in the local
-            application data directory; back up both files together. A saved key
-            overrides the environment key for that provider. Removing the saved
-            key restores the environment fallback. Environment keys come from
-            the server’s environment or its .env file. Restart the server after
-            changing those values.
+            agent-eval encrypts provider keys and stores them in SQLite. The
+            local data directory contains the encryption key. Make a backup of
+            both files together. The server reads provider keys from its
+            environment or its .env file. Restart the server if you change those
+            values.
           </p>
         </CollapsibleContent>
       </Collapsible>

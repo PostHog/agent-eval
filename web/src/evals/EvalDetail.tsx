@@ -125,8 +125,8 @@ export function EvalDetail({ id }: { id: string }) {
         </div>
       )}
       <p className="section-note">
-        Runs use revision {evaluation.revision}. Each session gets an
-        independent workspace and judgment; both agent and judge calls incur
+        Runs use revision {evaluation.revision}. Each session uses a separate
+        workspace and receives one judgment. Agent and judge calls both incur
         usage.
       </p>
       <div className="toolbar">
@@ -145,8 +145,8 @@ export function EvalDetail({ id }: { id: string }) {
           />
         </Field>
         <span className="muted">
-          Showing revision {definition.revision}; current revision{" "}
-          {evaluation.revision}
+          This report shows revision {definition.revision}. The current revision
+          is {evaluation.revision}.
         </span>
       </div>
       {definition.revision !== evaluation.revision && (

@@ -86,7 +86,9 @@ export function HarnessesPage() {
                       >
                         {harness.installed ? "Installed" : "Not installed"}
                         {!harness.installed && (
-                          <small>Install {harness.title}, then refresh.</small>
+                          <small>
+                            Install {harness.title}. Then refresh this page.
+                          </small>
                         )}
                       </TableCell>
                       <TableCell>

@@ -27,9 +27,8 @@ export const resourceInfo = {
     kind: "mcp",
     title: "MCP servers",
     singular: "MCP server",
-    description:
-      "Give agents tools through local MCP servers. Each configuration launches an executable with the arguments below.",
-    hint: "Enter the executable separately from its arguments. Each argument is passed exactly as entered; do not add shell quotes.",
+    description: "Give agents tools from local or remote MCP servers.",
+    hint: "Enter a command and its arguments, or enter an MCP URL.",
   },
 } as const;
 

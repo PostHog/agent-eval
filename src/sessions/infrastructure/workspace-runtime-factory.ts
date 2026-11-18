@@ -84,7 +84,7 @@ class DockerWorkspaceRuntime implements HarnessRuntime {
   }
 
   async process(command: ProcessCommand, cwd: string): Promise<ProcessCommand> {
-    const environmentArgs = await this.environmentArguments(command.env);
+    const environmentArgs = await this.environmentArguments(command.env, true);
 
     return {
       binary: "docker",
@@ -140,10 +140,14 @@ class DockerWorkspaceRuntime implements HarnessRuntime {
     return value.replaceAll(this.root, "/agent-eval");
   }
 
-  private async environmentArguments(environment: NodeJS.ProcessEnv = {}) {
+  private async environmentArguments(
+    environment: NodeJS.ProcessEnv = {},
+    explicit = false,
+  ) {
     const entries = Object.entries(environment).filter(
       (entry): entry is [string, string] =>
-        entry[1] !== undefined && process.env[entry[0]] !== entry[1],
+        entry[1] !== undefined &&
+        (explicit || process.env[entry[0]] !== entry[1]),
     );
 
     return entries.length

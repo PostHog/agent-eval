@@ -26,7 +26,7 @@ export class ApiErrorFilter implements ExceptionFilter {
         message:
           error.code === "P2003"
             ? "This resource is in use or no longer exists."
-            : "The saved data changed. Reload the page and try again.",
+            : "The saved data changed. Reload the page. Then try again.",
       });
     else
       response.status(400).json({

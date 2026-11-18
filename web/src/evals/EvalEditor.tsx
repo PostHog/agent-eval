@@ -57,7 +57,7 @@ function Editor({
     initial ?? {
       title: "",
       prompt: "",
-      criteria: [{ id: crypto.randomUUID(), description: "" }],
+      criteria: [],
       environmentId: null,
       personaId: null,
       skillIds: [],
@@ -88,6 +88,11 @@ function Editor({
 
   async function save(event: FormEvent) {
     event.preventDefault();
+
+    if (!value.criteria.length) {
+      setError("Add at least one criterion before saving the evaluation.");
+      return;
+    }
 
     if (value.criteria.some((criterion) => !criterion.description.trim())) {
       setError("Add text to each criterion before saving the evaluation.");
@@ -157,29 +162,25 @@ function Editor({
         />
       </PageTitle>
       <p className="description">
-        Define the task and what success means. Save the evaluation, then run it
-        from the report page.
+        Define the task, criteria, and models for this evaluation.
       </p>
-      {!initial && (
-        <p className="section-note">
-          Models and judge start from your{" "}
-          <a href="#settings">evaluation defaults</a>. Changes here apply only
-          to this evaluation.
-        </p>
-      )}
       <Notice error={resourceError || harnessError} />
       {harnessError && (
         <Button type="button" onClick={refreshHarnesses}>
           Retry loading harnesses
         </Button>
       )}
-      <form onSubmit={save} className="editor">
+      <form onSubmit={save} className="editor eval-editor">
         <section>
           <h2>Task</h2>
+          <p className="muted">
+            Describe what the agent should do in each session.
+          </p>
           <Field label="Title">
             <Input
               required
               maxLength={200}
+              placeholder="Add analytics to a Next.js app"
               value={value.title}
               onChange={(event) =>
                 setValue({ ...value, title: event.target.value })
@@ -190,6 +191,7 @@ function Editor({
             <Textarea
               required
               rows={5}
+              placeholder="Configure PostHog. Capture an event when a user completes signup."
               value={value.prompt}
               onChange={(event) =>
                 setValue({ ...value, prompt: event.target.value })
@@ -198,6 +200,12 @@ function Editor({
           </Field>
         </section>
         <EvalCriteria value={value} onChange={setValue} />
+        <EvalModels
+          value={value}
+          onChange={(next) => setValue(withJudgeMcpSupport(next, harnesses))}
+          harnesses={harnesses}
+          showDefaultsLink={!initial}
+        />
         <EvalResources
           value={value}
           onChange={setValue}
@@ -206,30 +214,28 @@ function Editor({
           resourcesLoading={resourcesLoading}
           judgeHarness={judgeHarness}
         />
-        <EvalModels
-          value={value}
-          onChange={(next) => setValue(withJudgeMcpSupport(next, harnesses))}
-          harnesses={harnesses}
-        />
         <div className="form-actions">
           <Notice error={error} />
-          <p className="section-note">
-            {value.criteria.length} criteria ·{" "}
-            {value.models.reduce(
-              (sum, model) =>
-                sum + (Number.isFinite(model.count) ? model.count : 0),
-              0,
-            )}{" "}
-            sessions per run · one judgment per session
-          </p>
-          <Button
-            variant="primary"
-            disabled={saving || !harnesses}
-            type="submit"
-          >
-            {saving && <StatusIcon name="spinner" />}
-            {saving ? "Saving..." : "Save evaluation"}
-          </Button>
+          <div className="eval-save-row">
+            <p className="section-note">
+              {value.criteria.length}{" "}
+              {value.criteria.length === 1 ? "criterion" : "criteria"} ·{" "}
+              {value.models.reduce(
+                (sum, model) =>
+                  sum + (Number.isFinite(model.count) ? model.count : 0),
+                0,
+              )}{" "}
+              sessions per run · one judgment per session
+            </p>
+            <Button
+              variant="primary"
+              disabled={saving || !harnesses}
+              type="submit"
+            >
+              {saving && <StatusIcon name="spinner" />}
+              {saving ? "Saving..." : "Save evaluation"}
+            </Button>
+          </div>
         </div>
       </form>
     </>

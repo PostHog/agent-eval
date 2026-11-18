@@ -48,7 +48,8 @@ export function messageEntries(
 
   return content.flatMap((raw, index): TranscriptEntry[] => {
     const block = record(raw);
-    const id = `message-${String(message.id ?? sequence)}-${index}`;
+    // Claude can send separate thinking and text blocks with the same message ID.
+    const id = `message-${String(message.id ?? sequence)}-${String(block.type)}-${index}`;
 
     if (block.type === "tool_use") {
       const name = string(block.name);

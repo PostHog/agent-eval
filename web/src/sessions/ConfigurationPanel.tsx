@@ -6,109 +6,126 @@ import {
 import { ModelReference } from "../models/ModelReference.js";
 import type { Session } from "../types.js";
 
+type Snapshot = Session["snapshot"];
+
+function Resources({
+  skills,
+  mcps,
+}: {
+  skills: Snapshot["skills"];
+  mcps: NonNullable<Snapshot["judgeMcps"]>;
+}) {
+  return (
+    <dl className="configuration-fields">
+      <div>
+        <dt>Skills</dt>
+        <dd>
+          {skills.length ? (
+            <ul>
+              {skills.map((skill, index) => (
+                <li key={`${index}-${skill.title}`}>{skill.title}</li>
+              ))}
+            </ul>
+          ) : (
+            "None"
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt>MCP servers</dt>
+        <dd>
+          {mcps.length ? (
+            <ul>
+              {mcps.map((mcp, index) => (
+                <li key={`${index}-${mcp.title}`}>
+                  {mcp.title}
+                  <small>{mcp.url ?? mcp.command}</small>
+                  {mcp.allowedTools !== undefined && (
+                    <small>
+                      Allowed tools: {mcp.allowedTools.join(", ") || "None"}
+                    </small>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            "None"
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
+}
+
 export function ConfigurationPanel({ session }: { session: Session }) {
-  const snapshot = session.snapshot;
+  const { snapshot } = session;
+  const { evaluation, environment, persona } = snapshot;
+  const { judge } = evaluation;
 
   return (
     <div className="configuration-summary">
-      <h2>Saved session configuration</h2>
-      <p className="muted">
-        This snapshot records the settings used for this session. Later
-        evaluation edits do not change it.
-      </p>
-      <dl>
-        <dt>Evaluation revision</dt>
-        <dd>{snapshot.evaluation.revision}</dd>
-        <dt>Agent</dt>
-        <dd>
-          <ModelReference harness={session.harness} model={session.model} />
-        </dd>
-        <dt>Judge</dt>
-        <dd>
-          <ModelReference
-            harness={snapshot.evaluation.judge.harness}
-            model={snapshot.evaluation.judge.model}
-          />
-        </dd>
-        <dt>Environment</dt>
-        <dd>
-          {snapshot.environment?.title ?? "Empty workspace"}
-          {snapshot.environment && (
-            <small>
-              {snapshot.environment.executionMode === "docker"
-                ? snapshot.environment.dockerfilePath
-                  ? "Docker · local Dockerfile"
-                  : "Docker · saved Dockerfile"
-                : "This computer"}
-              {" · "}
-              {snapshot.environment.repositoryUrl ??
-                snapshot.environment.workspacePath ??
+      <section className="configuration-group">
+        <h2>Evaluation</h2>
+        <p className="muted">
+          This session uses revision {evaluation.revision}. Later edits do not
+          change these settings.
+        </p>
+        <dl className="configuration-fields">
+          <div>
+            <dt>Environment</dt>
+            <dd>{environment?.title ?? "Empty workspace"}</dd>
+          </div>
+          <div>
+            <dt>Execution engine</dt>
+            <dd>
+              {environment?.executionMode === "docker" ? "Docker" : "Local"}
+            </dd>
+          </div>
+          <div>
+            <dt>Workspace source</dt>
+            <dd>
+              {environment?.repositoryUrl ??
+                environment?.workspacePath ??
                 "Empty workspace"}
-            </small>
+            </dd>
+          </div>
+          {environment?.executionMode === "docker" && (
+            <div>
+              <dt>Dockerfile</dt>
+              <dd>
+                {environment.dockerfilePath ??
+                  (environment.dockerfileContent
+                    ? "Inline Dockerfile"
+                    : "Built-in image")}
+              </dd>
+            </div>
           )}
-        </dd>
-        <dt>Persona</dt>
-        <dd>
-          {snapshot.persona?.title ?? "None"}
-          {snapshot.persona && (
-            <p className="preserve-lines">{snapshot.persona.description}</p>
-          )}
-        </dd>
-        <dt>Skills</dt>
-        <dd>
-          {snapshot.skills.length ? (
-            <ul>
-              {snapshot.skills.map((skill) => (
-                <li key={skill.title}>{skill.title}</li>
-              ))}
-            </ul>
-          ) : (
-            "None"
-          )}
-        </dd>
-        <dt>MCP servers</dt>
-        <dd>
-          {snapshot.mcps.length ? (
-            <ul>
-              {snapshot.mcps.map((mcp, index) => (
-                <li key={`${index}-${mcp.title}`}>
-                  {mcp.title}
-                  <small>{mcp.command}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            "None"
-          )}
-        </dd>
-        <dt>Judge skills</dt>
-        <dd>
-          {snapshot.judgeSkills?.length ? (
-            <ul>
-              {snapshot.judgeSkills.map((skill) => (
-                <li key={skill.title}>{skill.title}</li>
-              ))}
-            </ul>
-          ) : (
-            "None"
-          )}
-        </dd>
-        <dt>Judge MCP servers</dt>
-        <dd>
-          {snapshot.judgeMcps?.length ? (
-            <ul>
-              {snapshot.judgeMcps.map((mcp, index) => (
-                <li key={`${index}-${mcp.title}`}>
-                  {mcp.title}
-                  <small>{mcp.command}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            "None"
-          )}
-        </dd>
-      </dl>
+        </dl>
+      </section>
+      <section className="configuration-group">
+        <h2>Agent</h2>
+        <ModelReference harness={session.harness} model={session.model} />
+        <dl className="configuration-fields">
+          <div>
+            <dt>Persona</dt>
+            <dd>
+              {persona?.title ?? "None"}
+              {persona && (
+                <p className="preserve-lines">{persona.description}</p>
+              )}
+            </dd>
+          </div>
+        </dl>
+        <Resources skills={snapshot.skills} mcps={snapshot.mcps} />
+      </section>
+      <section className="configuration-group">
+        <h2>Judge</h2>
+        <ModelReference harness={judge.harness} model={judge.model} />
+        <Resources
+          skills={snapshot.judgeSkills ?? []}
+          mcps={snapshot.judgeMcps ?? []}
+        />
+      </section>
       <Collapsible>
         <CollapsibleTrigger>Full configuration (JSON)</CollapsibleTrigger>
         <CollapsibleContent>

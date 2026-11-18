@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@posthog/quill";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, useApi } from "../api.js";
 import { Notice, PageTitle } from "../components.js";
 import { EmptyState, Feedback, RequestState } from "../PageState.js";
@@ -23,6 +23,7 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [removing, setRemoving] = useState("");
+  const [connecting, setConnecting] = useState("");
   const info = resourceInfo[kind];
   const filtered =
     data?.[kind].filter((resource) =>
@@ -31,10 +32,41 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
         .includes(search.trim().toLowerCase()),
     ) ?? [];
 
+  useEffect(() => {
+    if (kind !== "mcps") return;
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [kind, refresh]);
+
+  async function connect(resource: Resource) {
+    setFailure("");
+    const popup = window.open("about:blank", "_blank");
+    if (!popup) {
+      setFailure("Allow pop-ups to connect this MCP server.");
+      return;
+    }
+
+    popup.opener = null;
+    popup.document.body.textContent = "Starting MCP authorization…";
+    setConnecting(resource.id);
+    try {
+      const { authorizationUrl } = await api<{ authorizationUrl: string }>(
+        `/resources/${resource.id}/connect`,
+        { method: "POST" },
+      );
+      popup.location.replace(authorizationUrl);
+    } catch (error) {
+      popup.close();
+      setFailure(String(error));
+    } finally {
+      setConnecting("");
+    }
+  }
+
   async function remove(resource: Resource) {
     if (
       !confirm(
-        `Delete ${resource.title}? Resources used by an evaluation cannot be deleted.`,
+        `Delete ${resource.title}? You cannot delete a resource that an evaluation uses.`,
       )
     )
       return;
@@ -87,14 +119,14 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
       {!data ? (
         <RequestState error={error} retry={refresh} />
       ) : data[kind].length === 0 ? (
-        <EmptyState title={`No ${info.title.toLowerCase()} yet`}>
-          <p>{info.hint}</p>
-          {editing === null && (
+        editing === null && (
+          <EmptyState title={`No ${info.title.toLowerCase()} yet`}>
+            <p>{info.hint}</p>
             <Button type="button" onClick={() => setEditing("new")}>
               Add {info.singular}
             </Button>
-          )}
-        </EmptyState>
+          </EmptyState>
+        )
       ) : (
         <>
           <div className="toolbar">
@@ -146,14 +178,31 @@ export function ResourcePage({ kind }: { kind: ResourceKind }) {
                           {kind === "environments"
                             ? environmentConfiguration(resource)
                             : (resource.filePath ??
+                              resource.url ??
                               resource.command ??
                               (kind === "skills"
                                 ? "Inline instructions"
                                 : "Empty workspace"))}
+                          {resource.oauthConnected && (
+                            <small className="muted">OAuth connected</small>
+                          )}
                         </TableCell>
                       )}
                       <TableCell>
                         <div className="actions">
+                          {resource.url && (
+                            <Button
+                              type="button"
+                              disabled={Boolean(connecting) || editing !== null}
+                              onClick={() => void connect(resource)}
+                            >
+                              {connecting === resource.id
+                                ? "Connecting…"
+                                : resource.oauthConnected
+                                  ? "Reconnect"
+                                  : "Connect"}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             disabled={editing !== null}

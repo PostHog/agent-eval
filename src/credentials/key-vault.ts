@@ -58,6 +58,14 @@ export class KeyVault extends CredentialStore {
   }
 
   async save(provider: Provider, secret: string): Promise<void> {
+    return this.saveSecret(provider, secret);
+  }
+
+  async hasSecret(provider: string): Promise<boolean> {
+    return Boolean(await this.db.credential.count({ where: { provider } }));
+  }
+
+  async saveSecret(provider: string, secret: string): Promise<void> {
     const iv = randomBytes(12);
     const cipher = createCipheriv(
       "aes-256-gcm",
@@ -82,9 +90,15 @@ export class KeyVault extends CredentialStore {
   }
 
   async read(provider: Provider): Promise<string | undefined> {
+    return (
+      (await this.readSecret(provider)) ?? process.env[providers[provider]]
+    );
+  }
+
+  async readSecret(provider: string): Promise<string | undefined> {
     const saved = await this.db.credential.findUnique({ where: { provider } });
 
-    if (!saved) return process.env[providers[provider]];
+    if (!saved) return undefined;
 
     const encrypted = Buffer.from(saved.encryptedValue, "base64");
     const decipher = createDecipheriv(

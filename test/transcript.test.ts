@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import {
+  highlightParts,
+  transcriptSearch,
+} from "../web/src/sessions/transcript/search.js";
 import { buildTranscript } from "../web/src/sessions/transcript/transcript.js";
 import type { EventRow } from "../web/src/types.js";
 
@@ -138,4 +142,70 @@ test("OpenCode shows web evidence and ignores unknown events safely", () => {
   assert.equal(result[0]?.kind, "web");
   assert.equal(result[0]?.text, "https://posthog.com/docs");
   assert.equal(result[0]?.output, "Docs");
+});
+
+test("Claude keeps final text separate from thinking with the same message ID", () => {
+  const result = buildTranscript(
+    rows(
+      {
+        type: "assistant",
+        message: {
+          id: "msg-1",
+          content: [{ type: "thinking", thinking: "Plan" }],
+        },
+      },
+      {
+        type: "assistant",
+        message: {
+          id: "msg-1",
+          content: [{ type: "text", text: "Final reply" }],
+        },
+      },
+      { type: "result", result: "Final reply" },
+    ),
+  );
+
+  assert.deepEqual(
+    result.map(({ kind, text }) => ({ kind, text })),
+    [
+      { kind: "thinking", text: "Plan" },
+      { kind: "message", text: "Final reply" },
+    ],
+  );
+});
+
+test("transcript search finds typos and supplies offsets for the matching field", () => {
+  const entries = buildTranscript(
+    rows(
+      {
+        type: "assistant",
+        message: {
+          content: [
+            { type: "text", text: "Configure OpenTelemetry for logs." },
+          ],
+        },
+      },
+      {
+        type: "assistant",
+        message: { content: [{ type: "text", text: "No matching content." }] },
+      },
+    ),
+  );
+  const hits = transcriptSearch(entries, (entry) => entry.text).search(
+    "opentelemety",
+  );
+  assert.equal(hits.length, 1);
+  const [hit] = hits;
+  assert.ok(hit);
+  const match = hit.matches?.find((field) => field.key === "text");
+  assert.ok(match);
+  const parts = highlightParts(hit.item.text, match.indices);
+  assert.equal(parts.map((part) => part.text).join(""), hit.item.text);
+  assert.match(
+    parts
+      .filter((part) => part.match)
+      .map((part) => part.text)
+      .join(""),
+    /OpenTelemet/,
+  );
 });

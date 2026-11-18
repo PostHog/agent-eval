@@ -8,8 +8,9 @@ import {
 import { useState } from "react";
 import { api, useApi } from "../api.js";
 import { Notice, PageTitle, Status } from "../components.js";
-import { HarnessIcon, ModelReference } from "../models/ModelReference.js";
+import { ModelReference } from "../models/ModelReference.js";
 import { RequestState } from "../PageState.js";
+import { ResourceIcon } from "../resources/ResourceIcon.js";
 import { StatusIcon } from "../status/StatusIcon.js";
 import type { Session } from "../types.js";
 import { ConfigurationPanel } from "./ConfigurationPanel.js";
@@ -18,6 +19,7 @@ import { LogPanel } from "./LogPanel.js";
 import { SessionJudgment } from "./SessionJudgment.js";
 import { SessionMetadata } from "./SessionMetadata.js";
 import { isActive } from "./session-filters.js";
+import { TranscriptFilterIcon } from "./transcript/TranscriptFilterIcon.js";
 
 export function SessionDetail({ id }: { id: string }) {
   const {
@@ -25,7 +27,7 @@ export function SessionDetail({ id }: { id: string }) {
     error,
     refresh,
   } = useApi<Session>(`/sessions/${id}`, true);
-  const [tab, setTab] = useState("logs");
+  const [tab, setTab] = useState("agent");
   const [failure, setFailure] = useState("");
   const [cancelling, setCancelling] = useState(false);
 
@@ -53,15 +55,13 @@ export function SessionDetail({ id }: { id: string }) {
   if (!session) return <RequestState error={error} retry={refresh} />;
 
   const active = isActive(session);
-  const snapshot = session.snapshot;
 
   return (
-    <>
+    <div className="session-detail">
       <a className="back-link" href={`#evals/${session.evalId}`}>
         {session.eval.title}
       </a>
       <div className="session-heading">
-        <HarnessIcon harness={session.harness} />
         <PageTitle
           title={`${session.harness === "opencode" ? "OpenCode" : session.harness === "claude" ? "Claude Code" : session.harness === "codex" ? "Codex" : "Pi"} session`}
         >
@@ -80,18 +80,32 @@ export function SessionDetail({ id }: { id: string }) {
         <ModelReference harness={session.harness} model={session.model} />
       </div>
       <Notice error={error || failure || session.error || undefined} />
-      <p className="prompt-block">{snapshot.evaluation.prompt}</p>
-      <SessionMetadata session={session} />
       <div className="session-layout">
-        <section>
-          <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
-            <TabsList variant="line" aria-label="Session views">
-              <TabsTrigger value="logs">Logs</TabsTrigger>
-              <TabsTrigger value="files">Files</TabsTrigger>
-              <TabsTrigger value="configuration">Configuration</TabsTrigger>
+        <section className="session-agent" aria-label="Session activity">
+          <Tabs
+            className="session-tabs"
+            value={tab}
+            onValueChange={(value) => setTab(String(value))}
+          >
+            <TabsList className="session-tab-list" aria-label="Session views">
+              <TabsTrigger value="agent">
+                <TranscriptFilterIcon kind="tool" /> Agent logs
+              </TabsTrigger>
+              <TabsTrigger value="judge">
+                <StatusIcon name="check" /> Judge logs
+              </TabsTrigger>
+              <TabsTrigger value="files">
+                <ResourceIcon name="folder" /> Files
+              </TabsTrigger>
+              <TabsTrigger value="configuration">
+                <TranscriptFilterIcon kind="settings" /> Configuration
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="logs">
-              <LogPanel session={session} active={active} />
+            <TabsContent value="agent" className="session-log-view">
+              <LogPanel session={session} active={active} phase="agent" />
+            </TabsContent>
+            <TabsContent value="judge" className="session-log-view">
+              <LogPanel session={session} active={active} phase="judge" />
             </TabsContent>
             <TabsContent value="files">
               <FilesPanel id={id} active={active} />
@@ -101,8 +115,17 @@ export function SessionDetail({ id }: { id: string }) {
             </TabsContent>
           </Tabs>
         </section>
-        <SessionJudgment session={session} />
+        <section
+          className="session-inspector"
+          aria-label="Session details"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll this pane.
+          tabIndex={0}
+        >
+          <h2>Session details</h2>
+          <SessionMetadata session={session} />
+          <SessionJudgment session={session} />
+        </section>
       </div>
-    </>
+    </div>
   );
 }

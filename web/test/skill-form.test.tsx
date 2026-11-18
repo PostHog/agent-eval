@@ -30,6 +30,10 @@ test("a skill uses inline instructions or one local file", async () => {
   fireEvent.change(screen.getByLabelText("Title"), {
     target: { value: "Review code" },
   });
+  assert.match(
+    (screen.getByLabelText("Skill instructions") as HTMLTextAreaElement).value,
+    /^---\nname: .*\ndescription: .*\n---/,
+  );
   fireEvent.change(screen.getByLabelText("Skill instructions"), {
     target: { value: "Read the changed files." },
   });
@@ -44,11 +48,7 @@ test("a skill uses inline instructions or one local file", async () => {
 
   view.unmount();
   render(<ResourceForm kind="skills" onClose={() => {}} onSaved={() => {}} />);
-  fireEvent.click(screen.getByRole("combobox", { name: "Source" }));
-  const file = await screen.findByRole("option", { name: "Use a local file" });
-
-  fireEvent.pointerDown(file);
-  fireEvent.click(file);
+  fireEvent.click(screen.getByRole("tab", { name: "File" }));
   assert.equal(Boolean(screen.getByLabelText("Skill file")), true);
   assert.equal(Boolean(screen.queryByLabelText("Skill instructions")), false);
 });
@@ -79,23 +79,11 @@ test("an environment can clone a repository into a Docker workspace", async () =
     target: { value: "Hog CLI" },
   });
   assert.equal(Boolean(screen.queryByLabelText("Description")), false);
-  fireEvent.click(screen.getByRole("combobox", { name: "Workspace source" }));
-  const repository = await screen.findByRole("option", {
-    name: "Git repository",
-  });
-
-  fireEvent.pointerDown(repository);
-  fireEvent.click(repository);
+  fireEvent.click(screen.getByRole("tab", { name: "Git repository" }));
   fireEvent.change(screen.getByLabelText("Repository URL"), {
     target: { value: "https://github.com/PostHog/posthog.git" },
   });
-  fireEvent.click(screen.getByRole("combobox", { name: "Execution target" }));
-  const docker = await screen.findByRole("option", {
-    name: "Docker container",
-  });
-
-  fireEvent.pointerDown(docker);
-  fireEvent.click(docker);
+  fireEvent.click(screen.getByRole("tab", { name: "Docker" }));
   fireEvent.click(screen.getByRole("combobox", { name: "Image definition" }));
   const localDockerfile = await screen.findByRole("option", {
     name: "Use a local Dockerfile",
@@ -118,4 +106,50 @@ test("an environment can clone a repository into a Docker workspace", async () =
     dockerfilePath: "/tmp/Dockerfile.hog",
     dockerfileContent: null,
   });
+});
+
+test("an MCP URL uses the URL tab and saves without a command", async () => {
+  let request: Record<string, unknown> | undefined;
+  globalThis.fetch = async (_input, init) => {
+    request = JSON.parse(String(init?.body));
+    return Response.json({ id: crypto.randomUUID(), ...request });
+  };
+
+  render(<ResourceForm kind="mcps" onClose={() => {}} onSaved={() => {}} />);
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Docs" },
+  });
+  fireEvent.click(screen.getByRole("tab", { name: "MCP URL" }));
+  assert.equal(screen.queryByLabelText("MCP command"), null);
+  fireEvent.change(screen.getByRole("textbox", { name: "MCP URL" }), {
+    target: { value: "https://example.com/mcp" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save MCP server" }));
+  await waitFor(() => assert.equal(request?.url, "https://example.com/mcp"));
+  assert.equal(request?.command, "");
+  assert.deepEqual(request?.arguments, []);
+});
+
+test("an MCP command accepts a pasted npx command with quoted arguments", async () => {
+  let request: Record<string, unknown> | undefined;
+  globalThis.fetch = async (_input, init) => {
+    request = JSON.parse(String(init?.body));
+    return Response.json({ id: crypto.randomUUID(), ...request });
+  };
+
+  render(<ResourceForm kind="mcps" onClose={() => {}} onSaved={() => {}} />);
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Docs" },
+  });
+  fireEvent.change(screen.getByLabelText("MCP command"), {
+    target: { value: 'npx -y example-mcp-server --name="My server"' },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save MCP server" }));
+  await waitFor(() => assert.equal(request?.command, "npx"));
+  assert.deepEqual(request?.arguments, [
+    "-y",
+    "example-mcp-server",
+    "--name=My server",
+  ]);
+  assert.equal(request?.url, null);
 });

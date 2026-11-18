@@ -90,6 +90,7 @@ model Mcp {
   id          String    @id @default(uuid())
   title       String
   description String
+  url         String?
   command     String
   arguments   Json
   createdAt   DateTime  @default(now())

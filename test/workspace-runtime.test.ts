@@ -10,6 +10,8 @@ import {
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { test } from "node:test";
+import { ModelSettings } from "../src/evaluations/domain/model-settings.js";
+import { externalCommand } from "../src/harnesses/infrastructure/external-command.js";
 import { DefaultWorkspaceRuntimeFactory } from "../src/sessions/infrastructure/workspace-runtime-factory.js";
 
 test(
@@ -25,6 +27,7 @@ test(
     const dockerfile = join(root, "Dockerfile");
     const log = join(root, "docker.log");
     const previousPath = process.env.PATH;
+    const previousKey = process.env.ANTHROPIC_API_KEY;
     const previousLog = process.env.AGENT_EVAL_DOCKER_LOG;
 
     try {
@@ -38,6 +41,8 @@ test(
       await chmod(join(bin, "docker"), 0o700);
       process.env.PATH = `${bin}${delimiter}${previousPath ?? ""}`;
       process.env.AGENT_EVAL_DOCKER_LOG = log;
+      const key = "anthropic-fixture-key";
+      process.env.ANTHROPIC_API_KEY = key;
 
       const runtime = await new DefaultWorkspaceRuntimeFactory().create(
         {
@@ -57,7 +62,7 @@ test(
         {
           binary: "hog",
           args: ["--version"],
-          env: { ...process.env, HOG_TEST_KEY: "secret" },
+          env: { HOG_TEST_KEY: "secret" },
         },
         workspace,
       );
@@ -84,6 +89,33 @@ test(
         await readFile(join(root, "docker-build", "Dockerfile"), "utf8"),
         /RUN npm install --global @openai\/codex@0\.169\.0/,
       );
+
+      const claude = await externalCommand("claude", {
+        label: "agent",
+        settings: ModelSettings.create({ model: "claude-sonnet" }).value,
+        model: "claude-sonnet",
+        effort: "low",
+        directory: root,
+        workspace,
+        prompt: "Test",
+        skills: [],
+        tools: [],
+        timeout: 10,
+        maxTurns: 1,
+        signal: new AbortController().signal,
+        onRawEvent: async () => {},
+        apiKey: key,
+        runtime,
+      });
+      const dockerClaude = await runtime.process(claude, workspace);
+      const envFile =
+        dockerClaude.args[dockerClaude.args.indexOf("--env-file") + 1];
+      assert.ok(envFile);
+      assert.equal(
+        await readFile(envFile, "utf8"),
+        `ANTHROPIC_API_KEY=${key}\n`,
+      );
+      assert.ok(!dockerClaude.args.join(" ").includes(key));
 
       await runtime.shell("hog --version", workspace, {
         onData: () => {},
@@ -143,6 +175,8 @@ test(
       );
       assert.match(calls, /rm --force container-test/);
     } finally {
+      if (previousKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = previousKey;
       if (previousPath === undefined) delete process.env.PATH;
       else process.env.PATH = previousPath;
       if (previousLog === undefined) delete process.env.AGENT_EVAL_DOCKER_LOG;

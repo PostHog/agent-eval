@@ -1,10 +1,14 @@
 .transcript {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   background: var(--background);
   border: 1px solid var(--border);
   min-width: 0;
 }
 .transcript-toolbar {
-  padding: 12px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   background: var(--background);
 }
@@ -17,49 +21,38 @@
   gap: 6px;
 }
 .transcript-filters button {
+  display: inline-flex;
+  gap: 5px;
   min-height: 28px;
-  padding: 3px 9px;
-  border-radius: 18px;
-  font:
-    11px / 1.4 Consolas,
-    monospace;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 11px;
   background: transparent;
   color: var(--muted-foreground);
 }
 .transcript-filters button span {
-  margin-left: 6px;
-  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
 }
 .transcript-filters button[aria-pressed="true"] {
-  color: var(--foreground);
+  color: var(--info-foreground);
   background: var(--accent);
-  border-color: var(--info-foreground);
-}
-.transcript-filters .filter-tool {
-  border-color: #106fb2;
-}
-.transcript-filters .filter-thinking {
-  border-color: #8927af;
-}
-.transcript-filters .filter-message {
-  border-color: #35b14e;
-}
-.transcript-filters .filter-web {
-  border-color: #25bc95;
+  border-color: var(--border);
 }
 .transcript-options {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 6px;
   color: var(--muted-foreground);
   font-size: 11px;
 }
 .transcript-scroll {
-  max-height: 76vh;
-  min-height: 360px;
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
   overflow: auto;
-  padding: 22px 20px 30px 30px;
+  padding: 10px 14px 20px 35px;
   font:
     12px / 1.75 Consolas,
     "SFMono-Regular",
@@ -67,40 +60,33 @@
   scroll-padding-top: 16px;
 }
 .transcript-intro {
-  padding: 0 0 18px;
-}
-.transcript-intro dl {
-  display: grid;
-  grid-template-columns: 100px minmax(0, 1fr);
-  gap: 4px 12px;
-  margin: 14px 0 0;
-}
-.transcript-intro dt,
-.transcript-intro dd {
-  font-size: 12px;
-  margin: 0;
-}
-.transcript-intro dt {
-  color: var(--muted-foreground);
+  margin-bottom: 8px;
 }
 .transcript-prompt {
-  border-block: 1px solid var(--border);
-  background: var(--card);
-  padding: 7px 12px;
-  margin-bottom: 22px;
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 12px;
+  margin-bottom: 14px;
   white-space: pre-wrap;
 }
 .transcript-row {
   position: relative;
-  margin: 0 0 22px;
+  margin: 0 0 10px;
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 12px;
   overflow-wrap: anywhere;
 }
 .transcript-sequence {
   position: absolute;
-  right: calc(100% + 9px);
-  top: 1px;
+  right: calc(100% + 6px);
+  top: 3px;
   font-size: 9px;
+  white-space: nowrap;
   color: var(--muted-foreground);
+}
+.transcript-row mark {
+  background: var(--warning-foreground);
+  color: var(--background);
+  border-radius: 2px;
 }
 .tool-command {
   display: flex;
@@ -211,20 +197,6 @@
 .transcript-error {
   color: var(--destructive-foreground);
 }
-.transcript-user {
-  background: var(--card);
-  padding: 7px 10px;
-}
-.raw-event {
-  margin-bottom: 12px;
-}
-.raw-event pre {
-  overflow-wrap: anywhere;
-}
-.back-to-top {
-  margin: 0 12px 12px;
-  font-size: 11px;
-}
 .load-transcript {
   margin: 14px 0;
 }
@@ -232,4 +204,24 @@
   .transcript-scroll {
     padding: 18px 14px 24px 26px;
   }
+}
+
+.transcript-body {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.transcript-scroll-top {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 18px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--card);
 }
