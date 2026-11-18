@@ -14,3 +14,5 @@ runs/
 !.env.example
 .DS_Store
 .impeccable/hook.cache.json
+
+.*.bun-build
