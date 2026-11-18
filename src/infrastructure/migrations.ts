@@ -11,7 +11,10 @@ export async function migrateDatabase(dataDirectory?: string): Promise<void> {
   await mkdir(directory, { recursive: true });
 
   process.env.AGENT_EVAL_DATA_DIR = directory;
-  const databasePath = resolve(directory, "agent-eval.db");
+  const databasePath = resolve(
+    directory,
+    Bun.isStandaloneExecutable ? "agent-eval.db" : "agent-eval_dev.db",
+  );
 
   process.env.DATABASE_URL = `file:${databasePath}`;
 

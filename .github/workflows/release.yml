@@ -177,6 +177,19 @@ jobs:
           fi
       - name: Run installed command from PATH
         run: agent-eval --help
+      - name: Start installed application without source dependencies
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          agent-eval --no-open --port 3199 --data "$RUNNER_TEMP/agent-eval-installed-smoke" &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            kill -0 "$pid" 2>/dev/null || exit 1
+            curl --fail --silent http://127.0.0.1:3199/api/evals >/dev/null && exit 0
+            sleep 1
+          done
+          exit 1
       - name: Verify uninstall removes the PATH command
         shell: bash
         run: |

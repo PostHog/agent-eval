@@ -72,7 +72,7 @@ An npm package administrator must bootstrap `@posthog/agent-eval` if necessary, 
 
 ### Application data
 
-Evals, resources, sessions, traces, files, judgments, and usage are saved in `~/.agent-eval/agent-eval.db`. Launching from different project folders uses the same database and settings. The CLI applies committed Prisma migrations on startup and prints the data directory it uses. Set `--data /path/to/directory` or `AGENT_EVAL_DATA_DIR` to use another directory; `--data` takes precedence.
+Packaged releases save evals, resources, sessions, traces, files, judgments, and usage in `~/.agent-eval/agent-eval.db`. Runs from source use `~/.agent-eval/agent-eval_dev.db` instead. Existing databases are not moved or copied. Launching from different project folders uses the same database and settings. The CLI applies committed Prisma migrations on startup and prints the data directory it uses. Set `--data /path/to/directory` or `AGENT_EVAL_DATA_DIR` to use another directory; `--data` takes precedence.
 
 Older versions stored data in each project's `.agent-eval/` directory. To keep that data, stop agent-eval and move the entire directory to `~/.agent-eval/`, including `credential.key`. If the home directory already has data, do not overwrite it: use `--data /path/to/project/.agent-eval` to open the older database separately. Existing databases are not automatically moved or merged. Old `runs/` folders are not imported.
 

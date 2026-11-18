@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -24,7 +24,18 @@ test(
     const previousUrl = process.env.DATABASE_URL;
     const databases: Database[] = [];
     try {
+      const productionPath = join(root, "first", "agent-eval.db");
+      await mkdir(join(root, "first"));
+      await writeFile(productionPath, "existing production database");
       await migrateDatabase(join(root, "first"));
+      assert.equal(
+        await readFile(productionPath, "utf8"),
+        "existing production database",
+      );
+      assert.equal(
+        process.env.DATABASE_URL,
+        `file:${join(root, "first", "agent-eval_dev.db")}`,
+      );
       const first = new Database();
       databases.push(first);
       const ids = await Promise.all(
