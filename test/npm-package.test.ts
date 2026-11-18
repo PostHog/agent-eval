@@ -1,13 +1,6 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import {
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -32,13 +25,19 @@ test("update checks only offer newer stable npm versions", () => {
   assert.equal(isNewerVersion("0.1.5 && other-command", "0.1.4"), false);
 });
 
-test("npm package includes all targets, no runtime dependencies, and rejects incomplete releases", async () => {
+test("npm package includes release checksums, no binaries or dependencies, and rejects incomplete releases", async () => {
   const root = await mkdtemp(join(tmpdir(), "agent-eval-npm-"));
   const output = join(root, "package");
   try {
     await assert.rejects(packageNpm(root, output), /ENOENT/);
-    for (const name of Object.values(binaries))
-      await writeFile(join(root, name), name);
+    const archives = Object.values(binaries).map((name) =>
+      name.endsWith(".exe") ? name.replace(/\.exe$/, ".zip") : `${name}.tar.gz`,
+    );
+    for (const archive of archives)
+      await writeFile(
+        join(root, `${archive}.sha256`),
+        `${"a".repeat(64)}  ${archive}\n`,
+      );
     await assert.rejects(
       packageNpm(root, output, "v0.0.0-wrong"),
       /does not match/,
@@ -52,31 +51,22 @@ test("npm package includes all targets, no runtime dependencies, and rejects inc
     assert.equal(manifest.private, undefined);
     assert.equal(manifest.dependencies, undefined);
     assert.equal(manifest.optionalDependencies, undefined);
-    assert.equal(manifest.scripts, undefined);
+    assert.equal(manifest.scripts.postinstall, "node bin/install.cjs");
     assert.deepEqual(
-      (await readdir(join(output, "binaries"))).sort(),
-      Object.values(binaries).sort(),
+      (await readdir(output)).sort(),
+      ["README.md", "bin", "package.json"].sort(),
     );
-    assert.equal(Object.keys(binaries).length, 5);
-    assert.equal(binaryName("win32", "x64"), "agent-eval-windows-x64.exe");
+    const checksums = JSON.parse(
+      await readFile(join(output, "bin/checksums.json"), "utf8"),
+    );
+    assert.deepEqual(Object.keys(checksums).sort(), archives.sort());
+    assert.equal(archives.length, 5);
     assert.throws(() => binaryName("win32", "arm64"), /does not support/);
-    assert.throws(() => binaryName("freebsd", "x64"), /does not support/);
-    if (process.platform !== "win32") {
-      assert.equal(
-        (
-          await stat(
-            join(
-              output,
-              "binaries",
-              binaryName(process.platform, process.arch),
-            ),
-          )
-        ).mode & 0o777,
-        0o755,
-      );
-    }
-    await writeFile(join(root, binaryName("linux", "x64")), "");
-    await assert.rejects(packageNpm(root, output), /Invalid binary/);
+    await writeFile(
+      join(root, "agent-eval-linux-x64.tar.gz.sha256"),
+      "invalid",
+    );
+    await assert.rejects(packageNpm(root, output), /Invalid checksum/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -4,7 +4,6 @@ import {
   mkdir,
   readFile,
   rm,
-  stat,
   writeFile,
 } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -19,7 +18,7 @@ const { binaries } = createRequire(import.meta.url)(
 };
 
 export async function packageNpm(
-  binaryDirectory: string,
+  assetDirectory: string,
   outputDirectory: string,
   releaseTag?: string,
 ) {
@@ -32,25 +31,32 @@ export async function packageNpm(
     );
   }
 
-  // Require every build before producing a package that npm can publish.
+  const checksums: Record<string, string> = {};
   for (const name of Object.values(binaries)) {
-    const info = await stat(join(binaryDirectory, name));
-    if (!info.isFile() || info.size === 0)
-      throw new Error(`Invalid binary: ${name}`);
+    const archive = name.endsWith(".exe")
+      ? name.replace(/\.exe$/, ".zip")
+      : `${name}.tar.gz`;
+    const checksum = (
+      await readFile(join(assetDirectory, `${archive}.sha256`), "utf8")
+    )
+      .trim()
+      .split(/\s+/)[0];
+    if (!checksum || !/^[a-f0-9]{64}$/i.test(checksum))
+      throw new Error(`Invalid checksum for ${archive}`);
+    checksums[archive] = checksum.toLowerCase();
   }
   await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(join(outputDirectory, "bin"), { recursive: true });
-  await mkdir(join(outputDirectory, "binaries"));
-  for (const name of Object.values(binaries)) {
-    const destination = join(outputDirectory, "binaries", name);
-    await copyFile(join(binaryDirectory, name), destination);
-    await chmod(destination, 0o755);
-  }
-  await copyFile(
-    join(repository, "npm/agent-eval.cjs"),
-    join(outputDirectory, "bin/agent-eval.cjs"),
-  );
+  for (const file of ["agent-eval.cjs", "install.cjs"])
+    await copyFile(
+      join(repository, "npm", file),
+      join(outputDirectory, "bin", file),
+    );
   await chmod(join(outputDirectory, "bin/agent-eval.cjs"), 0o755);
+  await writeFile(
+    join(outputDirectory, "bin/checksums.json"),
+    JSON.stringify(checksums),
+  );
   const readme = await readFile(join(repository, "README.md"), "utf8");
   await writeFile(
     join(outputDirectory, "README.md"),
@@ -68,7 +74,8 @@ export async function packageNpm(
         description:
           "Evaluate coding agents in isolated workspaces with a local web app.",
         bin: { "agent-eval": "bin/agent-eval.cjs" },
-        files: ["bin", "binaries"],
+        files: ["bin"],
+        scripts: { postinstall: "node bin/install.cjs" },
         engines: { node: ">=22" },
         os: ["darwin", "linux", "win32"],
         cpu: ["arm64", "x64"],
@@ -88,7 +95,8 @@ export async function packageNpm(
 
 if (import.meta.main) {
   const source = process.argv[2];
-  if (!source) throw new Error("Usage: bun run package:npm <binary-directory>");
+  if (!source)
+    throw new Error("Usage: bun run package:npm <release-assets-directory>");
   await packageNpm(
     resolve(source),
     resolve("release/npm"),

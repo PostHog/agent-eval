@@ -1,0 +1,60 @@
+const { execFileSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
+const { createWriteStream } = require("node:fs");
+const { chmod, mkdir, mkdtemp, rename, rm } = require("node:fs/promises");
+const { join } = require("node:path");
+const { Transform } = require("node:stream");
+const { pipeline } = require("node:stream/promises");
+const { binaryName } = require("./agent-eval.cjs");
+
+async function install() {
+  const name = binaryName(process.platform, process.arch);
+  const archive = name.endsWith(".exe")
+    ? name.replace(/\.exe$/, ".zip")
+    : `${name}.tar.gz`;
+  const checksum = require("./checksums.json")[archive];
+  const { version } = require("../package.json");
+  const destination = join(__dirname, "..", "binaries");
+  await mkdir(destination, { recursive: true });
+  const temporary = await mkdtemp(join(destination, ".download-"));
+
+  try {
+    const url = `https://github.com/PostHog/agent-eval/releases/download/v${encodeURIComponent(version)}/${archive}`;
+    console.log(
+      `Downloading agent-eval ${version} for ${process.platform}/${process.arch}…`,
+    );
+    const response = await fetch(url, { signal: AbortSignal.timeout(300_000) });
+    if (!response.ok || !response.body)
+      throw new Error(`Download failed (HTTP ${response.status})`);
+
+    const hash = createHash("sha256");
+    const archivePath = join(temporary, archive);
+    await pipeline(
+      response.body,
+      new Transform({
+        transform(chunk, _encoding, callback) {
+          hash.update(chunk);
+          callback(null, chunk);
+        },
+      }),
+      createWriteStream(archivePath),
+    );
+    if (hash.digest("hex") !== checksum)
+      throw new Error(`Checksum mismatch for ${archive}`);
+
+    // Extract only the executable from the verified release archive.
+    execFileSync("tar", ["-xf", archivePath, "-C", temporary, name], {
+      stdio: "inherit",
+    });
+    const executable = join(temporary, name);
+    await chmod(executable, 0o755);
+    await rename(executable, join(destination, name));
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+}
+
+install().catch((error) => {
+  console.error(`Could not install agent-eval: ${error.message}`);
+  process.exitCode = 1;
+});

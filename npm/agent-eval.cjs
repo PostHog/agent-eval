@@ -77,7 +77,7 @@ async function checkForUpdate(autoUpdate) {
     [
       "install",
       "--global",
-      "--ignore-scripts",
+      "--ignore-scripts=false",
       "--no-audit",
       "--no-fund",
       `--registry=${registry}`,
@@ -123,6 +123,11 @@ async function main() {
   });
   child.once("error", (error) => {
     console.error(`Could not start agent-eval: ${error.message}`);
+    if (error.code === "ENOENT") {
+      console.error(
+        `Reinstall with npm install -g ${packageName} --ignore-scripts=false to download the executable.`,
+      );
+    }
     process.exitCode = 1;
   });
   child.once("close", (code, signal) => {

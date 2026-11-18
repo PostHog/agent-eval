@@ -19,7 +19,7 @@ npm install -g @posthog/agent-eval
 agent-eval
 ```
 
-The single package includes all five platform executables. A small Node launcher selects the executable for your computer; Bun is included. Installation does not run lifecycle scripts or download binaries from another service. npm's global executable directory must be on your `PATH`.
+The npm install script downloads the matching executable archive from GitHub Releases and checks its SHA-256 before extracting it with the system's `tar` command. Install with internet access and npm lifecycle scripts enabled. The executable includes Bun and runs offline after installation. npm's global executable directory must be on your `PATH`.
 
 The npm launcher checks for a newer stable version on startup. Run `agent-eval --auto-update` to install an available update before starting, or set `AGENT_EVAL_AUTO_UPDATE=1` to opt in on every launch. You can also update manually with `npm install -g @posthog/agent-eval@latest`.
 
@@ -64,9 +64,9 @@ bun run compile
 
 ### Publishing releases
 
-The `v*` tag workflow builds and tests the five standalone executables, then collects them into one `@posthog/agent-eval` npm tarball. The tag must match the version in `package.json`. Each platform installs that exact tarball globally with `--ignore-scripts` and checks the command before npm publishing. Stable versions use the `latest` npm tag; prereleases use `next`.
+The `v*` tag workflow builds and publishes the five standalone executables to GitHub Releases. The tag must match the version in `package.json`. Each platform installs the same npm tarball and verifies the installed command and its removal before npm publishing. Stable versions use the `latest` npm tag, and prereleases use `next`.
 
-The development package stays private. `bun run package:npm <binary-directory>` generates the publishable package in `release/npm`, including only the launcher, binaries, README, and distribution manifest. The input directory must contain all five executables with the filenames used in GitHub Releases (including `.exe` on Windows). To inspect a package locally, run `npm pack ./release/npm --pack-destination release`.
+The development package stays private. Run `bun run package:npm <release-assets-directory>` to generate the publishable launcher, installer, and checksums in `release/npm`. The input directory must contain all five release archive checksum files. To inspect the package locally, run `npm pack ./release/npm --pack-destination release`.
 
 An npm package administrator must bootstrap `@posthog/agent-eval` if necessary, then configure its GitHub Actions trusted publisher for organization **PostHog**, repository **agent-eval**, workflow **release.yml**, environment **npm**, with direct publishing allowed. Create the matching **npm** environment in GitHub and allow release tags. The publishing job uses OIDC with `id-token: write`; no npm token secret is needed. See [npm's trusted publisher setup](https://docs.npmjs.com/trusted-publishers/).
 

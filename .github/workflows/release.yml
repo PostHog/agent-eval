@@ -137,12 +137,9 @@ jobs:
           pattern: agent-eval-*
           path: release
           merge-multiple: true
-      - name: Assemble and pack all platforms
+      - name: Pack launcher and release checksums
         run: |
-          mkdir -p release/binaries
-          for archive in release/*.tar.gz; do tar -xzf "$archive" -C release/binaries; done
-          unzip -q release/agent-eval-windows-x64.zip -d release/binaries
-          GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" bun run package:npm release/binaries
+          GITHUB_REF_TYPE=tag GITHUB_REF_NAME="$RELEASE_TAG" bun run package:npm release
           npm pack ./release/npm --pack-destination release
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -153,7 +150,7 @@ jobs:
 
   test-npm:
     name: Test npm install on ${{ matrix.os }}
-    needs: package-npm
+    needs: [publish, package-npm]
     strategy:
       fail-fast: false
       matrix:
@@ -169,10 +166,10 @@ jobs:
         with:
           name: npm-package
           path: npm-package
-      - name: Install globally without lifecycle scripts
+      - name: Install globally and download the executable
         shell: bash
         run: |
-          npm install --global --prefix "$RUNNER_TEMP/npm-prefix" --ignore-scripts --no-audit --no-fund ./npm-package/*.tgz
+          npm install --global --prefix "$RUNNER_TEMP/npm-prefix" --foreground-scripts --no-audit --no-fund ./npm-package/*.tgz
           if [ "$RUNNER_OS" = Windows ]; then
             echo "$RUNNER_TEMP/npm-prefix" >> "$GITHUB_PATH"
           else
