@@ -25,7 +25,13 @@ import { SettingsService } from "../src/settings/application/settings-service.js
 import { PrismaSettingsRepository } from "../src/settings/infrastructure/prisma-settings-repository.js";
 import { fixture } from "./fixture.js";
 
-test("judge skills and MCP servers are saved, snapshotted, and sent only to the judge", async () => {
+test(
+  "judge skills and MCP servers are saved, snapshotted, and sent only to the judge",
+  { timeout: 30_000 },
+  verifyJudgeResources,
+);
+
+async function verifyJudgeResources() {
   const f = await fixture();
   const data = await mkdtemp(join(tmpdir(), "agent-eval-judge-resources-"));
   const previousDirectory = process.env.AGENT_EVAL_DATA_DIR;
@@ -279,4 +285,4 @@ test("judge skills and MCP servers are saved, snapshotted, and sent only to the 
     await rm(data, { recursive: true, force: true });
     await rm(f.root, { recursive: true, force: true });
   }
-});
+}

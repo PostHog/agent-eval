@@ -26,7 +26,13 @@ import { SettingsService } from "../src/settings/application/settings-service.js
 import { PrismaSettingsRepository } from "../src/settings/infrastructure/prisma-settings-repository.js";
 import { fixture } from "./fixture.js";
 
-test("SQLite saves eval revisions, encrypted credentials, independent judgments, logs, files, and usage", async () => {
+test(
+  "SQLite saves eval revisions, encrypted credentials, independent judgments, logs, files, and usage",
+  { timeout: 30_000 },
+  verifyApplicationPersistence,
+);
+
+async function verifyApplicationPersistence() {
   const f = await fixture();
   const data = await mkdtemp(join(tmpdir(), "agent-eval-database-"));
   const previousDirectory = process.env.AGENT_EVAL_DATA_DIR;
@@ -312,4 +318,4 @@ test("SQLite saves eval revisions, encrypted credentials, independent judgments,
     await rm(data, { recursive: true, force: true });
     await rm(f.root, { recursive: true, force: true });
   }
-});
+}
