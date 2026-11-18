@@ -69,7 +69,7 @@ function SettingsForm({ initial }: { initial: ApplicationSettingsData }) {
           <div>
             <h2>Session execution</h2>
             <p>
-              Set the maximum number of coding sessions that can run at the same
+              Set the maximum number of agent sessions that can run at the same
               time.
             </p>
           </div>

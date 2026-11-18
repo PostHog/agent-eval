@@ -30,7 +30,7 @@ export function SessionList() {
   return (
     <>
       <header className="session-list-header">
-        <h1>Coding sessions</h1>
+        <h1>Agent sessions</h1>
         <p className="muted">Review agent activity and judge results.</p>
       </header>
       {data ? (

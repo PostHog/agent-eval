@@ -21,7 +21,7 @@ export const navigationGroups: { title: string; links: [string, string][] }[] =
       title: "Workspace",
       links: [
         ["evals", "Evaluations"],
-        ["sessions", "Coding sessions"],
+        ["sessions", "Agent sessions"],
       ],
     },
     {

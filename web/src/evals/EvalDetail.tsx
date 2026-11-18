@@ -223,7 +223,7 @@ export function EvalDetail({ id }: { id: string }) {
       </div>
       {sessions.length > 0 && <UsageSummary sessions={sessions} />}
       <section className="section">
-        <h2>Coding sessions</h2>
+        <h2>Agent sessions</h2>
         {allSessions ? (
           <SessionsTable
             sessions={sessions}
