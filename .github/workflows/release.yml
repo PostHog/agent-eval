@@ -61,11 +61,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $process = Start-Process -FilePath release/agent-eval.exe -ArgumentList "--no-open", "--port", "3199", "--data", "$env:RUNNER_TEMP/agent-eval-smoke" -PassThru
+          $stdout = "$env:RUNNER_TEMP/agent-eval.stdout.log"
+          $stderr = "$env:RUNNER_TEMP/agent-eval.stderr.log"
+          $process = Start-Process -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr -FilePath release/agent-eval.exe -ArgumentList "--no-open", "--port", "3199", "--data", "$env:RUNNER_TEMP/agent-eval-smoke" -PassThru
           try {
             foreach ($attempt in 1..30) {
+              if ($process.HasExited) { exit 1 }
               try {
-                Invoke-WebRequest http://127.0.0.1:3199/ -UseBasicParsing | Out-Null
+                Invoke-WebRequest http://127.0.0.1:3199/ -TimeoutSec 2 -UseBasicParsing | Out-Null
                 exit 0
               } catch {
                 Start-Sleep -Seconds 1
@@ -74,6 +77,8 @@ jobs:
             exit 1
           } finally {
             Stop-Process -Id $process.Id -ErrorAction SilentlyContinue
+            Get-Content $stdout -ErrorAction SilentlyContinue
+            Get-Content $stderr -ErrorAction SilentlyContinue
           }
       - name: Package executable
         if: runner.os != 'Windows'
